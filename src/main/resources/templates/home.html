@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang chủ E-commerce</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .container {
+            width: 80%;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background-color: #333;
+            color: #fff;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
+    </header>
+    <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/products">Sản phẩm</a>
+        <a href="/cart">Giỏ hàng</a>
+        <a href="/about">Giới thiệu</a>
+    </nav>
+    <div class="container">
+        <h2 th:text="${message}">Nội dung chính của trang chủ.</h2>
+        <p>Đây là nơi bạn có thể hiển thị các sản phẩm nổi bật, tin tức hoặc thông tin khuyến mãi.</p>
+        <p>Hãy khám phá các sản phẩm của chúng tôi!</p>
+        <!-- Thêm các phần tử khác tại đây, ví dụ: danh sách sản phẩm -->
+    </div>
+    <footer>
+        <p>&copy; 2026 E-commerce của HSF</p>
+    </footer>
+</body>
+</html>
