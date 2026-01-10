@@ -28,19 +28,6 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
-  app:
-    build: .
-    container_name: spring_app
-    restart: on-failure
-    depends_on:
-      - postgres
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-
 volumes:
   postgres_data:
   minio_data:
