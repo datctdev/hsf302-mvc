@@ -44,9 +44,11 @@ const AuthUtils = {
             throw new Error('Chưa đăng nhập');
         }
 
+        // Don't set Content-Type for FormData, let browser set it with boundary
+        const isFormData = options.body instanceof FormData;
         const headers = {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
             ...options.headers
         };
 
@@ -452,7 +454,7 @@ async function handleUpdateProfile(event) {
 
     const fullName = document.getElementById('fullName').value.trim();
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const avatarUrl = document.getElementById('avatarUrl').value.trim();
+    const avatarFile = document.getElementById('avatarFile').files[0];
 
     // Disable submit button
     const submitBtn = document.getElementById('updateProfileBtn');
@@ -460,12 +462,54 @@ async function handleUpdateProfile(event) {
     submitBtn.textContent = 'Đang cập nhật...';
 
     try {
+        let finalAvatarUrl = null;
+
+        // Upload avatar file if provided
+        if (avatarFile) {
+            // Validate file size (25MB)
+            if (avatarFile.size > 25 * 1024 * 1024) {
+                FormValidator.showError('avatarFileError', 'Kích thước file không được vượt quá 25MB');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+
+            // Validate file type
+            if (!avatarFile.type.startsWith('image/')) {
+                FormValidator.showError('avatarFileError', 'Chỉ chấp nhận file ảnh');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', avatarFile);
+            formData.append('folder', 'avatars');
+
+            const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                finalAvatarUrl = uploadData.url;
+            } else {
+                const errorData = await uploadResponse.json().catch(() => ({}));
+                FormValidator.showError('avatarFileError', errorData.message || 'Upload ảnh thất bại. Vui lòng thử lại.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+        }
+
+        // Update profile
         const response = await AuthUtils.fetchWithAuth('/api/auth/profile', {
             method: 'PUT',
             body: JSON.stringify({
                 fullName: fullName || null,
                 phoneNumber: phoneNumber || null,
-                avatarUrl: avatarUrl || null
+                avatarUrl: finalAvatarUrl
             })
         });
 
@@ -487,6 +531,23 @@ async function handleUpdateProfile(event) {
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Cập Nhật';
+    }
+}
+
+// Avatar Preview Handler
+function handleAvatarPreview(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewDiv = document.getElementById('avatarPreview');
+            const previewImg = document.getElementById('avatarPreviewImg');
+            previewImg.src = e.target.result;
+            previewDiv.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('avatarPreview').style.display = 'none';
     }
 }
 
