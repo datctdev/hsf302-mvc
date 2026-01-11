@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Navigation Fragment - Home/General Pages -->
+    <nav th:fragment="nav-home" class="nav-home">
+        <div class="nav-container">
+            <div class="nav-main">
+                <a href="/">Trang chủ</a>
+                <a href="/products">Sản phẩm</a>
+                <a href="/cart">Giỏ hàng</a>
+                <a href="/about">Giới thiệu</a>
+            </div>
+            <div id="authLinks" class="nav-auth">
+                <a href="/login" id="loginLink">Đăng nhập</a>
+                <a href="/register" id="registerLink">Đăng ký</a>
+            </div>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <a href="/profile" class="profile-link" id="profileLink">Hồ sơ</a>
+                <span class="user-name" id="userName"></span>
+                <button class="logout-btn" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>

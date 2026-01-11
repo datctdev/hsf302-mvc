@@ -1,0 +1,7 @@
+/* Seller-specific Styles */
+
+.seller-content {
+    background-color: var(--bg-color);
+}
+
+/* Seller Shop Management specific styles are already in components.css */

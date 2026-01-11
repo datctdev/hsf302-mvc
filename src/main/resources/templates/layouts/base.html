@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ E-commerce</title>
+    <title th:text="${pageTitle} ?: 'E-commerce'">E-commerce</title>
     
-    <!-- CSS -->
+    <!-- Base CSS -->
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
+    
+    <!-- Additional CSS (can be overridden in pages) -->
+    <th:block th:fragment="additional-css">
+        <!-- Additional CSS links -->
+    </th:block>
 </head>
 <body>
     <!-- Header -->
@@ -19,24 +23,25 @@
     
     <!-- Main Content -->
     <main class="main-content">
-        <div class="container">
-            <h2 th:text="${message}">Nội dung chính của trang chủ.</h2>
-            <p>Đây là nơi bạn có thể hiển thị các sản phẩm nổi bật, tin tức hoặc thông tin khuyến mãi.</p>
-            <p>Hãy khám phá các sản phẩm của chúng tôi!</p>
-            <!-- Thêm các phần tử khác tại đây, ví dụ: danh sách sản phẩm -->
+        <div th:replace="~{::content}">
+            <!-- Page content goes here -->
         </div>
     </main>
     
     <!-- Footer -->
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
-    <!-- JavaScript -->
+    
+    <!-- Base JavaScript -->
     <script th:src="@{/js/common.js}"></script>
-    <script>
-        // Load user info when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initUserNav();
-        });
-    </script>
+    
+    <!-- Additional JavaScript (can be overridden in pages) -->
+    <th:block th:fragment="additional-js">
+        <!-- Additional JS scripts -->
+    </th:block>
+    
+    <!-- Page-specific scripts -->
+    <th:block th:fragment="scripts">
+        <!-- Page scripts go here -->
+    </th:block>
 </body>
 </html>

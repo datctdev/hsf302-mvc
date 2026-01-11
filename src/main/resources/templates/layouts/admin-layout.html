@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'Admin - E-commerce'">Admin - E-commerce</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    
+    <th:block th:fragment="additional-css">
+        <!-- Additional head content -->
+    </th:block>
+</head>
+<body>
+    <!-- Admin Header -->
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    
+    <!-- Admin Navigation -->
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+    
+    <!-- Main Content -->
+    <main class="main-content admin-content">
+        <div th:replace="~{::content}">
+            <!-- Page content goes here -->
+        </div>
+    </main>
+    
+    <!-- Base JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/admin.js}"></script>
+    
+    <th:block th:fragment="scripts">
+        <!-- Page scripts go here -->
+    </th:block>
+</body>
+</html>

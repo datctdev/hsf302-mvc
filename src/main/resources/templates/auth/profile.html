@@ -4,188 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hồ Sơ - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/auth.css}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background-color: #333;
-            color: #fff;
-            padding: 1rem 0;
-            text-align: center;
-        }
-        nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #444;
-            padding: 0.5rem 0;
-            position: relative;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            margin: 0 0.5rem;
-            border-radius: 5px;
-        }
-        nav a:hover {
-            background-color: #555;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-        .profile-section {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-        }
-        .profile-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            font-size: 2rem;
-            color: #666;
-        }
-        .profile-info h2 {
-            margin: 0;
-            color: #333;
-        }
-        .profile-info p {
-            margin: 0.5rem 0;
-            color: #666;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-        .status-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .status-inactive {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 0.9rem;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-        .btn-success {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-        }
-        .seller-status-card {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-        .seller-status-pending {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-        .seller-status-approved {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
-        }
-        .seller-status-none {
-            background-color: #e7f3ff;
-            border-left: 4px solid #007bff;
-        }
-        .seller-status-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        .seller-status-info p {
-            margin: 0;
-            font-weight: 500;
-        }
-        .seller-status-actions {
-            margin-top: 1rem;
-        }
-        footer {
-            text-align: center;
-            padding: 1rem 0;
-            background-color: #333;
-            color: #fff;
-            margin-top: auto;
-        }
-    </style>
 </head>
 <body>
-    <header>
-        <h1>Hồ Sơ Cá Nhân</h1>
-    </header>
-    <nav>
-        <div style="display: flex; align-items: center; width: 100%;">
-            <div style="flex: 1; display: flex; justify-content: center;">
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <nav class="nav-home">
+        <div class="nav-container">
+            <div class="nav-main">
                 <a href="/">Trang chủ</a>
                 <a href="/products">Sản phẩm</a>
             </div>
-            <div style="position: absolute; right: 1rem;">
+            <div class="nav-auth">
                 <a href="/">Quay lại</a>
             </div>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
             <!-- Profile Info Section -->
@@ -222,12 +65,10 @@
                     <div class="form-group">
                         <label for="avatarFile">Upload Avatar</label>
                         <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)">
-                        <div id="avatarPreview" style="margin-top: 10px; display: none;">
+                        <div id="avatarPreview" class="preview-container">
                             <img id="avatarPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
                         </div>
-                        <small style="color: #666; display: block; margin-top: 5px;">
-                            Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB
-                        </small>
+                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
                         <span id="avatarFileError" class="error-message"></span>
                     </div>
 
@@ -259,10 +100,11 @@
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2026 E-commerce của HSF</p>
-    </footer>
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/auth.js}"></script>
     <script>
         // Load user info when page loads
@@ -319,7 +161,6 @@
                     window.location.href = '/login?expired=true';
                 }
             } catch (error) {
-                console.error('Error loading user info:', error);
                 // If error, redirect to login
                 window.location.href = '/login?expired=true';
             }
