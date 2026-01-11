@@ -77,17 +77,7 @@ docker compose ps
 
 ### 4. Build và Run Application
 
-#### Option 1: Maven
-
-```bash
-# Build
-mvn clean install
-
-# Run
-mvn spring-boot:run
-```
-
-#### Option 2: IDE
+#### IDE
 
 1. Import project vào IDE
 2. Run `EComerceApplication.java`
@@ -105,21 +95,6 @@ mvn spring-boot:run
 ### Automatic (Recommended)
 
 Database sẽ tự động được tạo khi chạy Docker Compose. Application sẽ tự động tạo schema khi start.
-
-### Manual
-
-Nếu cần setup manual:
-
-```bash
-# Connect to PostgreSQL
-docker exec -it app-postgres psql -U postgres
-
-# Create database
-CREATE DATABASE ecommerce;
-
-# Exit
-\q
-```
 
 ---
 
