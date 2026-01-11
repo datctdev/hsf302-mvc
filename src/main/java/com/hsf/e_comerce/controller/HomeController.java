@@ -12,4 +12,24 @@ public class HomeController {
         model.addAttribute("message", "Chào mừng đến với E-commerce!");
         return "home";
     }
+
+    @GetMapping("/login")
+    public String login() {
+        return "auth/login";
+    }
+
+    @GetMapping("/register")
+    public String register() {
+        return "auth/register";
+    }
+
+    @GetMapping("/profile")
+    public String profile() {
+        return "auth/profile";
+    }
+
+    @GetMapping("/change-password")
+    public String changePassword() {
+        return "auth/change-password";
+    }
 }
