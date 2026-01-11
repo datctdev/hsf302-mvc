@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .profile-section {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 2rem;
+            color: #666;
+        }
+        .profile-info h2 {
+            margin: 0;
+            color: #333;
+        }
+        .profile-info p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background-color: #333;
+            color: #fff;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Hồ Sơ Cá Nhân</h1>
+    </header>
+    <nav>
+        <div style="display: flex; align-items: center; width: 100%;">
+            <div style="flex: 1; display: flex; justify-content: center;">
+                <a href="/">Trang chủ</a>
+                <a href="/products">Sản phẩm</a>
+            </div>
+            <div style="position: absolute; right: 1rem;">
+                <a href="/">Quay lại</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- Profile Info Section -->
+            <div class="profile-section">
+                <div class="profile-header">
+                    <div class="avatar" id="avatarDisplay">
+                        <span id="avatarInitial">U</span>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="userFullName">Đang tải...</h2>
+                        <p id="userEmail">Đang tải...</p>
+                        <p id="userPhone">Đang tải...</p>
+                        <span class="status-badge" id="statusBadge">Đang tải...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Profile Form -->
+            <div class="profile-section">
+                <h3>Cập Nhật Thông Tin</h3>
+                <form id="updateProfileForm" class="auth-form" onsubmit="handleUpdateProfile(event)">
+                    <div class="form-group">
+                        <label for="fullName">Họ và Tên</label>
+                        <input type="text" id="fullName" name="fullName">
+                        <span id="fullNameError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phoneNumber">Số Điện Thoại</label>
+                        <input type="text" id="phoneNumber" name="phoneNumber">
+                        <span id="phoneNumberError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="avatarUrl">URL Avatar</label>
+                        <input type="url" id="avatarUrl" name="avatarUrl" placeholder="https://example.com/avatar.jpg">
+                        <span id="avatarUrlError" class="error-message"></span>
+                    </div>
+
+                    <button type="submit" id="updateProfileBtn" class="submit-btn">Cập Nhật</button>
+                </form>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="profile-section">
+                <h3>Thao Tác</h3>
+                <div class="action-buttons">
+                    <a href="/change-password" class="btn btn-primary">Đổi Mật Khẩu</a>
+                    <button id="deactivateBtn" class="btn btn-danger" onclick="handleDeactivateAccount()" style="display: none;">
+                        Vô Hiệu Hóa Tài Khoản
+                    </button>
+                    <button id="activateBtn" class="btn btn-success" onclick="handleActivateAccount()" style="display: none;">
+                        Kích Hoạt Tài Khoản
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 E-commerce của HSF</p>
+    </footer>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Load user info when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check if user has token first
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            try {
+                const user = await loadUserInfo();
+                if (user) {
+                    // Update profile info
+                    document.getElementById('userFullName').textContent = user.fullName || 'Chưa cập nhật';
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userPhone').textContent = user.phoneNumber || 'Chưa cập nhật';
+                    
+                    // Update form fields
+                    document.getElementById('fullName').value = user.fullName || '';
+                    document.getElementById('phoneNumber').value = user.phoneNumber || '';
+                    document.getElementById('avatarUrl').value = user.avatarUrl || '';
+
+                    // Update avatar
+                    if (user.avatarUrl) {
+                        const avatarDisplay = document.getElementById('avatarDisplay');
+                        avatarDisplay.style.backgroundImage = `url(${user.avatarUrl})`;
+                        avatarDisplay.style.backgroundSize = 'cover';
+                        avatarDisplay.style.backgroundPosition = 'center';
+                        document.getElementById('avatarInitial').style.display = 'none';
+                    } else {
+                        const initial = (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+                        document.getElementById('avatarInitial').textContent = initial;
+                    }
+
+                    // Update status badge
+                    const statusBadge = document.getElementById('statusBadge');
+                    if (user.isActive) {
+                        statusBadge.textContent = 'Đang hoạt động';
+                        statusBadge.className = 'status-badge status-active';
+                        document.getElementById('deactivateBtn').style.display = 'inline-block';
+                        document.getElementById('activateBtn').style.display = 'none';
+                    } else {
+                        statusBadge.textContent = 'Đã vô hiệu hóa';
+                        statusBadge.className = 'status-badge status-inactive';
+                        document.getElementById('deactivateBtn').style.display = 'none';
+                        document.getElementById('activateBtn').style.display = 'inline-block';
+                    }
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = '/login?expired=true';
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                // If error, redirect to login
+                window.location.href = '/login?expired=true';
+            }
+        });
+    </script>
+</body>
+</html>

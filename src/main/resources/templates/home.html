@@ -20,8 +20,10 @@
         nav {
             display: flex;
             justify-content: center;
+            align-items: center;
             background-color: #444;
             padding: 0.5rem 0;
+            position: relative;
         }
         nav a {
             color: #fff;
@@ -32,6 +34,10 @@
         }
         nav a:hover {
             background-color: #555;
+        }
+        #authLinks {
+            position: absolute;
+            right: 1rem;
         }
         .container {
             width: 80%;
@@ -50,6 +56,30 @@
             bottom: 0;
             width: 100%;
         }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #555;
+            border-radius: 4px;
+        }
+        .user-name {
+            color: #fff;
+            font-weight: 500;
+        }
+        .logout-btn {
+            padding: 0.25rem 0.75rem;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -57,10 +87,23 @@
         <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
     </header>
     <nav>
-        <a href="/">Trang chủ</a>
-        <a href="/products">Sản phẩm</a>
-        <a href="/cart">Giỏ hàng</a>
-        <a href="/about">Giới thiệu</a>
+        <div style="display: flex; align-items: center; width: 100%;">
+            <div style="flex: 1; display: flex; justify-content: center;">
+                <a href="/">Trang chủ</a>
+                <a href="/products">Sản phẩm</a>
+                <a href="/cart">Giỏ hàng</a>
+                <a href="/about">Giới thiệu</a>
+            </div>
+            <div id="authLinks" style="position: absolute; right: 1rem;">
+                <a href="/login" id="loginLink">Đăng nhập</a>
+                <a href="/register" id="registerLink">Đăng ký</a>
+            </div>
+            <div id="userInfo" class="user-info" style="display: none; position: absolute; right: 1rem;">
+                <a href="/profile" style="color: #fff; text-decoration: none; margin-right: 0.5rem;" id="profileLink">Hồ sơ</a>
+                <span class="user-name" id="userName"></span>
+                <button class="logout-btn" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
     </nav>
     <div class="container">
         <h2 th:text="${message}">Nội dung chính của trang chủ.</h2>
@@ -71,5 +114,36 @@
     <footer>
         <p>&copy; 2026 E-commerce của HSF</p>
     </footer>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Load user info when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (token) {
+                try {
+                    const user = await loadUserInfo();
+                    if (user) {
+                        // Hide login/register links
+                        document.getElementById('authLinks').style.display = 'none';
+                        
+                        // Show user info
+                        const userInfoDiv = document.getElementById('userInfo');
+                        userInfoDiv.style.display = 'flex';
+                        document.getElementById('userName').textContent = user.fullName || user.email;
+                    }
+                } catch (error) {
+                    console.error('Error loading user info:', error);
+                    // If error, show login links
+                    document.getElementById('authLinks').style.display = 'block';
+                    document.getElementById('userInfo').style.display = 'none';
+                }
+            } else {
+                // Show login/register links
+                document.getElementById('authLinks').style.display = 'block';
+                document.getElementById('userInfo').style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background-color: #333;
+            color: #fff;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
+    </header>
+    <nav>
+        <div style="display: flex; align-items: center; width: 100%;">
+            <div style="flex: 1; display: flex; justify-content: center;">
+                <a href="/">Trang chủ</a>
+                <a href="/products">Sản phẩm</a>
+                <a href="/cart">Giỏ hàng</a>
+                <a href="/about">Giới thiệu</a>
+            </div>
+            <div style="position: absolute; right: 1rem;">
+                <a href="/login">Đăng nhập</a>
+                <a href="/register">Đăng ký</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>Đăng Ký Tài Khoản</h1>
+                <p>Tạo tài khoản mới để bắt đầu mua sắm</p>
+            </div>
+
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                    <span id="emailError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="fullName">Họ và Tên *</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                    <span id="fullNameError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="phoneNumber">Số Điện Thoại</label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber">
+                    <span id="phoneNumberError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật Khẩu *</label>
+                    <input type="password" id="password" name="password" required>
+                    <span id="passwordError" class="error-message"></span>
+                    <small style="color: #666; font-size: 0.875rem;">
+                        Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Xác Nhận Mật Khẩu *</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    <span id="confirmPasswordError" class="error-message"></span>
+                </div>
+
+                <button type="submit" id="registerBtn" class="submit-btn">Đăng Ký</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Đã có tài khoản? <a th:href="@{/login}">Đăng nhập ngay</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 E-commerce của HSF</p>
+    </footer>
+
+    <script th:src="@{/js/auth.js}"></script>
+</body>
+</html>
