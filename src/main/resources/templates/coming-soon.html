@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chức Năng Đang Phát Triển - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-content h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #555;
+            border-radius: 4px;
+        }
+        .user-info span {
+            color: #fff;
+            font-weight: 500;
+        }
+        .logout-btn {
+            padding: 0.25rem 0.75rem;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            gap: 0;
+            flex: 1;
+            justify-content: center;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        nav a:hover, nav a.active {
+            background-color: #555;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .coming-soon-section {
+            background-color: #fff;
+            padding: 4rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .coming-soon-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+        .coming-soon-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        .coming-soon-section p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .page-info {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            border-left: 4px solid #3498db;
+        }
+        .page-info strong {
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        .features-list {
+            text-align: left;
+            display: inline-block;
+            margin-top: 2rem;
+            max-width: 600px;
+        }
+        .features-list h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            font-size: 1.3rem;
+        }
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features-list li {
+            padding: 0.75rem 1rem;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .features-list li:hover {
+            background-color: #f8f9fa;
+        }
+        .features-list li:before {
+            content: "🚧 ";
+            margin-right: 0.5rem;
+        }
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .simple-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        .simple-nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        .simple-nav a:hover {
+            background-color: #555;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background-color: #333;
+            color: #fff;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Header (only show if admin) -->
+    <header id="adminHeader" style="display: none;">
+        <div class="header-content">
+            <h1 style="flex: 1; text-align: center;">🛒 Admin Dashboard - E-commerce Marketplace</h1>
+            <div class="user-info" style="position: absolute; right: 1rem;">
+                <span id="adminName">Admin</span>
+                <button class="logout-btn" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
+    </header>
+    <nav id="adminNav" style="display: none;">
+        <div class="nav-content">
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/seller-requests">Yêu Cầu Seller</a>
+            <a href="/admin/users">Quản Lý Users</a>
+            <a href="/admin/products">Quản Lý Sản Phẩm</a>
+            <a href="/admin/orders">Quản Lý Đơn Hàng</a>
+        </div>
+    </nav>
+
+    <!-- Simple Header (for non-admin pages) -->
+    <header id="simpleHeader" style="display: none;">
+        <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
+    </header>
+    <nav id="simpleNav" class="simple-nav" style="display: none;">
+        <div style="display: flex; align-items: center; width: 100%;">
+            <div style="flex: 1; display: flex; justify-content: center;">
+                <a href="/">Trang chủ</a>
+                <a href="/profile">Hồ sơ</a>
+                <a href="/seller/shop" id="sellerShopLink" style="display: none;">Quản Lý Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="coming-soon-section">
+                <div class="coming-soon-icon">🚧</div>
+                <h2>Chức Năng Đang Phát Triển</h2>
+                <p>Chức năng này đang được phát triển và sẽ sớm có mặt trong các phiên bản tiếp theo.</p>
+                <p style="color: #999; font-size: 0.9rem;">
+                    Chúng tôi đang nỗ lực để mang đến trải nghiệm tốt nhất cho bạn.
+                </p>
+                
+                <div class="page-info">
+                    <strong id="pageName">Chức năng</strong>
+                </div>
+
+                <div class="features-list" id="featuresContainer" style="display: none;">
+                    <h3>Các tính năng sẽ được thêm vào:</h3>
+                    <ul id="featuresList">
+                    </ul>
+                </div>
+
+                <div class="btn-group">
+                    <a href="#" id="backButton" class="btn btn-primary">Quay Lại</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 E-commerce của HSF</p>
+    </footer>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Page features mapping
+        const pageFeatures = {
+            // Admin pages
+            'admin-users': {
+                name: 'Quản Lý Users',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả người dùng',
+                    'Tìm kiếm và lọc người dùng',
+                    'Xem chi tiết thông tin người dùng',
+                    'Khóa/Mở khóa tài khoản',
+                    'Phân quyền người dùng',
+                    'Xem lịch sử hoạt động'
+                ]
+            },
+            'admin-products': {
+                name: 'Quản Lý Sản Phẩm',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả sản phẩm',
+                    'Tìm kiếm và lọc sản phẩm',
+                    'Xem chi tiết sản phẩm',
+                    'Duyệt/Gỡ sản phẩm',
+                    'Quản lý danh mục sản phẩm',
+                    'Thống kê sản phẩm'
+                ]
+            },
+            'admin-orders': {
+                name: 'Quản Lý Đơn Hàng',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả đơn hàng',
+                    'Tìm kiếm và lọc đơn hàng',
+                    'Xem chi tiết đơn hàng',
+                    'Xử lý đơn hàng',
+                    'Theo dõi trạng thái đơn hàng',
+                    'Thống kê doanh thu'
+                ]
+            },
+            // Seller pages
+            'seller-products': {
+                name: 'Quản Lý Sản Phẩm',
+                backUrl: '/seller/shop',
+                features: [
+                    'Thêm sản phẩm mới',
+                    'Chỉnh sửa thông tin sản phẩm',
+                    'Quản lý tồn kho',
+                    'Thêm ảnh sản phẩm',
+                    'Quản lý giá và biến thể',
+                    'Xem thống kê bán hàng'
+                ]
+            },
+            'seller-orders': {
+                name: 'Quản Lý Đơn Hàng',
+                backUrl: '/seller/shop',
+                features: [
+                    'Xem danh sách đơn hàng',
+                    'Xử lý đơn hàng',
+                    'Cập nhật trạng thái giao hàng',
+                    'In hóa đơn',
+                    'Theo dõi vận đơn',
+                    'Thống kê doanh thu'
+                ]
+            },
+            'seller-statistics': {
+                name: 'Thống Kê',
+                backUrl: '/seller/shop',
+                features: [
+                    'Thống kê doanh thu',
+                    'Thống kê sản phẩm bán chạy',
+                    'Biểu đồ doanh thu theo thời gian',
+                    'Thống kê đơn hàng',
+                    'Phân tích khách hàng',
+                    'Báo cáo chi tiết'
+                ]
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Detect page type and user role
+            const path = window.location.pathname;
+            let pageKey = '';
+            let isAdmin = false;
+            let backUrl = '/';
+
+            // Determine page key and type
+            if (path.includes('/admin/users')) {
+                pageKey = 'admin-users';
+                isAdmin = true;
+            } else if (path.includes('/admin/products')) {
+                pageKey = 'admin-products';
+                isAdmin = true;
+            } else if (path.includes('/admin/orders')) {
+                pageKey = 'admin-orders';
+                isAdmin = true;
+            } else if (path.includes('/seller/products')) {
+                pageKey = 'seller-products';
+            } else if (path.includes('/seller/orders')) {
+                pageKey = 'seller-orders';
+            } else if (path.includes('/seller/statistics')) {
+                pageKey = 'seller-statistics';
+            }
+
+            // Check user role and show appropriate header
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                if (response.ok) {
+                    const user = await response.json();
+                    const roles = user.roles || [];
+                    
+                    isAdmin = roles.includes('ROLE_ADMIN');
+                    
+                    if (isAdmin && path.startsWith('/admin')) {
+                        document.getElementById('adminHeader').style.display = 'block';
+                        document.getElementById('adminNav').style.display = 'block';
+                        document.getElementById('adminName').textContent = user.fullName || user.email;
+                        
+                        // Update active nav item
+                        const navLinks = document.querySelectorAll('#adminNav .nav-content a');
+                        navLinks.forEach(link => {
+                            if (link.getAttribute('href') === path) {
+                                link.classList.add('active');
+                            }
+                        });
+                    } else {
+                        // For seller or other pages, show simple header
+                        document.getElementById('simpleHeader').style.display = 'block';
+                        document.getElementById('simpleNav').style.display = 'block';
+                        
+                        // Show seller shop link if user is seller
+                        if (roles.includes('ROLE_SELLER')) {
+                            document.getElementById('sellerShopLink').style.display = 'inline-block';
+                        }
+                    }
+                } else {
+                    window.location.href = '/login?expired=true';
+                    return;
+                }
+            } catch (error) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Update page info
+            if (pageFeatures[pageKey]) {
+                const pageInfo = pageFeatures[pageKey];
+                document.getElementById('pageName').textContent = pageInfo.name;
+                backUrl = pageInfo.backUrl;
+                
+                // Show features
+                if (pageInfo.features && pageInfo.features.length > 0) {
+                    const featuresList = document.getElementById('featuresList');
+                    featuresList.innerHTML = pageInfo.features.map(feature => 
+                        `<li>${feature}</li>`
+                    ).join('');
+                    document.getElementById('featuresContainer').style.display = 'block';
+                }
+            } else {
+                // Generic page name from URL
+                const pathParts = path.split('/').filter(p => p);
+                if (pathParts.length > 0) {
+                    const lastPart = pathParts[pathParts.length - 1];
+                    document.getElementById('pageName').textContent = 
+                        lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
+                }
+                
+                // Set back URL based on context
+                if (isAdmin) {
+                    backUrl = '/admin/dashboard';
+                } else if (path.includes('/seller')) {
+                    backUrl = '/seller/shop';
+                } else {
+                    backUrl = '/';
+                }
+            }
+
+            // Update back button
+            const backButton = document.getElementById('backButton');
+            backButton.href = backUrl;
+        });
+
+        async function handleLogout() {
+            try {
+                await AuthUtils.fetchWithAuth('/api/auth/logout', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                // Ignore
+            } finally {
+                AuthUtils.removeToken();
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>

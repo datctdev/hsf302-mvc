@@ -32,4 +32,54 @@ public class HomeController {
     public String changePassword() {
         return "auth/change-password";
     }
+
+    @GetMapping("/become-seller")
+    public String becomeSeller() {
+        return "seller/become-seller";
+    }
+
+    @GetMapping("/admin/seller-requests")
+    public String adminSellerRequests() {
+        return "admin/seller-requests";
+    }
+
+    @GetMapping("/seller/shop")
+    public String sellerShop() {
+        return "seller/shop";
+    }
+
+    @GetMapping("/admin/dashboard")
+    public String adminDashboard() {
+        return "admin/dashboard";
+    }
+
+    @GetMapping("/admin/users")
+    public String adminUsers() {
+        return "coming-soon";
+    }
+
+    @GetMapping("/admin/products")
+    public String adminProducts() {
+        return "coming-soon";
+    }
+
+    @GetMapping("/admin/orders")
+    public String adminOrders() {
+        return "coming-soon";
+    }
+
+    @GetMapping("/seller/products")
+    public String sellerProducts() {
+        return "coming-soon";
+    }
+
+    @GetMapping("/seller/orders")
+    public String sellerOrders() {
+        return "coming-soon";
+    }
+
+    @GetMapping("/seller/statistics")
+    public String sellerStatistics() {
+        return "coming-soon";
+    }
 }

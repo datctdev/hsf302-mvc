@@ -302,8 +302,15 @@ async function handleLogin(event) {
             // Hiển thị thông báo thành công
             alert('Đăng nhập thành công!');
             
-            // Redirect về trang chủ
-            window.location.href = '/';
+            // Kiểm tra role và redirect
+            const roles = data.roles || [];
+            if (roles.includes('ROLE_ADMIN')) {
+                // Admin redirect đến dashboard
+                window.location.href = '/admin/dashboard';
+            } else {
+                // User thường redirect về trang chủ
+                window.location.href = '/';
+            }
         } else {
             // Hiển thị lỗi
             const errorElement = document.getElementById('loginError');

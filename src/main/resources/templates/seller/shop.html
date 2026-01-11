@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Shop - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444;
+            padding: 0.5rem 0;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .shop-section {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .shop-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            gap: 2rem;
+        }
+        .shop-logo-container {
+            flex-shrink: 0;
+        }
+        .shop-logo {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            background-color: #ddd;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+        .shop-cover {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+        .shop-info {
+            flex: 1;
+        }
+        .shop-info h2 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+        .shop-info p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-banned {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .form-control:hover {
+            border-color: #007bff;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+        .preview-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: none;
+        }
+        .preview-container.show {
+            display: block;
+        }
+        .preview-logo {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .preview-cover {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .error-message {
+            color: #d32f2f;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .rating-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Quản Lý Shop</h1>
+    </header>
+    <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/profile">Hồ sơ</a>
+    </nav>
+
+    <div class="container">
+        <!-- Shop Info Display -->
+        <div class="shop-section">
+            <div id="shopCoverContainer" style="display: none;">
+                <img id="shopCover" class="shop-cover" src="" alt="Shop Cover">
+            </div>
+            <div class="shop-header">
+                <div class="shop-logo-container">
+                    <img id="shopLogo" class="shop-logo" src="" alt="Shop Logo" style="display: none;">
+                    <div id="shopLogoPlaceholder" class="shop-logo" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #999;">
+                        🏪
+                    </div>
+                </div>
+                <div class="shop-info">
+                    <h2 id="shopName">Đang tải...</h2>
+                    <p id="shopDescription">Đang tải...</p>
+                    <p><strong>Số điện thoại:</strong> <span id="shopPhone">-</span></p>
+                    <p><strong>Địa chỉ:</strong> <span id="shopAddress">-</span></p>
+                    <div class="rating" id="ratingContainer" style="display: none;">
+                        <span class="rating-value" id="averageRating">0.0</span>
+                        <span>⭐</span>
+                    </div>
+                    <span class="status-badge" id="shopStatus">Đang tải...</span>
+                    <p style="margin-top: 0.5rem; color: #999; font-size: 0.875rem;">
+                        Ngày tạo: <span id="createdAt">-</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Management Menu -->
+        <div class="shop-section">
+            <h3 style="margin-top: 0;">Quản Lý Shop</h3>
+            <div class="form-group">
+                <label for="managementOption">Chọn chức năng:</label>
+                <select id="managementOption" class="form-control" onchange="handleManagementOptionChange()">
+                    <option value="">-- Chọn chức năng --</option>
+                    <option value="update">Cập Nhật Thông Tin Shop</option>
+                    <option value="products">Quản Lý Sản Phẩm</option>
+                    <option value="orders">Quản Lý Đơn Hàng</option>
+                    <option value="statistics">Thống Kê</option>
+                </select>
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    Một số chức năng đang được phát triển
+                </small>
+            </div>
+        </div>
+
+        <!-- Update Shop Form -->
+        <div class="shop-section" id="updateShopSection" style="display: none;">
+            <h3 style="margin-top: 0;">Cập Nhật Thông Tin Shop</h3>
+            <form id="updateShopForm" onsubmit="handleUpdateShop(event)">
+                <div class="form-group">
+                    <label for="name">Tên Shop *</label>
+                    <input type="text" id="name" name="name" required>
+                    <small>Tên shop phải có từ 3 đến 255 ký tự và không được trùng với shop khác</small>
+                    <span id="nameError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Mô Tả Shop</label>
+                    <textarea id="description" name="description"></textarea>
+                    <small>Tối đa 2000 ký tự</small>
+                    <span id="descriptionError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="phoneNumber">Số Điện Thoại</label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber">
+                    <span id="phoneNumberError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Địa Chỉ</label>
+                    <input type="text" id="address" name="address">
+                    <span id="addressError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="logoFile">Logo Shop</label>
+                    <input type="file" id="logoFile" name="logoFile" accept="image/*" onchange="handleLogoPreview(event)">
+                    <div id="logoPreview" class="preview-container">
+                        <img id="logoPreviewImg" src="" alt="Logo Preview" class="preview-logo">
+                    </div>
+                    <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
+                    <span id="logoFileError" class="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="coverFile">Ảnh Bìa Shop</label>
+                    <input type="file" id="coverFile" name="coverFile" accept="image/*" onchange="handleCoverPreview(event)">
+                    <div id="coverPreview" class="preview-container">
+                        <img id="coverPreviewImg" src="" alt="Cover Preview" class="preview-cover">
+                    </div>
+                    <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
+                    <span id="coverFileError" class="error-message"></span>
+                </div>
+
+                <button type="submit" id="updateShopBtn" class="btn btn-primary">Cập Nhật Shop</button>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        let currentShop = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            await loadShopInfo();
+        });
+
+        async function loadShopInfo() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/shop');
+                if (response.ok) {
+                    currentShop = await response.json();
+                    displayShopInfo(currentShop);
+                    populateForm(currentShop);
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Không thể tải thông tin shop');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi khi tải thông tin shop');
+            }
+        }
+
+        function displayShopInfo(shop) {
+            document.getElementById('shopName').textContent = shop.name || 'Chưa có tên';
+            document.getElementById('shopDescription').textContent = shop.description || 'Chưa có mô tả';
+            document.getElementById('shopPhone').textContent = shop.phoneNumber || '-';
+            document.getElementById('shopAddress').textContent = shop.address || '-';
+            document.getElementById('createdAt').textContent = formatDate(shop.createdAt);
+
+            // Status badge
+            const statusBadge = document.getElementById('shopStatus');
+            statusBadge.textContent = getStatusText(shop.status);
+            statusBadge.className = 'status-badge status-' + shop.status.toLowerCase();
+
+            // Rating
+            if (shop.averageRating && shop.averageRating > 0) {
+                document.getElementById('averageRating').textContent = shop.averageRating.toFixed(1);
+                document.getElementById('ratingContainer').style.display = 'flex';
+            }
+
+            // Logo
+            if (shop.logoUrl) {
+                document.getElementById('shopLogo').src = shop.logoUrl;
+                document.getElementById('shopLogo').style.display = 'block';
+                document.getElementById('shopLogoPlaceholder').style.display = 'none';
+            }
+
+            // Cover
+            if (shop.coverImageUrl) {
+                document.getElementById('shopCover').src = shop.coverImageUrl;
+                document.getElementById('shopCoverContainer').style.display = 'block';
+            }
+        }
+
+        function populateForm(shop) {
+            document.getElementById('name').value = shop.name || '';
+            document.getElementById('description').value = shop.description || '';
+            document.getElementById('phoneNumber').value = shop.phoneNumber || '';
+            document.getElementById('address').value = shop.address || '';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'ACTIVE': 'Hoạt động',
+                'INACTIVE': 'Không hoạt động',
+                'PENDING': 'Đang chờ',
+                'BANNED': 'Bị cấm'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
+
+        function handleManagementOptionChange() {
+            const option = document.getElementById('managementOption').value;
+            
+            // Hide update section
+            document.getElementById('updateShopSection').style.display = 'none';
+            
+            // Show selected section or redirect
+            switch(option) {
+                case 'update':
+                    document.getElementById('updateShopSection').style.display = 'block';
+                    break;
+                case 'products':
+                    window.location.href = '/seller/products';
+                    break;
+                case 'orders':
+                    window.location.href = '/seller/orders';
+                    break;
+                case 'statistics':
+                    window.location.href = '/seller/statistics';
+                    break;
+                default:
+                    // Hide all if no option selected
+                    break;
+            }
+        }
+
+        function handleLogoPreview(event) {
+            const fileInput = event.target;
+            const previewDiv = document.getElementById('logoPreview');
+            const previewImg = document.getElementById('logoPreviewImg');
+            const errorSpan = document.getElementById('logoFileError');
+
+            errorSpan.classList.remove('show');
+            errorSpan.textContent = '';
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+
+                if (file.size > 25 * 1024 * 1024) {
+                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.remove('show');
+            }
+        }
+
+        function handleCoverPreview(event) {
+            const fileInput = event.target;
+            const previewDiv = document.getElementById('coverPreview');
+            const previewImg = document.getElementById('coverPreviewImg');
+            const errorSpan = document.getElementById('coverFileError');
+
+            errorSpan.classList.remove('show');
+            errorSpan.textContent = '';
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+
+                if (file.size > 25 * 1024 * 1024) {
+                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.remove('show');
+            }
+        }
+
+        async function handleUpdateShop(event) {
+            event.preventDefault();
+            
+            const updateBtn = document.getElementById('updateShopBtn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Đang cập nhật...';
+
+            try {
+                const name = document.getElementById('name').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const phoneNumber = document.getElementById('phoneNumber').value.trim();
+                const address = document.getElementById('address').value.trim();
+                const logoFile = document.getElementById('logoFile').files[0];
+                const coverFile = document.getElementById('coverFile').files[0];
+
+                let logoUrl = currentShop?.logoUrl || null;
+                let coverImageUrl = currentShop?.coverImageUrl || null;
+
+                // Upload logo if provided
+                if (logoFile) {
+                    const formData = new FormData();
+                    formData.append('file', logoFile);
+                    formData.append('folder', 'shop-logos');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        logoUrl = uploadData.url;
+                    } else {
+                        const errorData = await uploadResponse.json().catch(() => ({}));
+                        alert(errorData.message || 'Upload logo thất bại');
+                        updateBtn.disabled = false;
+                        updateBtn.textContent = 'Cập Nhật Shop';
+                        return;
+                    }
+                }
+
+                // Upload cover if provided
+                if (coverFile) {
+                    const formData = new FormData();
+                    formData.append('file', coverFile);
+                    formData.append('folder', 'shop-covers');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        coverImageUrl = uploadData.url;
+                    }
+                }
+
+                // Update shop
+                const response = await AuthUtils.fetchWithAuth('/api/shop', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        name: name,
+                        description: description || null,
+                        phoneNumber: phoneNumber || null,
+                        address: address || null,
+                        logoUrl: logoUrl,
+                        coverImageUrl: coverImageUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Cập nhật shop thành công!');
+                    await loadShopInfo();
+                    // Clear file inputs
+                    document.getElementById('logoFile').value = '';
+                    document.getElementById('coverFile').value = '';
+                    document.getElementById('logoPreview').classList.remove('show');
+                    document.getElementById('coverPreview').classList.remove('show');
+                } else {
+                    alert(data.message || 'Cập nhật shop thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Cập Nhật Shop';
+            }
+        }
+    </script>
+</body>
+</html>

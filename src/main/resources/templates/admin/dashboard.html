@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-content h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-info span {
+            font-size: 0.9rem;
+            color: #f39c12;
+            font-weight: 500;
+        }
+        nav {
+            background-color: #34495e;
+            padding: 0;
+        }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            gap: 0;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            display: block;
+            transition: background-color 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        nav a:hover, nav a.active {
+            background-color: #2c3e50;
+            border-bottom-color: #3498db;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .stat-card.success {
+            border-left-color: #27ae60;
+        }
+        .stat-card.warning {
+            border-left-color: #f39c12;
+        }
+        .stat-card.danger {
+            border-left-color: #e74c3c;
+        }
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0.5rem 0;
+        }
+        .stat-card .description {
+            font-size: 0.85rem;
+            color: #999;
+        }
+        .section {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 0.5rem;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .action-card {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .action-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+        .action-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🛒 Admin Dashboard - E-commerce Marketplace</h1>
+            <div class="user-info">
+                <span id="adminName">Admin</span>
+                <button class="btn btn-danger" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
+    </header>
+    <nav>
+        <div class="nav-content">
+            <a href="/admin/dashboard" class="active">Dashboard</a>
+            <a href="/admin/seller-requests">Yêu Cầu Seller</a>
+            <a href="/admin/users">Quản Lý Users</a>
+            <a href="/admin/products">Quản Lý Sản Phẩm</a>
+            <a href="/admin/orders">Quản Lý Đơn Hàng</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Statistics Cards -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Tổng Users</h3>
+                <div class="value" id="totalUsers">-</div>
+                <div class="description">Tổng số người dùng</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Yêu Cầu Seller</h3>
+                <div class="value" id="pendingRequests">-</div>
+                <div class="description">Đang chờ duyệt</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Tổng Shops</h3>
+                <div class="value" id="totalShops">-</div>
+                <div class="description">Shops đang hoạt động</div>
+            </div>
+            <div class="stat-card danger">
+                <h3>Tổng Đơn Hàng</h3>
+                <div class="value" id="totalOrders">-</div>
+                <div class="description">Tất cả đơn hàng</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <h2>Thao Tác Nhanh</h2>
+            <div class="quick-actions">
+                <a href="/admin/seller-requests" class="action-card">
+                    <h3>📋 Duyệt Yêu Cầu Seller</h3>
+                    <p>Xem và duyệt các yêu cầu trở thành seller</p>
+                </a>
+                <a href="/admin/users" class="action-card">
+                    <h3>👥 Quản Lý Users</h3>
+                    <p>Xem danh sách và quản lý người dùng</p>
+                </a>
+                <a href="/admin/products" class="action-card">
+                    <h3>📦 Quản Lý Sản Phẩm</h3>
+                    <p>Xem và quản lý tất cả sản phẩm</p>
+                </a>
+                <a href="/admin/orders" class="action-card">
+                    <h3>🛒 Quản Lý Đơn Hàng</h3>
+                    <p>Xem và xử lý đơn hàng</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section">
+            <h2>Hoạt Động Gần Đây</h2>
+            <p style="color: #666;">Tính năng đang phát triển...</p>
+        </div>
+    </div>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Check if user is admin
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                if (response.ok) {
+                    const user = await response.json();
+                    const roles = user.roles || [];
+                    
+                    // Check if user has ADMIN role
+                    if (!roles.includes('ROLE_ADMIN')) {
+                        alert('Bạn không có quyền truy cập trang này.');
+                        window.location.href = '/';
+                        return;
+                    }
+                    
+                    document.getElementById('adminName').textContent = user.fullName || user.email;
+                } else {
+                    window.location.href = '/login?expired=true';
+                    return;
+                }
+            } catch (error) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Load statistics
+            await loadStatistics();
+        });
+
+        async function loadStatistics() {
+            try {
+                // Load pending seller requests
+                const requestsResponse = await AuthUtils.fetchWithAuth('/api/admin/seller-requests?status=PENDING');
+                if (requestsResponse.ok) {
+                    const requests = await requestsResponse.json();
+                    document.getElementById('pendingRequests').textContent = requests.length || 0;
+                }
+            } catch (error) {
+                // Ignore errors for now
+            }
+
+            // TODO: Load other statistics when APIs are ready
+            document.getElementById('totalUsers').textContent = '-';
+            document.getElementById('totalShops').textContent = '-';
+            document.getElementById('totalOrders').textContent = '-';
+        }
+
+        async function handleLogout() {
+            try {
+                await AuthUtils.fetchWithAuth('/api/auth/logout', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                // Ignore
+            } finally {
+                AuthUtils.removeToken();
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>

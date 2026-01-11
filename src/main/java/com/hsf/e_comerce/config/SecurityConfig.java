@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/files/view/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/profile", "/change-password").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/profile", "/change-password", "/become-seller", "/seller/shop", "/seller/products", "/seller/orders", "/seller/statistics", "/admin/seller-requests", "/admin/dashboard", "/admin/users", "/admin/products", "/admin/orders").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
                         .anyRequest().authenticated()
                 )

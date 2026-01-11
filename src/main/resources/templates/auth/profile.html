@@ -131,6 +131,36 @@
         .btn-success:hover {
             background-color: #218838;
         }
+        .seller-status-card {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .seller-status-pending {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .seller-status-approved {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .seller-status-none {
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+        }
+        .seller-status-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .seller-status-info p {
+            margin: 0;
+            font-weight: 500;
+        }
+        .seller-status-actions {
+            margin-top: 1rem;
+        }
         footer {
             text-align: center;
             padding: 1rem 0;
@@ -205,6 +235,14 @@
                 </form>
             </div>
 
+            <!-- Seller Status Section -->
+            <div class="profile-section" id="sellerStatusSection">
+                <h3>Trạng Thái Seller</h3>
+                <div id="sellerStatusContent">
+                    <p>Đang kiểm tra...</p>
+                </div>
+            </div>
+
             <!-- Actions Section -->
             <div class="profile-section">
                 <h3>Thao Tác</h3>
@@ -273,6 +311,9 @@
                         document.getElementById('deactivateBtn').style.display = 'none';
                         document.getElementById('activateBtn').style.display = 'inline-block';
                     }
+                    
+                    // Load seller status
+                    await loadSellerStatus();
                 } else {
                     // Not authenticated, redirect to login
                     window.location.href = '/login?expired=true';
@@ -283,6 +324,80 @@
                 window.location.href = '/login?expired=true';
             }
         });
+
+        async function loadSellerStatus() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/seller/check');
+                const data = await response.json();
+                
+                const sellerStatusContent = document.getElementById('sellerStatusContent');
+                let statusClass = '';
+                let statusText = '';
+                let actionHtml = '';
+                let detailHtml = '';
+
+                if (data.message.includes('đã là seller')) {
+                    statusClass = 'seller-status-approved';
+                    statusText = 'Bạn đã là Seller';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Bạn có thể quản lý shop và bán sản phẩm ngay bây giờ.</p>';
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/seller/shop" class="btn btn-success">Quản Lý Shop</a>
+                        </div>
+                    `;
+                } else if (data.message.includes('đang chờ duyệt')) {
+                    statusClass = 'seller-status-pending';
+                    statusText = 'Yêu cầu đang chờ duyệt';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Yêu cầu của bạn đang được admin xem xét. Vui lòng đợi phản hồi.</p>';
+                    
+                    // Try to load request details
+                    try {
+                        const requestResponse = await AuthUtils.fetchWithAuth('/api/seller/request/status');
+                        if (requestResponse.ok) {
+                            const requestData = await requestResponse.json();
+                            detailHtml += `<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;"><strong>Tên shop:</strong> ${requestData.shopName || 'N/A'}</p>`;
+                            detailHtml += `<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;"><strong>Ngày gửi:</strong> ${formatDate(requestData.createdAt)}</p>`;
+                        }
+                    } catch (e) {
+                        // Ignore error
+                    }
+                    
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/become-seller" class="btn btn-primary">Xem Chi Tiết</a>
+                        </div>
+                    `;
+                } else {
+                    statusClass = 'seller-status-none';
+                    statusText = 'Bạn chưa là Seller';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Trở thành seller để bán sản phẩm trên sàn thương mại điện tử của chúng tôi.</p>';
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/become-seller" class="btn btn-primary">Trở Thành Seller</a>
+                        </div>
+                    `;
+                }
+
+                sellerStatusContent.innerHTML = `
+                    <div class="seller-status-card ${statusClass}">
+                        <div class="seller-status-info">
+                            <p>${statusText}</p>
+                        </div>
+                        ${detailHtml}
+                        ${actionHtml}
+                    </div>
+                `;
+            } catch (error) {
+                // Nếu không có quyền hoặc lỗi, ẩn section
+                document.getElementById('sellerStatusSection').style.display = 'none';
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
     </script>
 </body>
 </html>
