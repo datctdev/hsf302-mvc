@@ -1,8 +1,7 @@
 package com.hsf.e_comerce.seller.controller;
 
-import com.hsf.e_comerce.auth.service.UserService;
-import com.hsf.e_comerce.common.dto.response.MessageResponse;
-import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.seller.dto.request.RejectSellerRequestRequest;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
@@ -10,8 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +21,6 @@ import java.util.UUID;
 public class AdminSellerController {
 
     private final SellerRequestService sellerRequestService;
-    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<List<SellerRequestResponse>> getAllRequests(
@@ -47,9 +43,8 @@ public class AdminSellerController {
     @PostMapping("/{id}/approve")
     public ResponseEntity<SellerRequestResponse> approveRequest(
             @PathVariable UUID id,
-            Authentication authentication) {
-        UUID adminId = getUserIdFromAuthentication(authentication);
-        SellerRequestResponse response = sellerRequestService.approveRequest(id, adminId);
+            @CurrentUser User admin) {
+        SellerRequestResponse response = sellerRequestService.approveRequest(id, admin.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -57,18 +52,8 @@ public class AdminSellerController {
     public ResponseEntity<SellerRequestResponse> rejectRequest(
             @PathVariable UUID id,
             @Valid @RequestBody RejectSellerRequestRequest request,
-            Authentication authentication) {
-        UUID adminId = getUserIdFromAuthentication(authentication);
-        SellerRequestResponse response = sellerRequestService.rejectRequest(id, adminId, request);
+            @CurrentUser User admin) {
+        SellerRequestResponse response = sellerRequestService.rejectRequest(id, admin.getId(), request);
         return ResponseEntity.ok(response);
-    }
-
-    private UUID getUserIdFromAuthentication(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            throw new CustomException("Không thể xác định người dùng");
-        }
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String email = userDetails.getUsername();
-        return userService.findByEmail(email).getId();
     }
 }
