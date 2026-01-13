@@ -40,10 +40,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // Static resources
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
+                        // API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/files/view/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/profile", "/change-password", "/become-seller", "/seller/shop", "/seller/products", "/seller/orders", "/seller/statistics", "/admin/seller-requests", "/admin/dashboard", "/admin/users", "/admin/products", "/admin/orders").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
+                        // Public pages
+                        .requestMatchers("/", "/login", "/register").permitAll()
+                        // User pages (permit all, but will check auth in frontend)
+                        .requestMatchers("/profile", "/change-password").permitAll()
+                        // Seller pages
+                        .requestMatchers("/become-seller", "/seller/**").permitAll()
+                        // Admin pages (permit all, but will check auth in frontend)
+                        .requestMatchers("/admin/**").permitAll()
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

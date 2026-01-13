@@ -71,8 +71,21 @@ async function loadStatistics() {
     }
 }
 
+// Set active nav link based on current path
+function setActiveNavLink() {
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.nav-admin .nav-link').forEach(link => {
+        if (link.getAttribute('data-path') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+}
+
 // Initialize admin pages
 document.addEventListener('DOMContentLoaded', function() {
+    // Set active nav link
+    setActiveNavLink();
+    
     // Check if we're on an admin page
     if (window.location.pathname.startsWith('/admin')) {
         initAdminDashboard();

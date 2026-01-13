@@ -126,8 +126,16 @@ async function handleLogin(event) {
         return;
     }
 
+    // Hide previous errors
+    const errorElement = document.getElementById('loginError');
+    if (errorElement) {
+        errorElement.style.display = 'none';
+        errorElement.textContent = '';
+    }
+
     // Disable submit button
     const submitBtn = document.getElementById('loginBtn');
+    const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Đang đăng nhập...';
 
@@ -156,33 +164,100 @@ async function handleLogin(event) {
             }
             
             // Hiển thị thông báo thành công
-            alert('Đăng nhập thành công!');
+            submitBtn.textContent = 'Đăng nhập thành công!';
+            submitBtn.style.backgroundColor = '#28a745';
             
             // Kiểm tra role và redirect
             const roles = data.roles || [];
-            if (roles.includes('ROLE_ADMIN')) {
-                // Admin redirect đến dashboard
-                window.location.href = '/admin/dashboard';
-            } else {
-                // User thường redirect về trang chủ
-                window.location.href = '/';
-            }
+            setTimeout(() => {
+                if (roles.includes('ROLE_ADMIN')) {
+                    // Admin redirect đến dashboard
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    // User thường redirect về trang chủ
+                    window.location.href = '/';
+                }
+            }, 500);
         } else {
             // Hiển thị lỗi
-            const errorElement = document.getElementById('loginError');
             if (errorElement) {
                 errorElement.textContent = data.message || 'Email hoặc mật khẩu không đúng';
                 errorElement.style.display = 'block';
+                errorElement.classList.add('show');
+                // Scroll to error
+                errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } else {
                 alert(data.message || 'Email hoặc mật khẩu không đúng');
             }
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            submitBtn.style.backgroundColor = '';
         }
     } catch (error) {
-        alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-    } finally {
+        console.error('Login error:', error);
+        if (errorElement) {
+            errorElement.textContent = 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+            errorElement.style.display = 'block';
+            errorElement.classList.add('show');
+        } else {
+            alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+        }
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Đăng nhập';
+        submitBtn.textContent = originalText;
+        submitBtn.style.backgroundColor = '';
     }
+}
+
+// Real-time validation for login form
+function initLoginValidation() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginForm = document.getElementById('loginForm');
+
+    if (!loginForm || !emailInput || !passwordInput) {
+        return;
+    }
+
+    // Email validation
+    emailInput.addEventListener('blur', function() {
+        const email = this.value.trim();
+        if (email && !FormValidator.validateEmail(email)) {
+            FormValidator.showError('emailError', 'Email không hợp lệ');
+        } else {
+            FormValidator.hideError('emailError');
+        }
+    });
+
+    emailInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+            FormValidator.hideError('emailError');
+        }
+    });
+
+    // Password validation
+    passwordInput.addEventListener('input', function() {
+        if (this.value) {
+            FormValidator.hideError('passwordError');
+        }
+    });
+
+    // Clear general error on input
+    [emailInput, passwordInput].forEach(input => {
+        input.addEventListener('input', function() {
+            const errorElement = document.getElementById('loginError');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+                errorElement.classList.remove('show');
+            }
+        });
+    });
+}
+
+// Initialize validation when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLoginValidation);
+} else {
+    initLoginValidation();
 }
 
 // Change Password Handler
