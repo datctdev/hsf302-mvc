@@ -2,11 +2,8 @@ package com.hsf.e_comerce.auth.service.impl;
 
 import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
-import com.hsf.e_comerce.auth.entity.UserRole;
-import com.hsf.e_comerce.auth.entity.UserRoleId;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
-import com.hsf.e_comerce.auth.repository.UserRoleRepository;
 import com.hsf.e_comerce.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,7 +25,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserDetailsService, UserService {
 
     private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
 
     @Override
@@ -43,15 +40,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                getAuthorities(user.getId())
+                getAuthorities(user)
         );
     }
 
-    private Collection<? extends GrantedAuthority> getAuthorities(UUID userId) {
-        List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-        return userRoles.stream()
-                .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName()))
-                .collect(Collectors.toList());
+    private Collection<? extends GrantedAuthority> getAuthorities(User user) {
+        if (user.getRole() != null) {
+            return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getName()));
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -71,10 +68,13 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional
     public List<String> getUserRoles(UUID userId) {
-        List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-        return userRoles.stream()
-                .map(userRole -> userRole.getRole().getName())
-                .collect(Collectors.toList());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        if (user.getRole() != null) {
+            return Collections.singletonList(user.getRole().getName());
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -82,12 +82,8 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     public void assignRoleToUser(User user, String roleName) {
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-        UserRole userRole = new UserRole();
-        userRole.setId(new UserRoleId(user.getId(), role.getId()));
-        userRole.setUser(user);
-        userRole.setRole(role);
-
-        userRoleRepository.save(userRole);
+        
+        user.setRole(role);
+        userRepository.save(user);
     }
 }
