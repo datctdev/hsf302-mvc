@@ -55,7 +55,7 @@ public class HomeController {
 
     @GetMapping("/admin/users")
     public String adminUsers() {
-        return "coming-soon";
+        return "admin/users";
     }
 
     @GetMapping("/admin/products")

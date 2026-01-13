@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Users - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <!-- Admin Header -->
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    
+    <!-- Admin Navigation -->
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+    
+    <!-- Main Content -->
+    <main class="main-content admin-content">
+        <div class="container">
+            <div class="section">
+                <h2>Quản Lý Users</h2>
+                
+                <div class="filters">
+                    <label for="roleFilter">Lọc theo role: </label>
+                    <select id="roleFilter" onchange="loadUsers()">
+                        <option value="">Tất cả</option>
+                        <option value="ROLE_BUYER">Buyer</option>
+                        <option value="ROLE_SELLER">Seller</option>
+                        <option value="ROLE_ADMIN">Admin</option>
+                    </select>
+                    
+                    <label for="statusFilter" style="margin-left: 1rem;">Lọc theo trạng thái: </label>
+                    <select id="statusFilter" onchange="loadUsers()">
+                        <option value="">Tất cả</option>
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Đã vô hiệu hóa</option>
+                    </select>
+                </div>
+
+                <div id="usersContainer" class="requests-list">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Chỉnh Sửa User</h3>
+            </div>
+            <form id="editForm">
+                <div class="form-group" style="text-align: center; margin-bottom: 1.5rem;">
+                    <div id="editAvatarPreview" style="display: inline-block;">
+                        <div id="editAvatarPlaceholder" class="user-avatar-placeholder-large" style="display: none;"></div>
+                        <img id="editAvatarImg" class="user-avatar-large" src="" alt="Avatar" style="display: none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editFullName">Họ và tên *</label>
+                    <input type="text" id="editFullName" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">Email *</label>
+                    <input type="email" id="editEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPhoneNumber">Số điện thoại</label>
+                    <input type="text" id="editPhoneNumber" name="phoneNumber">
+                </div>
+                <div class="form-group">
+                    <label for="editRole">Role *</label>
+                    <select id="editRole" name="roleName" required>
+                        <option value="ROLE_BUYER">Buyer</option>
+                        <option value="ROLE_SELLER">Seller</option>
+                        <option value="ROLE_ADMIN">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="editIsActive" name="isActive" style="margin-right: 8px;">
+                        <span>Đang hoạt động</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/admin.js}"></script>
+    <script>
+        let currentEditUserId = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Check if user is admin and load admin info
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                if (response.ok) {
+                    const user = await response.json();
+                    const roles = user.roles || [];
+                    
+                    if (!roles.includes('ROLE_ADMIN')) {
+                        alert('Bạn không có quyền truy cập trang này.');
+                        window.location.href = '/';
+                        return;
+                    }
+                    
+                    // Load admin name
+                    document.getElementById('adminName').textContent = user.fullName || user.email;
+                } else {
+                    window.location.href = '/login?expired=true';
+                    return;
+                }
+            } catch (error) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+            
+            loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/admin/users');
+                const users = await response.json();
+
+                const roleFilter = document.getElementById('roleFilter').value;
+                const statusFilter = document.getElementById('statusFilter').value;
+
+                // Filter users
+                let filteredUsers = users;
+                if (roleFilter) {
+                    filteredUsers = filteredUsers.filter(user => 
+                        user.roles && user.roles.includes(roleFilter)
+                    );
+                }
+                if (statusFilter !== '') {
+                    const isActive = statusFilter === 'true';
+                    filteredUsers = filteredUsers.filter(user => user.isActive === isActive);
+                }
+
+                const container = document.getElementById('usersContainer');
+                
+                if (filteredUsers.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Không có user nào</h3>
+                            <p>Hiện tại không có user nào phù hợp với bộ lọc của bạn.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = filteredUsers.map(user => {
+                    const userInitial = (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+                    return `
+                    <div class="request-card">
+                        <div class="request-header" style="display: flex; align-items: center; gap: 1rem;">
+                            ${user.avatarUrl ? 
+                                `<img src="${user.avatarUrl}" alt="Avatar" class="user-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
+                                ''
+                            }
+                            <div class="user-avatar-placeholder" style="${user.avatarUrl ? 'display: none;' : ''}">${userInitial}</div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0;">${escapeHtml(user.fullName || user.email)}</h3>
+                                <span class="status-badge ${user.isActive ? 'status-active' : 'status-inactive'}" style="margin-top: 0.5rem; display: inline-block;">
+                                    ${user.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <label>ID:</label>
+                                <span>${user.id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Email:</label>
+                                <span>${escapeHtml(user.email)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Số điện thoại:</label>
+                                <span>${escapeHtml(user.phoneNumber || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Role:</label>
+                                <span>${getRoleText(user.roles && user.roles[0])}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Ngày tạo:</label>
+                                <span>${formatDate(user.createdAt)}</span>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-primary" onclick="openEditModal('${user.id}')">Chỉnh sửa</button>
+                            ${user.isActive ? 
+                                `<button class="btn btn-warning" onclick="deactivateUser('${user.id}')">Vô hiệu hóa</button>` :
+                                `<button class="btn btn-success" onclick="activateUser('${user.id}')">Kích hoạt</button>`
+                            }
+                            <button class="btn btn-danger" onclick="deleteUser('${user.id}')">Xóa</button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                document.getElementById('usersContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Lỗi</h3>
+                        <p>Không thể tải danh sách users. Vui lòng thử lại sau.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function openEditModal(userId) {
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/users/${userId}`);
+                const user = await response.json();
+
+                currentEditUserId = userId;
+                document.getElementById('editFullName').value = user.fullName || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPhoneNumber').value = user.phoneNumber || '';
+                document.getElementById('editRole').value = user.roles && user.roles[0] || 'ROLE_BUYER';
+                document.getElementById('editIsActive').checked = user.isActive !== false;
+                
+                // Display avatar
+                const avatarImg = document.getElementById('editAvatarImg');
+                const avatarPlaceholder = document.getElementById('editAvatarPlaceholder');
+                
+                if (user.avatarUrl) {
+                    avatarImg.src = user.avatarUrl;
+                    avatarImg.style.display = 'block';
+                    avatarPlaceholder.style.display = 'none';
+                } else {
+                    const initial = (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+                    avatarPlaceholder.textContent = initial;
+                    avatarPlaceholder.style.display = 'flex';
+                    avatarImg.style.display = 'none';
+                }
+                
+                document.getElementById('editModal').style.display = 'block';
+            } catch (error) {
+                alert('Không thể tải thông tin user. Vui lòng thử lại sau.');
+            }
+        }
+
+        function closeEditModal() {
+            currentEditUserId = null;
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editForm').reset();
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await updateUser();
+        });
+
+        async function updateUser() {
+            if (!currentEditUserId) {
+                return;
+            }
+
+            const fullName = document.getElementById('editFullName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const phoneNumber = document.getElementById('editPhoneNumber').value.trim();
+            const roleName = document.getElementById('editRole').value;
+            const isActive = document.getElementById('editIsActive').checked;
+
+            if (!fullName || !email) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/users/${currentEditUserId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        fullName,
+                        email,
+                        phoneNumber: phoneNumber || null,
+                        roleName,
+                        isActive
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Cập nhật user thành công!');
+                    closeEditModal();
+                    loadUsers();
+                } else {
+                    alert(data.message || 'Cập nhật user thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        async function activateUser(userId) {
+            if (!confirm('Bạn có chắc muốn kích hoạt user này?')) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/users/${userId}/activate`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Kích hoạt user thành công!');
+                    loadUsers();
+                } else {
+                    alert(data.message || 'Kích hoạt user thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        async function deactivateUser(userId) {
+            if (!confirm('Bạn có chắc muốn vô hiệu hóa user này?')) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/users/${userId}/deactivate`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Vô hiệu hóa user thành công!');
+                    loadUsers();
+                } else {
+                    alert(data.message || 'Vô hiệu hóa user thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Bạn có chắc muốn xóa user này? Hành động này không thể hoàn tác!')) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Xóa user thành công!');
+                    loadUsers();
+                } else {
+                    alert(data.message || 'Xóa user thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        function getRoleText(role) {
+            const roleMap = {
+                'ROLE_BUYER': 'Buyer',
+                'ROLE_SELLER': 'Seller',
+                'ROLE_ADMIN': 'Admin'
+            };
+            return roleMap[role] || role || 'N/A';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+    </script>
+</body>
+</html>

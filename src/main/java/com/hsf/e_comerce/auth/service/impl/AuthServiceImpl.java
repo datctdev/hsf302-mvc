@@ -235,18 +235,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user = userRepository.save(user);
-        var roles = userService.getUserRoles(user.getId());
-
-        return UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(user.getAvatarUrl())
-                .roles(roles)
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return UserResponse.convertToResponse(user, userService);
     }
 
     @Override

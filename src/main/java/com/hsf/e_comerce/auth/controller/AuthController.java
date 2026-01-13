@@ -48,19 +48,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(@CurrentUser User user) {
-        var roles = userService.getUserRoles(user.getId());
-
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(user.getAvatarUrl())
-                .roles(roles)
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .build();
-
+        UserResponse response = UserResponse.convertToResponse(user, userService);
         return ResponseEntity.ok(response);
     }
 

@@ -1,5 +1,6 @@
 package com.hsf.e_comerce.auth.service.impl;
 
+import com.hsf.e_comerce.auth.dto.response.UserResponse;
 import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
@@ -84,6 +85,98 @@ public class UserServiceImpl implements UserDetailsService, UserService {
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
         
         user.setRole(role);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getAllUserResponses() {
+        return userRepository.findAll().stream()
+                .map(user -> UserResponse.convertToResponse(user, this))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserResponseById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return UserResponse.convertToResponse(user, this);
+    }
+
+    @Override
+    @Transactional
+    public User updateUser(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        if (fullName != null && !fullName.isEmpty()) {
+            user.setFullName(fullName);
+        }
+        
+        if (email != null && !email.isEmpty()) {
+            // Check if email already exists for another user
+            userRepository.findByEmail(email).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(userId)) {
+                    throw new RuntimeException("Email đã được sử dụng bởi người dùng khác");
+                }
+            });
+            user.setEmail(email);
+        }
+        
+        if (phoneNumber != null) {
+            user.setPhoneNumber(phoneNumber);
+        }
+        
+        if (roleName != null && !roleName.isEmpty()) {
+            Role role = roleRepository.findByName(roleName)
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            user.setRole(role);
+        }
+        
+        if (isActive != null) {
+            user.setIsActive(isActive);
+        }
+        
+        return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserAndGetResponse(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive) {
+        User user = updateUser(userId, fullName, email, phoneNumber, roleName, isActive);
+        return UserResponse.convertToResponse(user, this);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        userRepository.delete(user);
+    }
+
+    @Override
+    @Transactional
+    public void activateUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        user.setIsActive(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void deactivateUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        user.setIsActive(false);
         userRepository.save(user);
     }
 }
