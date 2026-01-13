@@ -1,146 +1,4 @@
-// JWT Token Management
-const AuthUtils = {
-    // Lưu token vào localStorage
-    saveToken: function(token) {
-        localStorage.setItem('jwt_token', token);
-    },
-
-    // Lưu refresh token
-    saveRefreshToken: function(refreshToken) {
-        localStorage.setItem('refresh_token', refreshToken);
-    },
-
-    // Lấy token từ localStorage
-    getToken: function() {
-        return localStorage.getItem('jwt_token');
-    },
-
-    // Lấy refresh token
-    getRefreshToken: function() {
-        return localStorage.getItem('refresh_token');
-    },
-
-    // Xóa token
-    removeToken: function() {
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('refresh_token');
-    },
-
-    // Kiểm tra đã đăng nhập chưa
-    isAuthenticated: function() {
-        return this.getToken() !== null;
-    },
-
-    // Lấy Authorization header
-    getAuthHeader: function() {
-        const token = this.getToken();
-        return token ? `Bearer ${token}` : '';
-    },
-
-    // Gửi request với JWT token
-    fetchWithAuth: async function(url, options = {}) {
-        const token = this.getToken();
-        if (!token) {
-            throw new Error('Chưa đăng nhập');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            ...options.headers
-        };
-
-        let response = await fetch(url, {
-            ...options,
-            headers
-        });
-
-        // Nếu token hết hạn, thử refresh token
-        if (response.status === 401) {
-            const refreshToken = this.getRefreshToken();
-            if (refreshToken) {
-                try {
-                    const refreshResponse = await fetch('/api/auth/refresh', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ refreshToken })
-                    });
-
-                    if (refreshResponse.ok) {
-                        const data = await refreshResponse.json();
-                        this.saveToken(data.token);
-                        if (data.refreshToken) {
-                            this.saveRefreshToken(data.refreshToken);
-                        }
-
-                        // Retry original request với token mới
-                        headers['Authorization'] = `Bearer ${data.token}`;
-                        response = await fetch(url, {
-                            ...options,
-                            headers
-                        });
-                    } else {
-                        // Refresh token cũng không hợp lệ
-                        this.removeToken();
-                        window.location.href = '/login?expired=true';
-                        throw new Error('Phiên đăng nhập đã hết hạn');
-                    }
-                } catch (error) {
-                    this.removeToken();
-                    window.location.href = '/login?expired=true';
-                    throw new Error('Phiên đăng nhập đã hết hạn');
-                }
-            } else {
-                // Không có refresh token
-                this.removeToken();
-                window.location.href = '/login?expired=true';
-                throw new Error('Phiên đăng nhập đã hết hạn');
-            }
-        }
-
-        return response;
-    }
-};
-
-// Form Validation
-const FormValidator = {
-    validateEmail: function(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    },
-
-    validatePassword: function(password) {
-        // Min 8 chars, có chữ hoa, chữ thường, số
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-        return passwordRegex.test(password);
-    },
-
-    showError: function(elementId, message) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.textContent = message;
-            element.style.display = 'block';
-            element.style.color = '#dc3545';
-        }
-    },
-
-    hideError: function(elementId) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.style.display = 'none';
-        }
-    },
-
-    clearErrors: function() {
-        const errorElements = document.querySelectorAll('.error-message');
-        errorElements.forEach(el => {
-            el.style.display = 'none';
-            el.textContent = '';
-        });
-    }
-};
+// Auth-specific JavaScript
 
 // Register Form Handler
 async function handleRegister(event) {
@@ -300,8 +158,15 @@ async function handleLogin(event) {
             // Hiển thị thông báo thành công
             alert('Đăng nhập thành công!');
             
-            // Redirect về trang chủ
-            window.location.href = '/';
+            // Kiểm tra role và redirect
+            const roles = data.roles || [];
+            if (roles.includes('ROLE_ADMIN')) {
+                // Admin redirect đến dashboard
+                window.location.href = '/admin/dashboard';
+            } else {
+                // User thường redirect về trang chủ
+                window.location.href = '/';
+            }
         } else {
             // Hiển thị lỗi
             const errorElement = document.getElementById('loginError');
@@ -318,41 +183,6 @@ async function handleLogin(event) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Đăng nhập';
     }
-}
-
-// Logout Handler
-async function handleLogout() {
-    try {
-        const token = AuthUtils.getToken();
-        if (token) {
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-        }
-    } catch (error) {
-        // Ignore logout errors
-    } finally {
-        // Xóa token và redirect
-        AuthUtils.removeToken();
-        window.location.href = '/login';
-    }
-}
-
-// Load user info
-async function loadUserInfo() {
-    try {
-        const response = await AuthUtils.fetchWithAuth('/api/auth/me');
-        if (response.ok) {
-            const user = await response.json();
-            return user;
-        }
-    } catch (error) {
-        // Error loading user info
-    }
-    return null;
 }
 
 // Change Password Handler
@@ -452,7 +282,7 @@ async function handleUpdateProfile(event) {
 
     const fullName = document.getElementById('fullName').value.trim();
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const avatarUrl = document.getElementById('avatarUrl').value.trim();
+    const avatarFile = document.getElementById('avatarFile').files[0];
 
     // Disable submit button
     const submitBtn = document.getElementById('updateProfileBtn');
@@ -460,12 +290,54 @@ async function handleUpdateProfile(event) {
     submitBtn.textContent = 'Đang cập nhật...';
 
     try {
+        let finalAvatarUrl = null;
+
+        // Upload avatar file if provided
+        if (avatarFile) {
+            // Validate file size (25MB)
+            if (avatarFile.size > 25 * 1024 * 1024) {
+                FormValidator.showError('avatarFileError', 'Kích thước file không được vượt quá 25MB');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+
+            // Validate file type
+            if (!avatarFile.type.startsWith('image/')) {
+                FormValidator.showError('avatarFileError', 'Chỉ chấp nhận file ảnh');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', avatarFile);
+            formData.append('folder', 'avatars');
+
+            const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                finalAvatarUrl = uploadData.url;
+            } else {
+                const errorData = await uploadResponse.json().catch(() => ({}));
+                FormValidator.showError('avatarFileError', errorData.message || 'Upload ảnh thất bại. Vui lòng thử lại.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cập Nhật';
+                return;
+            }
+        }
+
+        // Update profile
         const response = await AuthUtils.fetchWithAuth('/api/auth/profile', {
             method: 'PUT',
             body: JSON.stringify({
                 fullName: fullName || null,
                 phoneNumber: phoneNumber || null,
-                avatarUrl: avatarUrl || null
+                avatarUrl: finalAvatarUrl
             })
         });
 
@@ -487,6 +359,28 @@ async function handleUpdateProfile(event) {
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Cập Nhật';
+    }
+}
+
+// Avatar Preview Handler
+function handleAvatarPreview(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewDiv = document.getElementById('avatarPreview');
+            const previewImg = document.getElementById('avatarPreviewImg');
+            if (previewDiv && previewImg) {
+                previewImg.src = e.target.result;
+                previewDiv.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        const previewDiv = document.getElementById('avatarPreview');
+        if (previewDiv) {
+            previewDiv.style.display = 'none';
+        }
     }
 }
 

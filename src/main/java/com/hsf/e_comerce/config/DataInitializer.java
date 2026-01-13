@@ -1,12 +1,12 @@
 package com.hsf.e_comerce.config;
 
-import com.hsf.e_comerce.entity.Role;
-import com.hsf.e_comerce.entity.User;
-import com.hsf.e_comerce.entity.UserRole;
-import com.hsf.e_comerce.entity.UserRoleId;
-import com.hsf.e_comerce.repository.RoleRepository;
-import com.hsf.e_comerce.repository.UserRepository;
-import com.hsf.e_comerce.repository.UserRoleRepository;
+import com.hsf.e_comerce.auth.entity.Role;
+import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.auth.entity.UserRole;
+import com.hsf.e_comerce.auth.entity.UserRoleId;
+import com.hsf.e_comerce.auth.repository.RoleRepository;
+import com.hsf.e_comerce.auth.repository.UserRepository;
+import com.hsf.e_comerce.auth.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

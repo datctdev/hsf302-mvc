@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chức Năng Đang Phát Triển - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+</head>
+<body>
+    <!-- Admin Header (only show if admin) -->
+    <header id="adminHeader" style="display: none;" class="admin-header">
+        <div class="header-content">
+            <h1 style="flex: 1; text-align: center;">🛒 Admin Dashboard - E-commerce Marketplace</h1>
+            <div class="user-info" style="position: absolute; right: 1rem;">
+                <span id="adminName">Admin</span>
+                <button class="btn btn-danger" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+        </div>
+    </header>
+    <nav id="adminNav" style="display: none;" class="nav-admin">
+        <div class="nav-content">
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/seller-requests">Yêu Cầu Seller</a>
+            <a href="/admin/users">Quản Lý Users</a>
+            <a href="/admin/products">Quản Lý Sản Phẩm</a>
+            <a href="/admin/orders">Quản Lý Đơn Hàng</a>
+        </div>
+    </nav>
+
+    <!-- Simple Header (for non-admin pages) -->
+    <header id="simpleHeader" style="display: none;">
+        <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
+    </header>
+    <nav id="simpleNav" class="nav-home" style="display: none;">
+        <div class="nav-container">
+            <div class="nav-main">
+                <a href="/">Trang chủ</a>
+                <a href="/profile">Hồ sơ</a>
+                <a href="/seller/shop" id="sellerShopLink" style="display: none;">Quản Lý Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="coming-soon-section">
+                <div class="coming-soon-icon">🚧</div>
+                <h2>Chức Năng Đang Phát Triển</h2>
+                <p>Chức năng này đang được phát triển và sẽ sớm có mặt trong các phiên bản tiếp theo.</p>
+                <p style="color: #999; font-size: 0.9rem;">
+                    Chúng tôi đang nỗ lực để mang đến trải nghiệm tốt nhất cho bạn.
+                </p>
+                
+                <div class="page-info">
+                    <strong id="pageName">Chức năng</strong>
+                </div>
+
+                <div class="features-list" id="featuresContainer" style="display: none;">
+                    <h3>Các tính năng sẽ được thêm vào:</h3>
+                    <ul id="featuresList">
+                    </ul>
+                </div>
+
+                <div class="btn-group">
+                    <a href="#" id="backButton" class="btn btn-primary">Quay Lại</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        // Page features mapping
+        const pageFeatures = {
+            // Admin pages
+            'admin-users': {
+                name: 'Quản Lý Users',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả người dùng',
+                    'Tìm kiếm và lọc người dùng',
+                    'Xem chi tiết thông tin người dùng',
+                    'Khóa/Mở khóa tài khoản',
+                    'Phân quyền người dùng',
+                    'Xem lịch sử hoạt động'
+                ]
+            },
+            'admin-products': {
+                name: 'Quản Lý Sản Phẩm',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả sản phẩm',
+                    'Tìm kiếm và lọc sản phẩm',
+                    'Xem chi tiết sản phẩm',
+                    'Duyệt/Xóa sản phẩm',
+                    'Quản lý danh mục sản phẩm',
+                    'Thống kê sản phẩm'
+                ]
+            },
+            'admin-orders': {
+                name: 'Quản Lý Đơn Hàng',
+                backUrl: '/admin/dashboard',
+                features: [
+                    'Xem danh sách tất cả đơn hàng',
+                    'Tìm kiếm và lọc đơn hàng',
+                    'Xem chi tiết đơn hàng',
+                    'Cập nhật trạng thái đơn hàng',
+                    'Thống kê doanh thu',
+                    'Xuất báo cáo'
+                ]
+            },
+            // Seller pages
+            'seller-products': {
+                name: 'Quản Lý Sản Phẩm',
+                backUrl: '/seller/shop',
+                features: [
+                    'Thêm sản phẩm mới',
+                    'Chỉnh sửa thông tin sản phẩm',
+                    'Xóa sản phẩm',
+                    'Quản lý kho hàng',
+                    'Xem thống kê sản phẩm',
+                    'Tối ưu hóa SEO'
+                ]
+            },
+            'seller-orders': {
+                name: 'Quản Lý Đơn Hàng',
+                backUrl: '/seller/shop',
+                features: [
+                    'Xem danh sách đơn hàng',
+                    'Cập nhật trạng thái đơn hàng',
+                    'In hóa đơn',
+                    'Thống kê doanh thu',
+                    'Xuất báo cáo',
+                    'Quản lý vận chuyển'
+                ]
+            },
+            'seller-statistics': {
+                name: 'Thống Kê',
+                backUrl: '/seller/shop',
+                features: [
+                    'Thống kê doanh thu',
+                    'Thống kê sản phẩm bán chạy',
+                    'Thống kê khách hàng',
+                    'Biểu đồ xu hướng',
+                    'Xuất báo cáo',
+                    'Phân tích hiệu suất'
+                ]
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Get page identifier from URL
+            const path = window.location.pathname;
+            let pageKey = '';
+            let isAdmin = false;
+
+            if (path.startsWith('/admin/')) {
+                isAdmin = true;
+                if (path === '/admin/users') pageKey = 'admin-users';
+                else if (path === '/admin/products') pageKey = 'admin-products';
+                else if (path === '/admin/orders') pageKey = 'admin-orders';
+            } else if (path.startsWith('/seller/')) {
+                if (path === '/seller/products') pageKey = 'seller-products';
+                else if (path === '/seller/orders') pageKey = 'seller-orders';
+                else if (path === '/seller/statistics') pageKey = 'seller-statistics';
+            }
+
+            // Show appropriate header/nav
+            if (isAdmin) {
+                document.getElementById('adminHeader').style.display = 'block';
+                document.getElementById('adminNav').style.display = 'block';
+                
+                // Load admin info
+                const token = AuthUtils.getToken();
+                if (token) {
+                    try {
+                        const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                        if (response.ok) {
+                            const user = await response.json();
+                            document.getElementById('adminName').textContent = user.fullName || user.email;
+                        }
+                    } catch (error) {
+                        // Ignore
+                    }
+                }
+            } else {
+                document.getElementById('simpleHeader').style.display = 'block';
+                document.getElementById('simpleNav').style.display = 'block';
+                
+                // Check if seller and show seller shop link
+                const token = AuthUtils.getToken();
+                if (token) {
+                    try {
+                        const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                        if (response.ok) {
+                            const user = await response.json();
+                            const roles = user.roles || [];
+                            if (roles.includes('ROLE_SELLER')) {
+                                document.getElementById('sellerShopLink').style.display = 'inline-block';
+                            }
+                        }
+                    } catch (error) {
+                        // Ignore
+                    }
+                }
+            }
+
+            // Load page info
+            if (pageKey && pageFeatures[pageKey]) {
+                const pageInfo = pageFeatures[pageKey];
+                document.getElementById('pageName').textContent = pageInfo.name;
+                document.getElementById('backButton').href = pageInfo.backUrl;
+
+                if (pageInfo.features && pageInfo.features.length > 0) {
+                    const featuresList = document.getElementById('featuresList');
+                    pageInfo.features.forEach(feature => {
+                        const li = document.createElement('li');
+                        li.textContent = feature;
+                        featuresList.appendChild(li);
+                    });
+                    document.getElementById('featuresContainer').style.display = 'block';
+                }
+            } else {
+                document.getElementById('pageName').textContent = 'Chức năng';
+                document.getElementById('backButton').href = '/';
+            }
+        });
+    </script>
+</body>
+</html>

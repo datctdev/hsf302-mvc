@@ -1,0 +1,7 @@
+/* Admin-specific Styles */
+
+.admin-content {
+    background-color: var(--bg-color);
+}
+
+/* Admin Dashboard specific styles are already in components.css */

@@ -4,77 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Ký - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/auth.css}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background-color: #333;
-            color: #fff;
-            padding: 1rem 0;
-            text-align: center;
-        }
-        nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #444;
-            padding: 0.5rem 0;
-            position: relative;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            margin: 0 0.5rem;
-            border-radius: 5px;
-        }
-        nav a:hover {
-            background-color: #555;
-        }
-        .main-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 0;
-        }
-        footer {
-            text-align: center;
-            padding: 1rem 0;
-            background-color: #333;
-            color: #fff;
-            margin-top: auto;
-        }
-    </style>
 </head>
 <body>
-    <header>
-        <h1>Chào mừng đến với cửa hàng E-commerce!</h1>
-    </header>
-    <nav>
-        <div style="display: flex; align-items: center; width: 100%;">
-            <div style="flex: 1; display: flex; justify-content: center;">
-                <a href="/">Trang chủ</a>
-                <a href="/products">Sản phẩm</a>
-                <a href="/cart">Giỏ hàng</a>
-                <a href="/about">Giới thiệu</a>
-            </div>
-            <div style="position: absolute; right: 1rem;">
-                <a href="/login">Đăng nhập</a>
-                <a href="/register">Đăng ký</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="auth-container">
             <div class="auth-header">
@@ -125,10 +69,11 @@
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2026 E-commerce của HSF</p>
-    </footer>
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/auth.js}"></script>
 </body>
 </html>

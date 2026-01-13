@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trở thành Seller - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <link rel="stylesheet" th:href="@{/css/seller.css}">
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
+    
+    <!-- Main Content -->
+    <div class="main-content seller-content">
+        <div class="container">
+            <div class="form-container section">
+                <h2>Trở thành Seller</h2>
+                <div id="statusContainer"></div>
+                <form id="sellerRequestForm">
+                    <div class="form-group">
+                        <label for="shopName">Tên Shop *</label>
+                        <input type="text" id="shopName" name="shopName" required>
+                        <small>Tên shop phải có từ 3 đến 100 ký tự và không được trùng với shop khác</small>
+                        <span id="shopNameError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopDescription">Mô tả Shop</label>
+                        <textarea id="shopDescription" name="shopDescription"></textarea>
+                        <small>Tối đa 2000 ký tự</small>
+                        <span id="shopDescriptionError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopPhone">Số điện thoại Shop *</label>
+                        <input type="tel" id="shopPhone" name="shopPhone" required>
+                        <span id="shopPhoneError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopAddress">Địa chỉ Shop *</label>
+                        <input type="text" id="shopAddress" name="shopAddress" required>
+                        <span id="shopAddressError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="logoFile">Logo Shop *</label>
+                        <input type="file" id="logoFile" name="logoFile" accept="image/*" onchange="handleLogoPreview(event)">
+                        <div id="logoPreview" class="preview-container">
+                            <img id="logoPreviewImg" src="" alt="Logo Preview" class="preview-logo">
+                        </div>
+                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
+                        <span id="logoFileError" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="coverFile">Ảnh Bìa Shop</label>
+                        <input type="file" id="coverFile" name="coverFile" accept="image/*" onchange="handleCoverPreview(event)">
+                        <div id="coverPreview" class="preview-container">
+                            <img id="coverPreviewImg" src="" alt="Cover Preview" class="preview-cover">
+                        </div>
+                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
+                        <span id="coverFileError" class="error-message"></span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Gửi Yêu Cầu</button>
+                        <button type="button" id="updateBtn" class="btn btn-secondary" style="display: none;" onclick="handleUpdateRequest()">Cập Nhật Request</button>
+                        <button type="button" id="cancelBtn" class="btn btn-danger" style="display: none;" onclick="handleCancelRequest()">Hủy Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/seller.js}"></script>
+    <script>
+        let currentRequest = null;
+
+        // Check seller status on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkSellerStatus();
+            await loadExistingRequest();
+        });
+
+        async function checkSellerStatus() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/seller/check');
+                const data = await response.json();
+                
+                if (data.message.includes('đã là seller')) {
+                    showStatus('approved', 'Bạn đã là seller! Bạn có thể quản lý shop của mình.');
+                    disableForm();
+                }
+            } catch (error) {
+                // User chưa là seller, có thể tạo request
+            }
+        }
+
+        async function loadExistingRequest() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/seller/request/status');
+                if (response.ok) {
+                    currentRequest = await response.json();
+                    displayRequestStatus(currentRequest);
+                    populateForm(currentRequest);
+                }
+            } catch (error) {
+                // Không có request, hiển thị form trống
+            }
+        }
+
+        function displayRequestStatus(request) {
+            const statusContainer = document.getElementById('statusContainer');
+            let statusClass = '';
+            let statusText = '';
+            
+            if (request.status === 'PENDING') {
+                statusClass = 'status-pending';
+                statusText = 'Đang chờ duyệt';
+                document.getElementById('updateBtn').style.display = 'inline-block';
+                document.getElementById('cancelBtn').style.display = 'inline-block';
+                document.getElementById('submitBtn').style.display = 'none';
+            } else if (request.status === 'APPROVED') {
+                statusClass = 'status-approved';
+                statusText = 'Đã được duyệt';
+                disableForm();
+            } else if (request.status === 'REJECTED') {
+                statusClass = 'status-rejected';
+                statusText = 'Đã bị từ chối';
+                document.getElementById('updateBtn').style.display = 'inline-block';
+                document.getElementById('submitBtn').style.display = 'none';
+                
+                if (request.rejectionReason) {
+                    statusContainer.innerHTML += `
+                        <div class="rejection-reason" style="margin-top: 1rem; padding: 1rem; background-color: #f8d7da; border-left: 4px solid #721c24; border-radius: 4px;">
+                            <strong>Lý do từ chối:</strong>
+                            <p>${request.rejectionReason}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            statusContainer.innerHTML = `
+                <div class="status-badge ${statusClass}">${statusText}</div>
+            ` + statusContainer.innerHTML;
+        }
+
+        function populateForm(request) {
+            document.getElementById('shopName').value = request.shopName || '';
+            document.getElementById('shopDescription').value = request.shopDescription || '';
+            document.getElementById('shopPhone').value = request.shopPhone || '';
+            document.getElementById('shopAddress').value = request.shopAddress || '';
+            
+            if (request.logoUrl) {
+                document.getElementById('logoPreviewImg').src = request.logoUrl;
+                document.getElementById('logoPreview').classList.add('show');
+            }
+            
+            if (request.coverImageUrl) {
+                document.getElementById('coverPreviewImg').src = request.coverImageUrl;
+                document.getElementById('coverPreview').classList.add('show');
+            }
+        }
+
+        function disableForm() {
+            const form = document.getElementById('sellerRequestForm');
+            const inputs = form.querySelectorAll('input, textarea, button');
+            inputs.forEach(input => {
+                input.disabled = true;
+            });
+        }
+
+        function showStatus(status, message) {
+            const statusContainer = document.getElementById('statusContainer');
+            let statusClass = '';
+            if (status === 'approved') statusClass = 'status-approved';
+            else if (status === 'rejected') statusClass = 'status-rejected';
+            else statusClass = 'status-pending';
+            
+            statusContainer.innerHTML = `
+                <div class="status-badge ${statusClass}">${message}</div>
+            `;
+        }
+
+        function handleLogoPreview(event) {
+            const fileInput = event.target;
+            const previewDiv = document.getElementById('logoPreview');
+            const previewImg = document.getElementById('logoPreviewImg');
+            const errorSpan = document.getElementById('logoFileError');
+
+            errorSpan.classList.remove('show');
+            errorSpan.textContent = '';
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+
+                if (file.size > 25 * 1024 * 1024) {
+                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.remove('show');
+            }
+        }
+
+        function handleCoverPreview(event) {
+            const fileInput = event.target;
+            const previewDiv = document.getElementById('coverPreview');
+            const previewImg = document.getElementById('coverPreviewImg');
+            const errorSpan = document.getElementById('coverFileError');
+
+            errorSpan.classList.remove('show');
+            errorSpan.textContent = '';
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+
+                if (file.size > 25 * 1024 * 1024) {
+                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
+                    errorSpan.classList.add('show');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.remove('show');
+            }
+        }
+
+        document.getElementById('sellerRequestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleSubmitRequest();
+        });
+
+        async function handleSubmitRequest() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang xử lý...';
+
+            try {
+                const shopName = document.getElementById('shopName').value.trim();
+                const shopDescription = document.getElementById('shopDescription').value.trim();
+                const shopPhone = document.getElementById('shopPhone').value.trim();
+                const shopAddress = document.getElementById('shopAddress').value.trim();
+                const logoFile = document.getElementById('logoFile').files[0];
+                const coverFile = document.getElementById('coverFile').files[0];
+
+                // Validate
+                if (!logoFile) {
+                    alert('Vui lòng chọn logo shop');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Gửi Yêu Cầu';
+                    return;
+                }
+
+                let logoUrl = null;
+                let coverImageUrl = null;
+
+                // Upload logo
+                if (logoFile) {
+                    const formData = new FormData();
+                    formData.append('file', logoFile);
+                    formData.append('folder', 'shop-logos');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        logoUrl = uploadData.url;
+                    } else {
+                        const errorData = await uploadResponse.json().catch(() => ({}));
+                        alert(errorData.message || 'Upload logo thất bại');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Gửi Yêu Cầu';
+                        return;
+                    }
+                }
+
+                // Upload cover (optional)
+                if (coverFile) {
+                    const formData = new FormData();
+                    formData.append('file', coverFile);
+                    formData.append('folder', 'shop-covers');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        coverImageUrl = uploadData.url;
+                    }
+                }
+
+                // Create request
+                const response = await AuthUtils.fetchWithAuth('/api/seller/request', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        shopName: shopName,
+                        shopDescription: shopDescription,
+                        shopPhone: shopPhone,
+                        shopAddress: shopAddress,
+                        logoUrl: logoUrl,
+                        coverImageUrl: coverImageUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Gửi yêu cầu thành công! Đang chờ admin duyệt.');
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Gửi yêu cầu thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Gửi Yêu Cầu';
+            }
+        }
+
+        async function handleUpdateRequest() {
+            if (!confirm('Bạn có chắc muốn cập nhật request này?')) {
+                return;
+            }
+
+            const updateBtn = document.getElementById('updateBtn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Đang cập nhật...';
+
+            try {
+                const shopName = document.getElementById('shopName').value.trim();
+                const shopDescription = document.getElementById('shopDescription').value.trim();
+                const shopPhone = document.getElementById('shopPhone').value.trim();
+                const shopAddress = document.getElementById('shopAddress').value.trim();
+                const logoFile = document.getElementById('logoFile').files[0];
+                const coverFile = document.getElementById('coverFile').files[0];
+
+                let logoUrl = currentRequest?.logoUrl || null;
+                let coverImageUrl = currentRequest?.coverImageUrl || null;
+
+                // Upload new logo if provided
+                if (logoFile) {
+                    const formData = new FormData();
+                    formData.append('file', logoFile);
+                    formData.append('folder', 'shop-logos');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        logoUrl = uploadData.url;
+                    }
+                }
+
+                // Upload new cover if provided
+                if (coverFile) {
+                    const formData = new FormData();
+                    formData.append('file', coverFile);
+                    formData.append('folder', 'shop-covers');
+
+                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        coverImageUrl = uploadData.url;
+                    }
+                }
+
+                const response = await AuthUtils.fetchWithAuth('/api/seller/request', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        shopName: shopName,
+                        shopDescription: shopDescription,
+                        shopPhone: shopPhone,
+                        shopAddress: shopAddress,
+                        logoUrl: logoUrl,
+                        coverImageUrl: coverImageUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Cập nhật request thành công!');
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Cập nhật thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Cập Nhật Request';
+            }
+        }
+
+        async function handleCancelRequest() {
+            if (!confirm('Bạn có chắc muốn hủy request này?')) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/seller/request', {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Đã hủy request thành công');
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Hủy request thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+    </script>
+</body>
+</html>

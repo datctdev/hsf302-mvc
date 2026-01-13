@@ -1,7 +1,7 @@
 package com.hsf.e_comerce.config;
 
-import com.hsf.e_comerce.service.JwtService;
-import com.hsf.e_comerce.service.impl.UserServiceImpl;
+import com.hsf.e_comerce.auth.service.JwtService;
+import com.hsf.e_comerce.auth.service.impl.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

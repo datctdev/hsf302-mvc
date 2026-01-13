@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'E-commerce'">E-commerce</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    
+    <!-- Additional CSS (can be overridden in pages) -->
+    <th:block th:fragment="additional-css">
+        <!-- Additional CSS links -->
+    </th:block>
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div th:replace="~{::content}">
+            <!-- Page content goes here -->
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    
+    <!-- Base JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    
+    <!-- Additional JavaScript (can be overridden in pages) -->
+    <th:block th:fragment="additional-js">
+        <!-- Additional JS scripts -->
+    </th:block>
+    
+    <!-- Page-specific scripts -->
+    <th:block th:fragment="scripts">
+        <!-- Page scripts go here -->
+    </th:block>
+</body>
+</html>

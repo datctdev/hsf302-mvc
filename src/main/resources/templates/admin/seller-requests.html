@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Yêu Cầu Seller - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <!-- Admin Header -->
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    
+    <!-- Admin Navigation -->
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+    
+    <!-- Main Content -->
+    <main class="main-content admin-content">
+        <div class="container">
+            <div class="filters">
+                <label for="statusFilter">Lọc theo trạng thái: </label>
+                <select id="statusFilter" onchange="loadRequests()">
+                    <option value="">Tất cả</option>
+                    <option value="PENDING">Đang chờ</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Đã từ chối</option>
+                </select>
+            </div>
+
+            <div id="requestsContainer" class="requests-list">
+                <!-- Requests will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Từ chối Yêu cầu</h3>
+            </div>
+            <form id="rejectForm">
+                <div class="form-group">
+                    <label for="rejectionReason">Lý do từ chối *</label>
+                    <textarea id="rejectionReason" name="rejectionReason" required placeholder="Nhập lý do từ chối..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRejectModal()">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/admin.js}"></script>
+    <script>
+        let currentRejectRequestId = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Check if user is admin and load admin info
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/auth/me');
+                if (response.ok) {
+                    const user = await response.json();
+                    const roles = user.roles || [];
+                    
+                    if (!roles.includes('ROLE_ADMIN')) {
+                        alert('Bạn không có quyền truy cập trang này.');
+                        window.location.href = '/';
+                        return;
+                    }
+                    
+                    // Load admin name
+                    document.getElementById('adminName').textContent = user.fullName || user.email;
+                } else {
+                    window.location.href = '/login?expired=true';
+                    return;
+                }
+            } catch (error) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+            
+            loadRequests();
+        });
+
+        async function loadRequests() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            let url = '/api/admin/seller-requests';
+            if (statusFilter) {
+                url += '?status=' + statusFilter;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(url);
+                const requests = await response.json();
+
+                const container = document.getElementById('requestsContainer');
+                
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Không có yêu cầu nào</h3>
+                            <p>Hiện tại không có yêu cầu nào phù hợp với bộ lọc của bạn.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = requests.map(request => `
+                    <div class="request-card">
+                        <div class="request-header">
+                            <h3>${escapeHtml(request.shopName)}</h3>
+                            <span class="status-badge status-${request.status.toLowerCase()}">
+                                ${getStatusText(request.status)}
+                            </span>
+                        </div>
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <label>User ID:</label>
+                                <span>${request.userId}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Số điện thoại:</label>
+                                <span>${escapeHtml(request.shopPhone || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Địa chỉ:</label>
+                                <span>${escapeHtml(request.shopAddress || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Ngày tạo:</label>
+                                <span>${formatDate(request.createdAt)}</span>
+                            </div>
+                            ${request.reviewedAt ? `
+                                <div class="detail-item">
+                                    <label>Ngày duyệt:</label>
+                                    <span>${formatDate(request.reviewedAt)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${request.shopDescription ? `
+                            <div class="detail-item">
+                                <label>Mô tả:</label>
+                                <span>${escapeHtml(request.shopDescription)}</span>
+                            </div>
+                        ` : ''}
+                        ${request.rejectionReason ? `
+                            <div style="margin-top: 1rem; padding: 1rem; background-color: #f8d7da; border-left: 4px solid #721c24; border-radius: 4px;">
+                                <strong>Lý do từ chối:</strong>
+                                <p>${escapeHtml(request.rejectionReason)}</p>
+                            </div>
+                        ` : ''}
+                        ${request.logoUrl || request.coverImageUrl ? `
+                            <div class="request-images">
+                                ${request.logoUrl ? `<img src="${request.logoUrl}" alt="Logo">` : ''}
+                                ${request.coverImageUrl ? `<img src="${request.coverImageUrl}" alt="Cover">` : ''}
+                            </div>
+                        ` : ''}
+                        ${request.status === 'PENDING' ? `
+                            <div class="request-actions">
+                                <button class="btn btn-success" onclick="approveRequest('${request.id}')">Duyệt</button>
+                                <button class="btn btn-danger" onclick="openRejectModal('${request.id}')">Từ chối</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('requestsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Lỗi</h3>
+                        <p>Không thể tải danh sách yêu cầu. Vui lòng thử lại sau.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function approveRequest(requestId) {
+            if (!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/seller-requests/${requestId}/approve`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Duyệt yêu cầu thành công!');
+                    loadRequests();
+                } else {
+                    alert(data.message || 'Duyệt yêu cầu thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        function openRejectModal(requestId) {
+            currentRejectRequestId = requestId;
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+
+        function closeRejectModal() {
+            currentRejectRequestId = null;
+            document.getElementById('rejectModal').style.display = 'none';
+            document.getElementById('rejectForm').reset();
+        }
+
+        document.getElementById('rejectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await rejectRequest();
+        });
+
+        async function rejectRequest() {
+            if (!currentRejectRequestId) {
+                return;
+            }
+
+            const rejectionReason = document.getElementById('rejectionReason').value.trim();
+            if (!rejectionReason) {
+                alert('Vui lòng nhập lý do từ chối');
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/admin/seller-requests/${currentRejectRequestId}/reject`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        rejectionReason: rejectionReason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Từ chối yêu cầu thành công!');
+                    closeRejectModal();
+                    loadRequests();
+                } else {
+                    alert(data.message || 'Từ chối yêu cầu thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'PENDING': 'Đang chờ',
+                'APPROVED': 'Đã duyệt',
+                'REJECTED': 'Đã từ chối'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('rejectModal');
+            if (event.target === modal) {
+                closeRejectModal();
+            }
+        }
+    </script>
+</body>
+</html>

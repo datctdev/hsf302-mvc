@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <!-- Admin Header -->
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    
+    <!-- Admin Navigation -->
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+
+    <!-- Main Content -->
+    <main class="main-content admin-content">
+        <div class="container">
+            <!-- Statistics Cards -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <h3>Tổng Users</h3>
+                    <div class="value" id="totalUsers">-</div>
+                    <div class="description">Tổng số người dùng</div>
+                </div>
+                <div class="stat-card success">
+                    <h3>Yêu Cầu Seller</h3>
+                    <div class="value" id="pendingRequests">-</div>
+                    <div class="description">Đang chờ duyệt</div>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Tổng Shops</h3>
+                    <div class="value" id="totalShops">-</div>
+                    <div class="description">Shops đang hoạt động</div>
+                </div>
+                <div class="stat-card danger">
+                    <h3>Tổng Đơn Hàng</h3>
+                    <div class="value" id="totalOrders">-</div>
+                    <div class="description">Tất cả đơn hàng</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <h2>Thao Tác Nhanh</h2>
+                <div class="quick-actions">
+                    <a href="/admin/seller-requests" class="action-card">
+                        <h3>📋 Duyệt Yêu Cầu Seller</h3>
+                        <p>Xem và duyệt các yêu cầu trở thành seller</p>
+                    </a>
+                    <a href="/admin/users" class="action-card">
+                        <h3>👥 Quản Lý Users</h3>
+                        <p>Xem danh sách và quản lý người dùng</p>
+                    </a>
+                    <a href="/admin/products" class="action-card">
+                        <h3>📦 Quản Lý Sản Phẩm</h3>
+                        <p>Xem và quản lý tất cả sản phẩm</p>
+                    </a>
+                    <a href="/admin/orders" class="action-card">
+                        <h3>🛒 Quản Lý Đơn Hàng</h3>
+                        <p>Xem và xử lý đơn hàng</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section">
+                <h2>Hoạt Động Gần Đây</h2>
+                <p style="color: #666;">Tính năng đang phát triển...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

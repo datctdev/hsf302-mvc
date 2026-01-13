@@ -4,158 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hồ Sơ - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/auth.css}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background-color: #333;
-            color: #fff;
-            padding: 1rem 0;
-            text-align: center;
-        }
-        nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #444;
-            padding: 0.5rem 0;
-            position: relative;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            margin: 0 0.5rem;
-            border-radius: 5px;
-        }
-        nav a:hover {
-            background-color: #555;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-        .profile-section {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-        }
-        .profile-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            font-size: 2rem;
-            color: #666;
-        }
-        .profile-info h2 {
-            margin: 0;
-            color: #333;
-        }
-        .profile-info p {
-            margin: 0.5rem 0;
-            color: #666;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-        .status-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .status-inactive {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 0.9rem;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-        .btn-success {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-        }
-        footer {
-            text-align: center;
-            padding: 1rem 0;
-            background-color: #333;
-            color: #fff;
-            margin-top: auto;
-        }
-    </style>
 </head>
 <body>
-    <header>
-        <h1>Hồ Sơ Cá Nhân</h1>
-    </header>
-    <nav>
-        <div style="display: flex; align-items: center; width: 100%;">
-            <div style="flex: 1; display: flex; justify-content: center;">
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <nav class="nav-home">
+        <div class="nav-container">
+            <div class="nav-main">
                 <a href="/">Trang chủ</a>
                 <a href="/products">Sản phẩm</a>
             </div>
-            <div style="position: absolute; right: 1rem;">
+            <div class="nav-auth">
                 <a href="/">Quay lại</a>
             </div>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
             <!-- Profile Info Section -->
@@ -190,13 +63,25 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="avatarUrl">URL Avatar</label>
-                        <input type="url" id="avatarUrl" name="avatarUrl" placeholder="https://example.com/avatar.jpg">
-                        <span id="avatarUrlError" class="error-message"></span>
+                        <label for="avatarFile">Upload Avatar</label>
+                        <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)">
+                        <div id="avatarPreview" class="preview-container">
+                            <img id="avatarPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                        </div>
+                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
+                        <span id="avatarFileError" class="error-message"></span>
                     </div>
 
                     <button type="submit" id="updateProfileBtn" class="submit-btn">Cập Nhật</button>
                 </form>
+            </div>
+
+            <!-- Seller Status Section -->
+            <div class="profile-section" id="sellerStatusSection">
+                <h3>Trạng Thái Seller</h3>
+                <div id="sellerStatusContent">
+                    <p>Đang kiểm tra...</p>
+                </div>
             </div>
 
             <!-- Actions Section -->
@@ -215,10 +100,11 @@
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2026 E-commerce của HSF</p>
-    </footer>
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/auth.js}"></script>
     <script>
         // Load user info when page loads
@@ -241,7 +127,6 @@
                     // Update form fields
                     document.getElementById('fullName').value = user.fullName || '';
                     document.getElementById('phoneNumber').value = user.phoneNumber || '';
-                    document.getElementById('avatarUrl').value = user.avatarUrl || '';
 
                     // Update avatar
                     if (user.avatarUrl) {
@@ -268,16 +153,92 @@
                         document.getElementById('deactivateBtn').style.display = 'none';
                         document.getElementById('activateBtn').style.display = 'inline-block';
                     }
+                    
+                    // Load seller status
+                    await loadSellerStatus();
                 } else {
                     // Not authenticated, redirect to login
                     window.location.href = '/login?expired=true';
                 }
             } catch (error) {
-                console.error('Error loading user info:', error);
                 // If error, redirect to login
                 window.location.href = '/login?expired=true';
             }
         });
+
+        async function loadSellerStatus() {
+            try {
+                const response = await AuthUtils.fetchWithAuth('/api/seller/check');
+                const data = await response.json();
+                
+                const sellerStatusContent = document.getElementById('sellerStatusContent');
+                let statusClass = '';
+                let statusText = '';
+                let actionHtml = '';
+                let detailHtml = '';
+
+                if (data.message.includes('đã là seller')) {
+                    statusClass = 'seller-status-approved';
+                    statusText = 'Bạn đã là Seller';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Bạn có thể quản lý shop và bán sản phẩm ngay bây giờ.</p>';
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/seller/shop" class="btn btn-success">Quản Lý Shop</a>
+                        </div>
+                    `;
+                } else if (data.message.includes('đang chờ duyệt')) {
+                    statusClass = 'seller-status-pending';
+                    statusText = 'Yêu cầu đang chờ duyệt';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Yêu cầu của bạn đang được admin xem xét. Vui lòng đợi phản hồi.</p>';
+                    
+                    // Try to load request details
+                    try {
+                        const requestResponse = await AuthUtils.fetchWithAuth('/api/seller/request/status');
+                        if (requestResponse.ok) {
+                            const requestData = await requestResponse.json();
+                            detailHtml += `<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;"><strong>Tên shop:</strong> ${requestData.shopName || 'N/A'}</p>`;
+                            detailHtml += `<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;"><strong>Ngày gửi:</strong> ${formatDate(requestData.createdAt)}</p>`;
+                        }
+                    } catch (e) {
+                        // Ignore error
+                    }
+                    
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/become-seller" class="btn btn-primary">Xem Chi Tiết</a>
+                        </div>
+                    `;
+                } else {
+                    statusClass = 'seller-status-none';
+                    statusText = 'Bạn chưa là Seller';
+                    detailHtml = '<p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">Trở thành seller để bán sản phẩm trên sàn thương mại điện tử của chúng tôi.</p>';
+                    actionHtml = `
+                        <div class="seller-status-actions">
+                            <a href="/become-seller" class="btn btn-primary">Trở Thành Seller</a>
+                        </div>
+                    `;
+                }
+
+                sellerStatusContent.innerHTML = `
+                    <div class="seller-status-card ${statusClass}">
+                        <div class="seller-status-info">
+                            <p>${statusText}</p>
+                        </div>
+                        ${detailHtml}
+                        ${actionHtml}
+                    </div>
+                `;
+            } catch (error) {
+                // Nếu không có quyền hoặc lỗi, ẩn section
+                document.getElementById('sellerStatusSection').style.display = 'none';
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
     </script>
 </body>
 </html>
