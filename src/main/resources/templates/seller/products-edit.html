@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh Sửa Sản Phẩm - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/seller.css}">
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
+
+    <!-- Main Content -->
+    <main class="main-content seller-content">
+        <div class="container">
+            <div class="wizard-container">
+                <h2 style="margin-bottom: 2rem;">Chỉnh Sửa Sản Phẩm</h2>
+
+                <!-- Wizard Steps -->
+                <div class="wizard-steps">
+                    <div class="wizard-step active" data-step="1">
+                        <div class="wizard-step-number">1</div>
+                        <div class="wizard-step-label">Thông Tin & Hình Ảnh</div>
+                    </div>
+                    <div class="wizard-step" data-step="2">
+                        <div class="wizard-step-number">2</div>
+                        <div class="wizard-step-label">Biến Thể & Danh Mục</div>
+                    </div>
+                    <div class="wizard-step" data-step="3">
+                        <div class="wizard-step-number">3</div>
+                        <div class="wizard-step-label">Xem Lại & Lưu</div>
+                    </div>
+                </div>
+
+                <!-- Wizard Content -->
+                <form id="productForm">
+                    <!-- Step 1: Basic Info + Images -->
+                    <div class="wizard-content" id="step1">
+                        <h3>Thông Tin Cơ Bản & Hình Ảnh</h3>
+                        
+                        <div class="form-group">
+                            <label for="productName">Tên sản phẩm *</label>
+                            <input type="text" id="productName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productDescription">Mô tả</label>
+                            <textarea id="productDescription" name="description" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="productSku">SKU (Mã hàng tồn kho) *</label>
+                            <input type="text" id="productSku" name="sku" placeholder="VD: SHIRT-COTTON-001" required>
+                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                <strong>SKU là gì?</strong> Mã định danh duy nhất cho sản phẩm (Stock Keeping Unit). 
+                                Dùng để quản lý tồn kho và phân biệt sản phẩm.
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="productBasePrice">Giá cơ bản (VNĐ) *</label>
+                            <input type="number" id="productBasePrice" name="basePrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStatus">Trạng thái</label>
+                            <select id="productStatus" name="status">
+                                <option value="DRAFT">Nháp</option>
+                                <option value="PUBLISHED">Xuất bản</option>
+                                <option value="ARCHIVED">Đã lưu trữ</option>
+                            </select>
+                        </div>
+
+                        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border-color);">
+
+                        <h4 style="margin-bottom: 1rem;">Hình Ảnh Sản Phẩm</h4>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <p>Kéo thả hình ảnh vào đây hoặc click để chọn (thêm ảnh mới)</p>
+                            <input type="file" id="imageInput" multiple accept="image/*" style="display: none;">
+                        </div>
+                        <div class="image-preview-grid" id="imagePreviewGrid">
+                            <!-- Images will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Variants + Category -->
+                    <div class="wizard-content" id="step2" style="display: none;">
+                        <h3>Biến Thể & Danh Mục</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                            Bạn có thể thêm, chỉnh sửa hoặc xóa biến thể và chọn danh mục. Nếu không cần, có thể bỏ qua bước này.
+                        </p>
+
+                        <div style="margin-bottom: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h4 style="margin: 0;">Biến Thể Sản Phẩm</h4>
+                                <button type="button" class="btn btn-secondary" onclick="addVariant()">+ Thêm Biến Thể</button>
+                            </div>
+                            <div class="variant-list" id="variantList">
+                                <!-- Variants will be loaded here -->
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
+                                Biến thể giúp quản lý các phiên bản khác nhau của sản phẩm (VD: Màu đỏ Size M, Màu xanh Size L)
+                            </p>
+                        </div>
+
+                        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border-color);">
+
+                        <div class="form-group">
+                            <label for="productCategory">Danh Mục Sản Phẩm</label>
+                            <select id="productCategory" name="categoryId">
+                                <option value="">-- Chọn danh mục (Tùy chọn) --</option>
+                                <!-- Categories will be loaded here -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Review -->
+                    <div class="wizard-content" id="step3" style="display: none;">
+                        <h3>Xem Lại & Lưu Thay Đổi</h3>
+                        <div id="reviewContent">
+                            <!-- Review content will be generated here -->
+                        </div>
+                    </div>
+
+                    <!-- Wizard Actions -->
+                    <div class="wizard-actions">
+                        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">Quay Lại</button>
+                        <div style="flex: 1;"></div>
+                        <button type="button" class="btn btn-outline-secondary" id="skipBtn" onclick="skipToReview()" style="display: none;">Bỏ qua & Xem lại</button>
+                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Tiếp Theo</button>
+                        <button type="button" class="btn btn-success" id="submitBtn" onclick="submitProduct()" style="display: none;">Lưu Thay Đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        let productId = null;
+        let productData = {
+            name: '',
+            description: '',
+            sku: '',
+            basePrice: 0,
+            status: 'DRAFT',
+            images: [],
+            variants: [],
+            categoryId: null
+        };
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Show seller products link
+            document.getElementById('sellerProductsLink').style.display = 'inline-block';
+
+            // Get product ID from URL
+            const pathParts = window.location.pathname.split('/');
+            productId = pathParts[pathParts.length - 1];
+
+            if (!productId) {
+                alert('Không tìm thấy ID sản phẩm');
+                window.location.href = '/seller/products';
+                return;
+            }
+
+            // Load product data
+            await loadProductData();
+
+            // Setup image upload
+            setupImageUpload();
+        });
+
+        async function loadProductData() {
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`);
+                if (!response.ok) {
+                    alert('Không thể tải thông tin sản phẩm');
+                    window.location.href = '/seller/products';
+                    return;
+                }
+
+                const product = await response.json();
+
+                // Fill form with product data
+                document.getElementById('productName').value = product.name || '';
+                document.getElementById('productDescription').value = product.description || '';
+                document.getElementById('productSku').value = product.sku || '';
+                document.getElementById('productBasePrice').value = product.basePrice || 0;
+                document.getElementById('productStatus').value = product.status || 'DRAFT';
+
+                // Load images
+                if (product.images && product.images.length > 0) {
+                    productData.images = product.images.map(img => ({
+                        id: img.id,
+                        imageUrl: img.imageUrl,
+                        isThumbnail: img.isThumbnail || false,
+                        displayOrder: img.displayOrder || 0
+                    }));
+                    updateImagePreviews();
+                }
+
+                // Load variants
+                if (product.variants && product.variants.length > 0) {
+                    productData.variants = product.variants.map(v => ({
+                        id: v.id,
+                        name: v.name,
+                        value: v.value,
+                        priceModifier: v.priceModifier || 0,
+                        stockQuantity: v.stockQuantity || 0,
+                        sku: v.sku
+                    }));
+                    updateVariantList();
+                }
+
+                // Load category
+                if (product.categoryId) {
+                    productData.categoryId = product.categoryId;
+                    document.getElementById('productCategory').value = product.categoryId;
+                }
+            } catch (error) {
+                alert('Lỗi khi tải thông tin sản phẩm');
+                console.error(error);
+                window.location.href = '/seller/products';
+            }
+        }
+
+        function setupImageUpload() {
+            const uploadArea = document.getElementById('imageUploadArea');
+            const imageInput = document.getElementById('imageInput');
+
+            uploadArea.addEventListener('click', () => imageInput.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            imageInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        async function handleFiles(files) {
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addImagePreview(data.url);
+                    } else {
+                        alert('Lỗi khi upload ảnh: ' + file.name);
+                    }
+                } catch (error) {
+                    alert('Lỗi khi upload ảnh: ' + file.name);
+                }
+            }
+        }
+
+        function addImagePreview(imageUrl) {
+            const previewGrid = document.getElementById('imagePreviewGrid');
+            const imageIndex = productData.images.length;
+            
+            productData.images.push({
+                imageUrl: imageUrl,
+                isThumbnail: false,
+                displayOrder: imageIndex
+            });
+
+            updateImagePreviews();
+        }
+
+        function setThumbnail(index) {
+            productData.images.forEach((img, i) => {
+                img.isThumbnail = (i === index);
+            });
+            updateImagePreviews();
+        }
+
+        function removeImage(index) {
+            productData.images.splice(index, 1);
+            updateImagePreviews();
+        }
+
+        function updateImagePreviews() {
+            const previewGrid = document.getElementById('imagePreviewGrid');
+            previewGrid.innerHTML = '';
+            productData.images.forEach((img, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-preview-item';
+                imageItem.innerHTML = `
+                    <img src="${img.imageUrl}" alt="Preview">
+                    ${img.isThumbnail ? '<span class="thumbnail-badge">Thumbnail</span>' : ''}
+                    <div class="image-actions">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="setThumbnail(${index})">Đặt làm ảnh đại diện</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeImage(${index})">Xóa</button>
+                    </div>
+                `;
+                previewGrid.appendChild(imageItem);
+            });
+        }
+
+        function addVariant() {
+            const variantList = document.getElementById('variantList');
+            const variantIndex = productData.variants.length;
+            
+            const variantItem = document.createElement('div');
+            variantItem.className = 'variant-item';
+            variantItem.innerHTML = `
+                <div class="variant-item-header">
+                    <h4>Biến Thể ${variantIndex + 1}</h4>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant(${variantIndex})">Xóa</button>
+                </div>
+                <div class="variant-fields">
+                    <div class="form-group">
+                        <label>Tên thuộc tính * (VD: Màu sắc, Size)</label>
+                        <input type="text" class="variant-name" placeholder="Màu sắc" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giá trị * (VD: Đỏ, XL)</label>
+                        <input type="text" class="variant-value" placeholder="Đỏ" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giá chênh lệch (VNĐ)</label>
+                        <input type="number" class="variant-price-modifier" value="0" step="0.01" placeholder="0">
+                        <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                            Số tiền chênh lệch so với giá cơ bản. Ví dụ: Giá cơ bản 200,000 VNĐ, chênh lệch +20,000 VNĐ → Giá variant = 220,000 VNĐ
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng tồn kho *</label>
+                        <input type="number" class="variant-stock" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU Variant (Mã biến thể) *</label>
+                        <input type="text" class="variant-sku" placeholder="VD: SHIRT-001-RED-M, SHOE-002-BLACK-42" required>
+                        <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                            Mã SKU riêng cho biến thể này. Thường kết hợp SKU sản phẩm + thuộc tính.
+                            <br>Ví dụ: Nếu Product SKU là "SHIRT-001", variant "Đỏ, Size M" có thể là "SHIRT-001-RED-M"
+                        </small>
+                    </div>
+                </div>
+            `;
+            variantList.appendChild(variantItem);
+        }
+
+        function removeVariant(index) {
+            productData.variants.splice(index, 1);
+            updateVariantList();
+        }
+
+        function updateVariantList() {
+            const variantList = document.getElementById('variantList');
+            variantList.innerHTML = '';
+            productData.variants.forEach((variant, index) => {
+                const variantItem = document.createElement('div');
+                variantItem.className = 'variant-item';
+                if (variant.id) {
+                    variantItem.setAttribute('data-variant-id', variant.id);
+                }
+                variantItem.innerHTML = `
+                    <div class="variant-item-header">
+                        <h4>Biến Thể ${index + 1}</h4>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant(${index})">Xóa</button>
+                    </div>
+                    <div class="variant-fields">
+                        <div class="form-group">
+                            <label>Tên thuộc tính *</label>
+                            <input type="text" class="variant-name" value="${escapeHtml(variant.name)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Giá trị *</label>
+                            <input type="text" class="variant-value" value="${escapeHtml(variant.value)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Giá chênh lệch (VNĐ)</label>
+                            <input type="number" class="variant-price-modifier" value="${variant.priceModifier}" step="0.01" placeholder="0">
+                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Số tiền chênh lệch so với giá cơ bản. Ví dụ: +20,000 VNĐ hoặc -10,000 VNĐ
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label>Số lượng tồn kho *</label>
+                            <input type="number" class="variant-stock" value="${variant.stockQuantity}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>SKU Variant (Mã biến thể) *</label>
+                            <input type="text" class="variant-sku" value="${escapeHtml(variant.sku)}" placeholder="VD: SHIRT-001-RED-M" required>
+                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Mã SKU riêng cho biến thể này. Thường kết hợp SKU sản phẩm + thuộc tính.
+                            </small>
+                        </div>
+                    </div>
+                `;
+                variantList.appendChild(variantItem);
+            });
+        }
+
+        function collectStepData() {
+            if (currentStep === 1) {
+                productData.name = document.getElementById('productName').value;
+                productData.description = document.getElementById('productDescription').value;
+                productData.sku = document.getElementById('productSku').value;
+                productData.basePrice = parseFloat(document.getElementById('productBasePrice').value);
+                productData.status = document.getElementById('productStatus').value;
+            } else if (currentStep === 2) {
+                // Collect variants - preserve original IDs
+                const newVariants = [];
+                const variantItems = document.querySelectorAll('.variant-item');
+                variantItems.forEach((item) => {
+                    const variantId = item.getAttribute('data-variant-id');
+                    newVariants.push({
+                        id: variantId || null,
+                        name: item.querySelector('.variant-name').value,
+                        value: item.querySelector('.variant-value').value,
+                        priceModifier: parseFloat(item.querySelector('.variant-price-modifier').value) || 0,
+                        stockQuantity: parseInt(item.querySelector('.variant-stock').value) || 0,
+                        sku: item.querySelector('.variant-sku').value
+                    });
+                });
+                productData.variants = newVariants;
+                
+                // Collect category
+                const categorySelect = document.getElementById('productCategory');
+                productData.categoryId = categorySelect.value || null;
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                collectStepData();
+                
+                if (!validateStep(currentStep)) {
+                    return;
+                }
+
+                document.getElementById(`step${currentStep}`).style.display = 'none';
+                document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.remove('active');
+
+                currentStep++;
+                document.getElementById(`step${currentStep}`).style.display = 'block';
+                document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.add('active', 'completed');
+
+                document.getElementById('prevBtn').style.display = 'inline-block';
+                if (currentStep === 2) {
+                    document.getElementById('skipBtn').style.display = 'inline-block';
+                } else if (currentStep === totalSteps) {
+                    document.getElementById('nextBtn').style.display = 'none';
+                    document.getElementById('submitBtn').style.display = 'inline-block';
+                    document.getElementById('skipBtn').style.display = 'none';
+                    generateReview();
+                } else {
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                    document.getElementById('submitBtn').style.display = 'none';
+                    document.getElementById('skipBtn').style.display = 'none';
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                collectStepData();
+
+                document.getElementById(`step${currentStep}`).style.display = 'none';
+                document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.remove('active');
+
+                currentStep--;
+                document.getElementById(`step${currentStep}`).style.display = 'block';
+                document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.add('active');
+                document.querySelector(`.wizard-step[data-step="${currentStep + 1}"]`).classList.remove('completed');
+
+                if (currentStep === 1) {
+                    document.getElementById('prevBtn').style.display = 'none';
+                }
+                if (currentStep === 2) {
+                    document.getElementById('skipBtn').style.display = 'inline-block';
+                }
+                document.getElementById('nextBtn').style.display = 'inline-block';
+                document.getElementById('submitBtn').style.display = 'none';
+            }
+        }
+
+        function skipToReview() {
+            collectStepData();
+            document.getElementById(`step${currentStep}`).style.display = 'none';
+            document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.remove('active');
+            
+            currentStep = totalSteps;
+            document.getElementById(`step${currentStep}`).style.display = 'block';
+            document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.add('active', 'completed');
+            
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('skipBtn').style.display = 'none';
+            
+            generateReview();
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                const name = document.getElementById('productName').value.trim();
+                const sku = document.getElementById('productSku').value.trim();
+                const basePrice = document.getElementById('productBasePrice').value;
+
+                if (!name) {
+                    alert('Vui lòng nhập tên sản phẩm');
+                    return false;
+                }
+                if (!sku) {
+                    alert('Vui lòng nhập SKU');
+                    return false;
+                }
+                if (!basePrice || parseFloat(basePrice) <= 0) {
+                    alert('Vui lòng nhập giá hợp lệ');
+                    return false;
+                }
+            } else if (step === 2) {
+                const variantItems = document.querySelectorAll('.variant-item');
+                for (let item of variantItems) {
+                    const name = item.querySelector('.variant-name').value.trim();
+                    const value = item.querySelector('.variant-value').value.trim();
+                    const sku = item.querySelector('.variant-sku').value.trim();
+                    const stock = item.querySelector('.variant-stock').value;
+
+                    if (!name || !value || !sku) {
+                        alert('Vui lòng điền đầy đủ thông tin biến thể');
+                        return false;
+                    }
+                    if (!stock || parseInt(stock) < 0) {
+                        alert('Số lượng tồn kho phải >= 0');
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function generateReview() {
+            collectStepData();
+            const reviewContent = document.getElementById('reviewContent');
+            
+            let html = `
+                <div class="review-section">
+                    <h4>Thông Tin Cơ Bản</h4>
+                    <p><strong>Tên:</strong> ${escapeHtml(productData.name)}</p>
+                    <p><strong>SKU:</strong> ${escapeHtml(productData.sku)}</p>
+                    <p><strong>Giá:</strong> ${formatPrice(productData.basePrice)} VNĐ</p>
+                    <p><strong>Trạng thái:</strong> ${getStatusText(productData.status)}</p>
+                    ${productData.description ? `<p><strong>Mô tả:</strong> ${escapeHtml(productData.description)}</p>` : ''}
+                </div>
+            `;
+
+            if (productData.images.length > 0) {
+                html += `
+                    <div class="review-section">
+                        <h4>Hình Ảnh (${productData.images.length})</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            ${productData.images.map(img => `
+                                <img src="${img.imageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;" alt="Preview">
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (productData.variants.length > 0) {
+                html += `
+                    <div class="review-section">
+                        <h4>Biến Thể (${productData.variants.length})</h4>
+                        ${productData.variants.map(v => `
+                            <p>${escapeHtml(v.name)}: ${escapeHtml(v.value)} - Giá: ${formatPrice(v.priceModifier)} VNĐ - Tồn kho: ${v.stockQuantity} - SKU: ${escapeHtml(v.sku)}</p>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            reviewContent.innerHTML = html;
+        }
+
+        async function submitProduct() {
+            collectStepData();
+
+            if (!validateStep(1)) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(productData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Cập nhật sản phẩm thành công!');
+                    window.location.href = '/seller/products';
+                } else {
+                    alert(data.message || 'Cập nhật sản phẩm thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+                console.error(error);
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'DRAFT': 'Nháp',
+                'PUBLISHED': 'Xuất bản',
+                'ARCHIVED': 'Đã lưu trữ'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN').format(price);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

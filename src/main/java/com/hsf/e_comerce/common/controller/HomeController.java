@@ -70,7 +70,17 @@ public class HomeController {
 
     @GetMapping("/seller/products")
     public String sellerProducts() {
-        return "coming-soon";
+        return "seller/products";
+    }
+
+    @GetMapping("/seller/products/add")
+    public String sellerAddProduct() {
+        return "seller/products-add";
+    }
+
+    @GetMapping("/seller/products/edit/{id}")
+    public String sellerEditProduct() {
+        return "seller/products-edit";
     }
 
     @GetMapping("/seller/orders")
@@ -81,5 +91,15 @@ public class HomeController {
     @GetMapping("/seller/statistics")
     public String sellerStatistics() {
         return "coming-soon";
+    }
+
+    @GetMapping("/products")
+    public String products() {
+        return "products";
+    }
+
+    @GetMapping("/products/{id}")
+    public String productDetail() {
+        return "products/detail";
     }
 }

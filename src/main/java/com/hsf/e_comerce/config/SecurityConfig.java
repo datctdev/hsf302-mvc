@@ -45,8 +45,10 @@ public class SecurityConfig {
                         // API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/files/view/**").permitAll()
+                        .requestMatchers("/api/products/**").permitAll() // Public product viewing
                         // Public pages
                         .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/products", "/products/**").permitAll() // Public product pages
                         // User pages (permit all, but will check auth in frontend)
                         .requestMatchers("/profile", "/change-password").permitAll()
                         // Seller pages

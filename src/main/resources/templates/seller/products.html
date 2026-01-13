@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/seller.css}">
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
+
+    <!-- Main Content -->
+    <main class="main-content seller-content">
+        <div class="container">
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>Quản Lý Sản Phẩm</h2>
+                    <a href="/seller/products/add" class="btn btn-primary">+ Thêm Sản Phẩm</a>
+                </div>
+
+                <div class="filters">
+                    <label for="statusFilter">Lọc theo trạng thái: </label>
+                    <select id="statusFilter" onchange="loadProducts()">
+                        <option value="">Tất cả</option>
+                        <option value="DRAFT">Nháp</option>
+                        <option value="PUBLISHED">Đã xuất bản</option>
+                        <option value="ARCHIVED">Đã lưu trữ</option>
+                    </select>
+                </div>
+
+                <div id="productsContainer" class="products-list">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = AuthUtils.getToken();
+            if (!token) {
+                window.location.href = '/login?expired=true';
+                return;
+            }
+
+            // Show seller products link
+            document.getElementById('sellerProductsLink').style.display = 'inline-block';
+            
+            loadProducts();
+        });
+
+        async function loadProducts() {
+            try {
+                const statusFilter = document.getElementById('statusFilter').value;
+                let url = '/api/seller/products';
+                if (statusFilter) {
+                    url += '?status=' + statusFilter;
+                }
+
+                const response = await AuthUtils.fetchWithAuth(url);
+                const products = await response.json();
+
+                const container = document.getElementById('productsContainer');
+                
+                if (products.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Chưa có sản phẩm nào</h3>
+                            <p>Bắt đầu bằng cách thêm sản phẩm đầu tiên của bạn.</p>
+                            <a href="/seller/products/add" class="btn btn-primary">Thêm Sản Phẩm</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = products.map(product => {
+                    const thumbnail = product.images && product.images.find(img => img.isThumbnail);
+                    const thumbnailUrl = thumbnail ? thumbnail.imageUrl : (product.images && product.images[0] ? product.images[0].imageUrl : null);
+                    
+                    return `
+                        <div class="product-card">
+                            <div class="product-image">
+                                ${thumbnailUrl ? 
+                                    `<img src="${thumbnailUrl}" alt="${escapeHtml(product.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
+                                    ''
+                                }
+                                <div class="product-image-placeholder" style="${thumbnailUrl ? 'display: none;' : ''}">
+                                    📦
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <h3>${escapeHtml(product.name)}</h3>
+                                <p class="product-sku">SKU: ${escapeHtml(product.sku)}</p>
+                                <p class="product-price">${formatPrice(product.basePrice)} VNĐ</p>
+                                <p class="product-description">${escapeHtml(product.description ? (product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description) : '')}</p>
+                                <div class="product-meta">
+                                    <span class="status-badge status-${product.status.toLowerCase()}">${getStatusText(product.status)}</span>
+                                    ${product.variants && product.variants.length > 0 ? 
+                                        `<span class="variant-count">${product.variants.length} biến thể</span>` : 
+                                        ''
+                                    }
+                                </div>
+                            </div>
+                            <div class="product-actions">
+                                <a href="/seller/products/edit/${product.id}" class="btn btn-primary">Chỉnh sửa</a>
+                                <button class="btn btn-danger" onclick="deleteProduct('${product.id}', '${escapeHtml(product.name)}')">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                document.getElementById('productsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Lỗi</h3>
+                        <p>Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function deleteProduct(productId, productName) {
+            if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${productName}"? Hành động này không thể hoàn tác!`)) {
+                return;
+            }
+
+            try {
+                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Xóa sản phẩm thành công!');
+                    loadProducts();
+                } else {
+                    alert(data.message || 'Xóa sản phẩm thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'DRAFT': 'Nháp',
+                'PUBLISHED': 'Đã xuất bản',
+                'ARCHIVED': 'Đã lưu trữ'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN').format(price);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

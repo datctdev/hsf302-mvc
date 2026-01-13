@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Sản Phẩm - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .product-detail-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .breadcrumb {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .breadcrumb a {
+            color: var(--primary-color);
+        }
+
+        .product-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .product-images {
+            position: relative;
+        }
+
+        .product-main-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            background: #f0f0f0;
+            margin-bottom: 1rem;
+        }
+
+        .product-thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .product-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .product-thumbnail:hover,
+        .product-thumbnail.active {
+            border-color: var(--primary-color);
+        }
+
+        .product-info h1 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 1rem 0;
+        }
+
+        .product-description {
+            margin: 1.5rem 0;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .product-variants {
+            margin: 1.5rem 0;
+        }
+
+        .variant-group {
+            margin-bottom: 1rem;
+        }
+
+        .variant-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .variant-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .variant-option {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--bg-white);
+        }
+
+        .variant-option:hover {
+            border-color: var(--primary-color);
+        }
+
+        .variant-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .variant-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .product-actions {
+            margin: 2rem 0;
+        }
+
+        .product-actions button {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-meta {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .product-meta-item {
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .product-meta-item strong {
+            color: var(--text-color);
+        }
+
+        .shop-info {
+            background: var(--bg-white);
+            padding: 1.5rem;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-top: 2rem;
+        }
+
+        .shop-info h3 {
+            margin-top: 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .error {
+            text-align: center;
+            padding: 3rem;
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .product-detail {
+                grid-template-columns: 1fr;
+            }
+
+            .product-main-image {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="product-detail-container">
+            <div class="breadcrumb">
+                <a href="/">Trang chủ</a> / 
+                <a href="/products">Sản phẩm</a> / 
+                <span id="productBreadcrumb">Chi tiết</span>
+            </div>
+
+            <div id="productDetail" class="loading">Đang tải thông tin sản phẩm...</div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        let productId = null;
+        let selectedVariants = {};
+        let productData = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Get product ID from URL
+            const pathParts = window.location.pathname.split('/');
+            productId = pathParts[pathParts.length - 1];
+
+            if (!productId) {
+                document.getElementById('productDetail').innerHTML = 
+                    '<div class="error">Không tìm thấy ID sản phẩm</div>';
+                return;
+            }
+
+            await loadProductDetail();
+        });
+
+        async function loadProductDetail() {
+            const container = document.getElementById('productDetail');
+            container.innerHTML = '<div class="loading">Đang tải thông tin sản phẩm...</div>';
+
+            try {
+                const response = await fetch(`/api/products/${productId}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        container.innerHTML = '<div class="error">Sản phẩm không tồn tại hoặc chưa được xuất bản</div>';
+                    } else {
+                        throw new Error('Failed to load product');
+                    }
+                    return;
+                }
+
+                productData = await response.json();
+                displayProductDetail(productData);
+            } catch (error) {
+                container.innerHTML = '<div class="error">Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.</div>';
+                console.error('Error loading product:', error);
+            }
+        }
+
+        function displayProductDetail(product) {
+            const container = document.getElementById('productDetail');
+            document.getElementById('productBreadcrumb').textContent = product.name;
+
+            const thumbnail = product.images && product.images.length > 0 
+                ? product.images.find(img => img.isThumbnail) || product.images[0]
+                : null;
+            const mainImageUrl = thumbnail ? thumbnail.imageUrl : '/images/placeholder.png';
+
+            // Group variants by name
+            const variantGroups = {};
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach(variant => {
+                    if (!variantGroups[variant.name]) {
+                        variantGroups[variant.name] = [];
+                    }
+                    variantGroups[variant.name].push(variant);
+                });
+            }
+
+            let variantHTML = '';
+            if (Object.keys(variantGroups).length > 0) {
+                variantHTML = Object.entries(variantGroups).map(([name, variants]) => {
+                    const options = variants.map((variant, index) => {
+                        const stockStatus = variant.stockQuantity > 0 ? '' : 'disabled';
+                        return `
+                            <div class="variant-option ${stockStatus}" 
+                                 data-variant-id="${variant.id}"
+                                 data-name="${escapeHtml(name)}"
+                                 data-value="${escapeHtml(variant.value)}"
+                                 onclick="selectVariant('${name}', '${variant.value}', ${variant.stockQuantity > 0})">
+                                ${escapeHtml(variant.value)} ${variant.stockQuantity > 0 ? '' : '(Hết hàng)'}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="variant-group">
+                            <label>${escapeHtml(name)}:</label>
+                            <div class="variant-options">${options}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const imagesHTML = product.images && product.images.length > 0
+                ? product.images.map((img, index) => `
+                    <img src="${img.imageUrl}" 
+                         alt="Product image ${index + 1}" 
+                         class="product-thumbnail ${index === 0 ? 'active' : ''}"
+                         onclick="changeMainImage('${img.imageUrl}', this)">
+                `).join('')
+                : '';
+
+            container.innerHTML = `
+                <div class="product-detail">
+                    <div class="product-images">
+                        <img src="${mainImageUrl}" alt="${escapeHtml(product.name)}" class="product-main-image" id="mainImage" onerror="this.src='/images/placeholder.png'">
+                        ${imagesHTML ? `<div class="product-thumbnails">${imagesHTML}</div>` : ''}
+                    </div>
+
+                    <div class="product-info">
+                        <h1>${escapeHtml(product.name)}</h1>
+                        <div class="product-price">${formatPrice(product.basePrice)} VNĐ</div>
+                        
+                        ${variantHTML ? `<div class="product-variants">${variantHTML}</div>` : ''}
+
+                        <div class="product-description">
+                            ${product.description ? escapeHtml(product.description).replace(/\n/g, '<br>') : 'Chưa có mô tả'}
+                        </div>
+
+                        <div class="product-meta">
+                            <div class="product-meta-item">
+                                <strong>SKU:</strong> ${escapeHtml(product.sku)}
+                            </div>
+                            <div class="product-meta-item">
+                                <strong>Shop:</strong> ${escapeHtml(product.shopName || 'N/A')}
+                            </div>
+                            ${product.categoryName ? `
+                                <div class="product-meta-item">
+                                    <strong>Danh mục:</strong> ${escapeHtml(product.categoryName)}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="product-actions">
+                            <button class="btn btn-primary" onclick="addToCart()" id="addToCartBtn">
+                                Thêm vào giỏ hàng
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.location.href='/products'">
+                                Quay lại danh sách
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shop-info">
+                    <h3>Thông tin shop</h3>
+                    <p><strong>${escapeHtml(product.shopName || 'N/A')}</strong></p>
+                    <button class="btn btn-outline-secondary" onclick="viewShop('${product.shopId}')">
+                        Xem shop
+                    </button>
+                </div>
+            `;
+
+            // Initialize variant selection
+            if (Object.keys(variantGroups).length > 0) {
+                // Auto-select first available variant for each group
+                Object.keys(variantGroups).forEach(name => {
+                    const firstAvailable = variantGroups[name].find(v => v.stockQuantity > 0);
+                    if (firstAvailable) {
+                        selectVariant(name, firstAvailable.value, true);
+                    }
+                });
+            }
+        }
+
+        function changeMainImage(imageUrl, thumbnail) {
+            document.getElementById('mainImage').src = imageUrl;
+            document.querySelectorAll('.product-thumbnail').forEach(img => {
+                img.classList.remove('active');
+            });
+            thumbnail.classList.add('active');
+        }
+
+        function selectVariant(name, value, available) {
+            if (!available) return;
+
+            const options = document.querySelectorAll(`[data-name="${name}"]`);
+            options.forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            const selectedOption = Array.from(options).find(opt => opt.dataset.value === value);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+
+            selectedVariants[name] = value;
+            updateAddToCartButton();
+        }
+
+        function updateAddToCartButton() {
+            const btn = document.getElementById('addToCartBtn');
+            if (!btn) return;
+
+            // Check if all variant groups have a selection
+            if (productData && productData.variants && productData.variants.length > 0) {
+                const variantGroups = {};
+                productData.variants.forEach(v => {
+                    if (!variantGroups[v.name]) {
+                        variantGroups[v.name] = true;
+                    }
+                });
+
+                const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
+                if (!allSelected) {
+                    btn.textContent = 'Vui lòng chọn đầy đủ thuộc tính';
+                    btn.disabled = true;
+                    return;
+                }
+            }
+
+            btn.textContent = 'Thêm vào giỏ hàng';
+            btn.disabled = false;
+        }
+
+        function addToCart() {
+            // Check if user is logged in
+            const token = AuthUtils ? AuthUtils.getToken() : null;
+            if (!token) {
+                if (confirm('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Đi đến trang đăng nhập?')) {
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                }
+                return;
+            }
+
+            // TODO: Implement add to cart functionality
+            alert('Chức năng thêm vào giỏ hàng sẽ được triển khai sau.');
+        }
+
+        function viewShop(shopId) {
+            // TODO: Implement shop view page
+            alert('Trang shop sẽ được triển khai sau.');
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN').format(price);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
