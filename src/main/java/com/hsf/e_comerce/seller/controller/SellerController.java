@@ -1,8 +1,8 @@
 package com.hsf.e_comerce.seller.controller;
 
-import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.common.dto.response.MessageResponse;
-import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.seller.dto.request.SellerRequestRequest;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
@@ -10,11 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/seller")
@@ -22,47 +18,41 @@ import java.util.UUID;
 public class SellerController {
 
     private final SellerRequestService sellerRequestService;
-    private final UserService userService;
 
     @PostMapping("/request")
     public ResponseEntity<SellerRequestResponse> createRequest(
-            @Valid @RequestBody SellerRequestRequest request,
-            Authentication authentication) {
-        UUID userId = getUserIdFromAuthentication(authentication);
-        SellerRequestResponse response = sellerRequestService.createRequest(userId, request);
+            @CurrentUser User user,
+            @Valid @RequestBody SellerRequestRequest request) {
+        SellerRequestResponse response = sellerRequestService.createRequest(user.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/request/status")
-    public ResponseEntity<SellerRequestResponse> getRequestStatus(Authentication authentication) {
-        UUID userId = getUserIdFromAuthentication(authentication);
-        SellerRequestResponse response = sellerRequestService.getRequestByUserId(userId);
+    public ResponseEntity<SellerRequestResponse> getRequestStatus(@CurrentUser User user) {
+        SellerRequestResponse response = sellerRequestService.getRequestByUserId(user.getId());
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/request")
     public ResponseEntity<SellerRequestResponse> updateRequest(
-            @Valid @RequestBody SellerRequestRequest request,
-            Authentication authentication) {
-        UUID userId = getUserIdFromAuthentication(authentication);
-        SellerRequestResponse response = sellerRequestService.updateRequest(userId, request);
+            @CurrentUser User user,
+            @Valid @RequestBody SellerRequestRequest request) {
+        SellerRequestResponse response = sellerRequestService.updateRequest(user.getId(), request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/request")
-    public ResponseEntity<MessageResponse> cancelRequest(Authentication authentication) {
-        UUID userId = getUserIdFromAuthentication(authentication);
-        sellerRequestService.cancelRequest(userId);
+    public ResponseEntity<MessageResponse> cancelRequest(@CurrentUser User user) {
+        sellerRequestService.cancelRequest(user.getId());
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Đã hủy request thành công")
                 .build());
     }
 
     @GetMapping("/check")
-    public ResponseEntity<MessageResponse> checkSellerStatus(Authentication authentication) {
-        UUID userId = getUserIdFromAuthentication(authentication);
-        boolean isSeller = sellerRequestService.isSeller(userId);
-        boolean hasPendingRequest = sellerRequestService.hasPendingRequest(userId);
+    public ResponseEntity<MessageResponse> checkSellerStatus(@CurrentUser User user) {
+        boolean isSeller = sellerRequestService.isSeller(user.getId());
+        boolean hasPendingRequest = sellerRequestService.hasPendingRequest(user.getId());
         
         String message;
         if (isSeller) {
@@ -76,14 +66,5 @@ public class SellerController {
         return ResponseEntity.ok(MessageResponse.builder()
                 .message(message)
                 .build());
-    }
-
-    private UUID getUserIdFromAuthentication(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            throw new CustomException("Không thể xác định người dùng");
-        }
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String email = userDetails.getUsername();
-        return userService.findByEmail(email).getId();
     }
 }

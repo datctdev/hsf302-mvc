@@ -7,17 +7,16 @@ import com.hsf.e_comerce.auth.dto.request.RegisterRequest;
 import com.hsf.e_comerce.auth.dto.request.UpdateProfileRequest;
 import com.hsf.e_comerce.auth.dto.response.AuthResponse;
 import com.hsf.e_comerce.auth.dto.response.UserResponse;
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.service.AuthService;
 import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.common.dto.response.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,22 +47,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-        String email = authentication.getName();
-        var user = userService.findByEmail(email);
-        var roles = userService.getUserRoles(user.getId());
-
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(user.getAvatarUrl())
-                .roles(roles)
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .build();
-
+    public ResponseEntity<UserResponse> getCurrentUser(@CurrentUser User user) {
+        UserResponse response = UserResponse.convertToResponse(user, userService);
         return ResponseEntity.ok(response);
     }
 
@@ -75,10 +60,8 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<MessageResponse> changePassword(
-            Authentication authentication,
+            @CurrentUser User user,
             @Valid @RequestBody ChangePasswordRequest request) {
-        String email = authentication.getName();
-        var user = userService.findByEmail(email);
         authService.changePassword(user.getId(), request);
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Mật khẩu đã được thay đổi thành công")
@@ -87,18 +70,14 @@ public class AuthController {
 
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
-            Authentication authentication,
+            @CurrentUser User user,
             @Valid @RequestBody UpdateProfileRequest request) {
-        String email = authentication.getName();
-        var user = userService.findByEmail(email);
         UserResponse response = authService.updateProfile(user.getId(), request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/deactivate")
-    public ResponseEntity<MessageResponse> deactivateAccount(Authentication authentication) {
-        String email = authentication.getName();
-        var user = userService.findByEmail(email);
+    public ResponseEntity<MessageResponse> deactivateAccount(@CurrentUser User user) {
         authService.deactivateAccount(user.getId());
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Tài khoản đã được vô hiệu hóa")
@@ -106,9 +85,7 @@ public class AuthController {
     }
 
     @PostMapping("/activate")
-    public ResponseEntity<MessageResponse> activateAccount(Authentication authentication) {
-        String email = authentication.getName();
-        var user = userService.findByEmail(email);
+    public ResponseEntity<MessageResponse> activateAccount(@CurrentUser User user) {
         authService.activateAccount(user.getId());
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Tài khoản đã được kích hoạt")

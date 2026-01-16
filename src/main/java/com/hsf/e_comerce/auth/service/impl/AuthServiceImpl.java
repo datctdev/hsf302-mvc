@@ -8,7 +8,9 @@ import com.hsf.e_comerce.auth.dto.request.UpdateProfileRequest;
 import com.hsf.e_comerce.auth.dto.response.AuthResponse;
 import com.hsf.e_comerce.auth.dto.response.UserResponse;
 import com.hsf.e_comerce.auth.entity.RefreshToken;
+import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
 import com.hsf.e_comerce.auth.service.AuthService;
 import com.hsf.e_comerce.auth.service.JwtService;
@@ -35,6 +37,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -58,11 +61,13 @@ public class AuthServiceImpl implements AuthService {
         user.setPhoneNumber(request.getPhoneNumber());
         user.setIsActive(true);
 
-        // Lưu user vào database
-        user = userRepository.save(user);
+        // Gán role mặc định ROLE_BUYER TRƯỚC KHI save
+        Role buyerRole = roleRepository.findByName("ROLE_BUYER")
+                .orElseThrow(() -> new RuntimeException("Role ROLE_BUYER not found"));
+        user.setRole(buyerRole);
 
-        // Gán role mặc định ROLE_BUYER
-        userService.assignRoleToUser(user, "ROLE_BUYER");
+        // Lưu user vào database (sau khi đã có role)
+        user = userRepository.save(user);
 
         // Load user details để tạo token
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -235,18 +240,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user = userRepository.save(user);
-        var roles = userService.getUserRoles(user.getId());
-
-        return UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(user.getAvatarUrl())
-                .roles(roles)
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return UserResponse.convertToResponse(user, userService);
     }
 
     @Override

@@ -2,11 +2,8 @@ package com.hsf.e_comerce.config;
 
 import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
-import com.hsf.e_comerce.auth.entity.UserRole;
-import com.hsf.e_comerce.auth.entity.UserRoleId;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
-import com.hsf.e_comerce.auth.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -24,7 +21,6 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -75,26 +71,20 @@ public class DataInitializer implements CommandLineRunner {
     private void createDefaultUser(String email, String password, String fullName, String roleName) {
         try {
             if (!userRepository.existsByEmail(email)) {
-                // Tạo user
+                // Lấy role
+                Role role = roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                
+                // Tạo user với role
                 User user = new User();
                 user.setEmail(email);
                 user.setPassword(passwordEncoder.encode(password));
                 user.setFullName(fullName);
                 user.setIsActive(true);
+                user.setRole(role);
                 user = userRepository.save(user);
-                log.info("✓ Created user: {} ({})", email, fullName);
                 
-                // Gán role cho user
-                Role role = roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-                
-                UserRole userRole = new UserRole();
-                userRole.setId(new UserRoleId(user.getId(), role.getId()));
-                userRole.setUser(user);
-                userRole.setRole(role);
-                userRoleRepository.save(userRole);
-                
-                log.info("✓ Assigned role {} to user {}", roleName, email);
+                log.info("✓ Created user: {} ({}) with role {}", email, fullName, roleName);
             } else {
                 log.info("→ User already exists: {}", email);
             }

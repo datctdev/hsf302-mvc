@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-    <!-- Navigation Fragment - Admin Pages -->
-    <nav th:fragment="nav-admin" class="nav-admin">
-        <div class="nav-content">
-            <a href="/admin/dashboard" th:classappend="${#httpServletRequest.requestURI == '/admin/dashboard' ? 'active' : ''}">Dashboard</a>
-            <a href="/admin/seller-requests" th:classappend="${#httpServletRequest.requestURI == '/admin/seller-requests' ? 'active' : ''}">Yêu Cầu Seller</a>
-            <a href="/admin/users" th:classappend="${#httpServletRequest.requestURI == '/admin/users' ? 'active' : ''}">Quản Lý Users</a>
-            <a href="/admin/products" th:classappend="${#httpServletRequest.requestURI == '/admin/products' ? 'active' : ''}">Quản Lý Sản Phẩm</a>
-            <a href="/admin/orders" th:classappend="${#httpServletRequest.requestURI == '/admin/orders' ? 'active' : ''}">Quản Lý Đơn Hàng</a>
-        </div>
-    </nav>
-</body>
-</html>
+<!-- Navigation Fragment - Admin Pages -->
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-admin" class="nav-admin">
+    <div class="nav-content">
+        <a href="/admin/dashboard" class="nav-link" data-path="/admin/dashboard">Dashboard</a>
+        <a href="/admin/seller-requests" class="nav-link" data-path="/admin/seller-requests">Yêu Cầu Seller</a>
+        <a href="/admin/users" class="nav-link" data-path="/admin/users">Quản Lý Users</a>
+        <a href="/admin/products" class="nav-link" data-path="/admin/products">Quản Lý Sản Phẩm</a>
+        <a href="/admin/orders" class="nav-link" data-path="/admin/orders">Quản Lý Đơn Hàng</a>
+    </div>
+</nav>
