@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.parameterName}">
     <title>Quản Lý Shop - E-commerce</title>
     
     <!-- CSS -->
@@ -21,33 +23,47 @@
     <!-- Main Content -->
     <main class="main-content seller-content">
         <div class="container">
+            <!-- Flash Messages -->
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
             <!-- Shop Info Display -->
-            <div class="shop-section">
-                <div id="shopCoverContainer" style="display: none;">
-                    <img id="shopCover" class="shop-cover" src="" alt="Shop Cover">
+            <div class="shop-section" th:if="${shop != null}">
+                <div th:if="${shop.coverImageUrl != null}" class="shop-cover-container">
+                    <img th:src="${shop.coverImageUrl}" class="shop-cover" alt="Shop Cover">
                 </div>
                 <div class="shop-header">
                     <div class="shop-logo-container">
-                        <img id="shopLogo" class="shop-logo" src="" alt="Shop Logo" style="display: none;">
-                        <div id="shopLogoPlaceholder" class="shop-logo" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #999;">
+                        <img th:if="${shop.logoUrl != null}" 
+                             th:src="${shop.logoUrl}" 
+                             class="shop-logo" 
+                             alt="Shop Logo">
+                        <div th:unless="${shop.logoUrl != null}" 
+                             class="shop-logo" 
+                             style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #999;">
                             🏪
                         </div>
                     </div>
                     <div class="shop-info">
-                        <h2 id="shopName">Đang tải...</h2>
-                        <p id="shopDescription">Đang tải...</p>
-                        <p><strong>Số điện thoại:</strong> <span id="shopPhone">-</span></p>
-                        <p><strong>Địa chỉ:</strong> <span id="shopAddress">-</span></p>
-                        <div class="rating" id="ratingContainer" style="display: none;">
-                            <span class="rating-value" id="averageRating">0.0</span>
+                        <h2 th:text="${shop.name}">Shop Name</h2>
+                        <p th:text="${shop.description ?: 'Chưa có mô tả'}">Description</p>
+                        <p><strong>Số điện thoại:</strong> <span th:text="${shop.phoneNumber ?: '-'}">-</span></p>
+                        <p><strong>Địa chỉ:</strong> <span th:text="${shop.address ?: '-'}">-</span></p>
+                        <div th:if="${shop.averageRating != null and shop.averageRating > 0}" class="rating">
+                            <span class="rating-value" th:text="${#numbers.formatDecimal(shop.averageRating, 1, 'POINT', 1, 'POINT')}">0.0</span>
                             <span>⭐</span>
                         </div>
-                        <span class="status-badge" id="shopStatus">Đang tải...</span>
+                        <span class="status-badge" 
+                              th:classappend="${shop.status == 'ACTIVE'} ? 'status-active' : 'status-inactive'"
+                              th:text="${shop.status == 'ACTIVE'} ? 'Hoạt động' : 'Không hoạt động'">Status</span>
                         <p style="margin-top: 0.5rem; color: #999; font-size: 0.875rem;">
-                            Ngày tạo: <span id="createdAt">-</span>
+                            Ngày tạo: <span th:text="${#temporals.format(shop.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
                         </p>
                     </div>
                 </div>
+            </div>
+            <div th:if="${shop == null}" class="alert alert-warning">
+                Bạn chưa có shop. Vui lòng đăng ký làm seller trước.
             </div>
 
             <!-- Shop Management Menu -->
@@ -67,53 +83,50 @@
             </div>
 
             <!-- Update Shop Form -->
-            <div class="shop-section" id="updateShopSection" style="display: none;">
+            <div class="shop-section" id="updateShopSection" th:if="${shop != null}" style="display: none;">
                 <h3 style="margin-top: 0;">Cập Nhật Thông Tin Shop</h3>
-                <form id="updateShopForm" onsubmit="handleUpdateShop(event)">
+                <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}">
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
                     <div class="form-group">
                         <label for="name">Tên Shop *</label>
-                        <input type="text" id="name" name="name" required>
+                        <input type="text" id="name" th:field="*{name}" required>
                         <small>Tên shop phải có từ 3 đến 255 ký tự và không được trùng với shop khác</small>
-                        <span id="nameError" class="error-message"></span>
+                        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="description">Mô Tả Shop</label>
-                        <textarea id="description" name="description"></textarea>
+                        <textarea id="description" th:field="*{description}"></textarea>
                         <small>Tối đa 2000 ký tự</small>
-                        <span id="descriptionError" class="error-message"></span>
+                        <span th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="phoneNumber">Số Điện Thoại</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber">
-                        <span id="phoneNumberError" class="error-message"></span>
+                        <input type="tel" id="phoneNumber" th:field="*{phoneNumber}">
+                        <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="address">Địa Chỉ</label>
-                        <input type="text" id="address" name="address">
-                        <span id="addressError" class="error-message"></span>
+                        <input type="text" id="address" th:field="*{address}">
+                        <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
-                        <label for="logoFile">Logo Shop</label>
-                        <input type="file" id="logoFile" name="logoFile" accept="image/*" onchange="handleLogoPreview(event)">
-                        <div id="logoPreview" class="preview-container">
-                            <img id="logoPreviewImg" src="" alt="Logo Preview" class="preview-logo">
-                        </div>
-                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
-                        <span id="logoFileError" class="error-message"></span>
+                        <label for="logoUrl">URL Logo Shop</label>
+                        <input type="text" id="logoUrl" th:field="*{logoUrl}" placeholder="Nhập URL logo sau khi upload">
+                        <small>Upload ảnh và nhập URL vào đây</small>
+                        <span th:if="${#fields.hasErrors('logoUrl')}" th:errors="*{logoUrl}" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
-                        <label for="coverFile">Ảnh Bìa Shop</label>
-                        <input type="file" id="coverFile" name="coverFile" accept="image/*" onchange="handleCoverPreview(event)">
-                        <div id="coverPreview" class="preview-container">
-                            <img id="coverPreviewImg" src="" alt="Cover Preview" class="preview-cover">
-                        </div>
-                        <small>Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP). Kích thước tối đa: 25MB</small>
-                        <span id="coverFileError" class="error-message"></span>
+                        <label for="coverImageUrl">URL Ảnh Bìa Shop</label>
+                        <input type="text" id="coverImageUrl" th:field="*{coverImageUrl}" placeholder="Nhập URL ảnh bìa sau khi upload">
+                        <small>Upload ảnh và nhập URL vào đây</small>
+                        <span th:if="${#fields.hasErrors('coverImageUrl')}" th:errors="*{coverImageUrl}" class="error-message"></span>
                     </div>
 
                     <button type="submit" id="updateShopBtn" class="btn btn-primary">Cập Nhật Shop</button>
@@ -127,112 +140,70 @@
 
     <!-- JavaScript -->
     <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/seller.js}"></script>
     <script>
-        let currentShop = null;
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            const token = AuthUtils.getToken();
-            if (!token) {
-                window.location.href = '/login?expired=true';
+        function handleManagementOptionChange() {
+            const option = document.getElementById('managementOption').value;
+            const updateShopSection = document.getElementById('updateShopSection');
+            
+            // Show/hide update form section
+            if (option === 'update') {
+                if (updateShopSection) {
+                    updateShopSection.style.display = 'block';
+                }
+            } else if (option === 'products') {
+                window.location.href = '/seller/products';
                 return;
+            } else if (option === 'orders') {
+                window.location.href = '/seller/orders';
+                return;
+            } else if (option === 'statistics') {
+                window.location.href = '/seller/statistics';
+                return;
+            } else {
+                if (updateShopSection) {
+                    updateShopSection.style.display = 'none';
+                }
             }
-
-            await loadShopInfo();
-        });
-
-        async function loadShopInfo() {
+        }
+        
+        // File upload helper
+        async function uploadFileAndSetUrl(fileInput, urlInputId, folder) {
+            if (!fileInput.files || fileInput.files.length === 0) return;
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', folder);
+            
             try {
-                const response = await AuthUtils.fetchWithAuth('/api/shop');
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                                 document.querySelector('input[name="_csrf"]')?.value;
+                if (csrfToken) {
+                    formData.append('_csrf', csrfToken);
+                }
+                
+                const response = await fetch('/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
                 if (response.ok) {
-                    currentShop = await response.json();
-                    displayShopInfo(currentShop);
-                    populateForm(currentShop);
-                } else if (response.status === 404) {
-                    document.getElementById('shopName').textContent = 'Chưa có shop';
-                    document.getElementById('shopDescription').textContent = 'Bạn chưa tạo shop. Vui lòng tạo shop trước.';
+                    const data = await response.json();
+                    document.getElementById(urlInputId).value = data.url;
+                    alert('Upload thành công!');
+                } else {
+                    alert('Upload thất bại. Vui lòng thử lại.');
                 }
             } catch (error) {
-                alert('Không thể tải thông tin shop. Vui lòng thử lại sau.');
+                alert('Lỗi khi upload file.');
             }
-        }
-
-        function displayShopInfo(shop) {
-            document.getElementById('shopName').textContent = shop.name || 'N/A';
-            document.getElementById('shopDescription').textContent = shop.description || 'Chưa có mô tả';
-            document.getElementById('shopPhone').textContent = shop.phoneNumber || '-';
-            document.getElementById('shopAddress').textContent = shop.address || '-';
-            document.getElementById('createdAt').textContent = formatDate(shop.createdAt);
-
-            // Display status
-            const statusBadge = document.getElementById('shopStatus');
-            statusBadge.textContent = getStatusText(shop.status);
-            statusBadge.className = 'status-badge status-' + shop.status.toLowerCase();
-
-            // Display logo
-            if (shop.logoUrl) {
-                document.getElementById('shopLogo').src = shop.logoUrl;
-                document.getElementById('shopLogo').style.display = 'block';
-                document.getElementById('shopLogoPlaceholder').style.display = 'none';
-            } else {
-                document.getElementById('shopLogo').style.display = 'none';
-                document.getElementById('shopLogoPlaceholder').style.display = 'flex';
-            }
-
-            // Display cover
-            if (shop.coverImageUrl) {
-                document.getElementById('shopCover').src = shop.coverImageUrl;
-                document.getElementById('shopCoverContainer').style.display = 'block';
-            }
-        }
-
-        function populateForm(shop) {
-            document.getElementById('name').value = shop.name || '';
-            document.getElementById('description').value = shop.description || '';
-            document.getElementById('phoneNumber').value = shop.phoneNumber || '';
-            document.getElementById('address').value = shop.address || '';
-        }
-
-        function getStatusText(status) {
-            const statusMap = {
-                'ACTIVE': 'Hoạt động',
-                'INACTIVE': 'Không hoạt động',
-                'PENDING': 'Đang chờ',
-                'BANNED': 'Bị cấm'
-            };
-            return statusMap[status] || status;
         }
 
         function formatDate(dateString) {
             if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleString('vi-VN');
-        }
-
-        function handleManagementOptionChange() {
-            const option = document.getElementById('managementOption').value;
-            
-            // Hide update section
-            document.getElementById('updateShopSection').style.display = 'none';
-            
-            // Show selected section or redirect
-            switch(option) {
-                case 'update':
-                    document.getElementById('updateShopSection').style.display = 'block';
-                    break;
-                case 'products':
-                    window.location.href = '/seller/products';
-                    break;
-                case 'orders':
-                    window.location.href = '/seller/orders';
-                    break;
-                case 'statistics':
-                    window.location.href = '/seller/statistics';
-                    break;
-                default:
-                    // Hide all if no option selected
-                    break;
-            }
         }
 
         function handleLogoPreview(event) {

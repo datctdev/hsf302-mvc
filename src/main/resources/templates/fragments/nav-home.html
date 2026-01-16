@@ -7,14 +7,19 @@
             <a href="/cart">Giỏ hàng</a>
             <a href="/about">Giới thiệu</a>
         </div>
-        <div id="authLinks" class="nav-auth">
-            <a href="/login" id="loginLink">Đăng nhập</a>
-            <a href="/register" id="registerLink">Đăng ký</a>
+        <!-- Show login/register links if not authenticated -->
+        <div th:if="${currentUser == null}" class="nav-auth">
+            <a href="/login">Đăng nhập</a>
+            <a href="/register">Đăng ký</a>
         </div>
-        <div id="userInfo" class="user-info" style="display: none;">
-            <a href="/profile" class="profile-link" id="profileLink">Hồ sơ</a>
-            <span class="user-name" id="userName"></span>
-            <button class="logout-btn" onclick="handleLogout()">Đăng xuất</button>
+        <!-- Show user info if authenticated -->
+        <div th:if="${currentUser != null}" class="user-info">
+            <a href="/profile" class="profile-link">Hồ sơ</a>
+            <span class="user-name" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="logout-btn">Đăng xuất</button>
+            </form>
         </div>
     </div>
 </nav>

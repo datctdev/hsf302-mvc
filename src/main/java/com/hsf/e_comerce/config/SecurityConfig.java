@@ -11,12 +11,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,42 +28,61 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;
+    private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**")) // Enable CSRF for MVC
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
-                        // API endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/files/view/**").permitAll()
-                        .requestMatchers("/api/products/**").permitAll() // Public product viewing
+                        // Chrome DevTools và các well-known paths
+                        .requestMatchers("/.well-known/**").permitAll()
                         // Public pages
                         .requestMatchers("/", "/login", "/register").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // Public product pages
-                        // User pages (permit all, but will check auth in frontend)
-                        .requestMatchers("/profile", "/change-password").permitAll()
-                        // Seller pages
-                        .requestMatchers("/become-seller", "/seller/**").permitAll()
-                        // Admin pages (permit all, but will check auth in frontend)
-                        .requestMatchers("/admin/**").permitAll()
+                        // File upload/download (require authentication)
+                        .requestMatchers("/files/upload").authenticated()
+                        .requestMatchers("/files/view/**", "/files/download/**").permitAll() // Public file access
+                        // User pages (require authentication)
+                        .requestMatchers("/profile", "/change-password").authenticated()
+                        // Seller pages - allow authenticated users to become seller
+                        .requestMatchers("/seller/become-seller", "/seller/become-seller/**").authenticated()
+                        // Other seller pages (require SELLER role)
+                        .requestMatchers("/seller/**").hasAnyRole("SELLER", "ADMIN")
+                        // Admin pages (require ADMIN role)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(authenticationSuccessHandler)
+                        .failureUrl("/login?error=true")
+                        .permitAll()
+                    )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
                 )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
+                )
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                );
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendRedirect("/login?error=true");
+                        })
+                )
+                .authenticationProvider(authenticationProvider());
 
         return http.build();
     }

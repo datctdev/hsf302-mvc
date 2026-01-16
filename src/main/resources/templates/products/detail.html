@@ -209,7 +209,60 @@
                 <span id="productBreadcrumb">Chi tiết</span>
             </div>
 
-            <div id="productDetail" class="loading">Đang tải thông tin sản phẩm...</div>
+            <div th:if="${product != null}" class="product-detail" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, 
+                                                          firstImage=${product.images != null and !product.images.empty ? product.images[0] : null},
+                                                          displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
+                <div class="product-images">
+                    <div class="main-image">
+                        <img th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" 
+                            th:alt="${product.name}"
+                            id="mainImage"
+                            class="product-main-image"
+                            onerror="this.src='/images/placeholder.png'">
+                    </div>
+                    <div class="product-thumbnails" th:if="${product.images != null and product.images.size() > 1}">
+                        <img th:each="img, iterStat : ${product.images}" 
+                             th:src="${img.imageUrl}" 
+                             th:alt="${product.name}"
+                             th:classappend="${iterStat.first} ? 'active' : ''"
+                             class="product-thumbnail"
+                             th:attr="onclick=|changeMainImage('${img.imageUrl}', this)|">
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <h1 th:text="${product.name}">Product Name</h1>
+                    <div class="product-price" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
+                    <div class="product-shop">
+                        <span>Shop: </span>
+                        <a th:href="@{'/products?shopId=' + ${product.shopId}}" th:text="${product.shopName}">Shop Name</a>
+                    </div>
+                    <div class="product-description" th:utext="${product.description}">Description</div>
+                    
+                    <!-- Variants -->
+                    <div th:if="${product.variants != null and !product.variants.empty}" class="product-variants">
+                        <h3>Lựa chọn:</h3>
+                        <div th:each="variantGroup : ${#maps.groupBy(product.variants, 'name')}">
+                            <label th:text="${variantGroup.key}">Variant Name</label>
+                            <div class="variant-options">
+                                <div th:each="variant : ${variantGroup.value}" 
+                                     class="variant-option"
+                                     th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''"
+                                     th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">
+                                    Variant Value
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <button class="btn btn-primary" onclick="addToCart()">Thêm vào giỏ hàng</button>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${product == null}" class="error">
+                Sản phẩm không tồn tại hoặc chưa được xuất bản.
+            </div>
         </div>
     </main>
 
@@ -219,46 +272,9 @@
     <!-- JavaScript -->
     <script th:src="@{/js/common.js}"></script>
     <script>
-        let productId = null;
+        let productId = /*[[${product != null ? product.id : null}]]*/ null;
         let selectedVariants = {};
-        let productData = null;
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Get product ID from URL
-            const pathParts = window.location.pathname.split('/');
-            productId = pathParts[pathParts.length - 1];
-
-            if (!productId) {
-                document.getElementById('productDetail').innerHTML = 
-                    '<div class="error">Không tìm thấy ID sản phẩm</div>';
-                return;
-            }
-
-            await loadProductDetail();
-        });
-
-        async function loadProductDetail() {
-            const container = document.getElementById('productDetail');
-            container.innerHTML = '<div class="loading">Đang tải thông tin sản phẩm...</div>';
-
-            try {
-                const response = await fetch(`/api/products/${productId}`);
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        container.innerHTML = '<div class="error">Sản phẩm không tồn tại hoặc chưa được xuất bản</div>';
-                    } else {
-                        throw new Error('Failed to load product');
-                    }
-                    return;
-                }
-
-                productData = await response.json();
-                displayProductDetail(productData);
-            } catch (error) {
-                container.innerHTML = '<div class="error">Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.</div>';
-                console.error('Error loading product:', error);
-            }
-        }
+        let productData = /*[[${product}]]*/ null;
 
         function displayProductDetail(product) {
             const container = document.getElementById('productDetail');

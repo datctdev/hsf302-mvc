@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.parameterName}">
     <title>Chỉnh Sửa Sản Phẩm - E-commerce</title>
     
     <!-- CSS -->
@@ -41,22 +43,25 @@
                 </div>
 
                 <!-- Wizard Content -->
-                <form id="productForm">
+                <form id="productForm" style="display: none;">
+                    <!-- Hidden form for actual submission -->
+                    <input type="hidden" id="hiddenProductId" th:value="${product?.id}">
+                </form>
                     <!-- Step 1: Basic Info + Images -->
                     <div class="wizard-content" id="step1">
                         <h3>Thông Tin Cơ Bản & Hình Ảnh</h3>
                         
                         <div class="form-group">
                             <label for="productName">Tên sản phẩm *</label>
-                            <input type="text" id="productName" name="name" required>
+                            <input type="text" id="productName" name="name" th:value="${product?.name}" required>
                         </div>
                         <div class="form-group">
                             <label for="productDescription">Mô tả</label>
-                            <textarea id="productDescription" name="description" rows="4"></textarea>
+                            <textarea id="productDescription" name="description" rows="4" th:text="${product?.description}"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="productSku">SKU (Mã hàng tồn kho) *</label>
-                            <input type="text" id="productSku" name="sku" placeholder="VD: SHIRT-COTTON-001" required>
+                            <input type="text" id="productSku" name="sku" th:value="${product?.sku}" placeholder="VD: SHIRT-COTTON-001" required>
                             <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
                                 <strong>SKU là gì?</strong> Mã định danh duy nhất cho sản phẩm (Stock Keeping Unit). 
                                 Dùng để quản lý tồn kho và phân biệt sản phẩm.
@@ -64,14 +69,14 @@
                         </div>
                         <div class="form-group">
                             <label for="productBasePrice">Giá cơ bản (VNĐ) *</label>
-                            <input type="number" id="productBasePrice" name="basePrice" min="0" step="0.01" required>
+                            <input type="number" id="productBasePrice" name="basePrice" th:value="${product?.basePrice}" min="0" step="0.01" required>
                         </div>
                         <div class="form-group">
                             <label for="productStatus">Trạng thái</label>
                             <select id="productStatus" name="status">
-                                <option value="DRAFT">Nháp</option>
-                                <option value="PUBLISHED">Xuất bản</option>
-                                <option value="ARCHIVED">Đã lưu trữ</option>
+                                <option value="DRAFT" th:selected="${product?.status == 'DRAFT'}">Nháp</option>
+                                <option value="PUBLISHED" th:selected="${product?.status == 'PUBLISHED'}">Xuất bản</option>
+                                <option value="ARCHIVED" th:selected="${product?.status == 'ARCHIVED'}">Đã lưu trữ</option>
                             </select>
                         </div>
 
@@ -113,8 +118,14 @@
                             <label for="productCategory">Danh Mục Sản Phẩm</label>
                             <select id="productCategory" name="categoryId">
                                 <option value="">-- Chọn danh mục (Tùy chọn) --</option>
-                                <!-- Categories will be loaded here -->
+                                <option th:each="category : ${categories}" 
+                                        th:value="${category.id}" 
+                                        th:selected="${product?.categoryId != null and product.categoryId == category.id}"
+                                        th:text="${category.name}">Category Name</option>
                             </select>
+                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Chọn danh mục phù hợp để khách hàng dễ tìm thấy sản phẩm của bạn
+                            </small>
                         </div>
                     </div>
 
@@ -155,85 +166,75 @@
             variants: [],
             categoryId: null
         };
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            const token = AuthUtils.getToken();
-            if (!token) {
-                window.location.href = '/login?expired=true';
-                return;
-            }
-
-            // Show seller products link
-            document.getElementById('sellerProductsLink').style.display = 'inline-block';
-
-            // Get product ID from URL
-            const pathParts = window.location.pathname.split('/');
-            productId = pathParts[pathParts.length - 1];
-
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get product ID from Thymeleaf or hidden input or URL
+            productId = /*[[${product?.id}]]*/ null;
             if (!productId) {
-                alert('Không tìm thấy ID sản phẩm');
-                window.location.href = '/seller/products';
-                return;
+                // Fallback: try to get from hidden input
+                const hiddenInput = document.getElementById('hiddenProductId');
+                if (hiddenInput && hiddenInput.value) {
+                    productId = hiddenInput.value;
+                }
             }
-
-            // Load product data
-            await loadProductData();
+            // If still null, try to get from URL
+            if (!productId) {
+                const pathParts = window.location.pathname.split('/');
+                const editIndex = pathParts.indexOf('edit');
+                if (editIndex !== -1 && editIndex < pathParts.length - 1) {
+                    productId = pathParts[editIndex + 1];
+                }
+            }
+            
+            // Validate productId
+            if (!productId) {
+                console.error('Product ID not found. Cannot proceed with edit.');
+                alert('Lỗi: Không tìm thấy ID sản phẩm. Vui lòng tải lại trang.');
+            }
+            
+            // Load product data from Model (already in page via Thymeleaf)
+            loadProductDataFromModel();
 
             // Setup image upload
             setupImageUpload();
         });
 
-        async function loadProductData() {
-            try {
-                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`);
-                if (!response.ok) {
-                    alert('Không thể tải thông tin sản phẩm');
-                    window.location.href = '/seller/products';
-                    return;
+        function loadProductDataFromModel() {
+            // Product data is already in the form via Thymeleaf
+            // Load images from Model
+            const productImages = /*[[${product?.images}]]*/ [];
+            if (productImages && productImages.length > 0) {
+                productData.images = productImages.map(img => ({
+                    id: img.id,
+                    imageUrl: img.imageUrl,
+                    isThumbnail: img.isThumbnail || false,
+                    displayOrder: img.displayOrder || 0
+                }));
+                updateImagePreviews();
+            }
+
+            // Load variants from Model
+            const productVariants = /*[[${product?.variants}]]*/ [];
+            if (productVariants && productVariants.length > 0) {
+                productData.variants = productVariants.map(v => ({
+                    id: v.id,
+                    name: v.name,
+                    value: v.value,
+                    priceModifier: v.priceModifier || 0,
+                    stockQuantity: v.stockQuantity || 0,
+                    sku: v.sku
+                }));
+                updateVariantList();
+            }
+
+            // Load category from Model
+            const productCategoryId = /*[[${product?.categoryId}]]*/ null;
+            if (productCategoryId) {
+                productData.categoryId = productCategoryId;
+                const categorySelect = document.getElementById('productCategory');
+                if (categorySelect) {
+                    categorySelect.value = productCategoryId;
                 }
-
-                const product = await response.json();
-
-                // Fill form with product data
-                document.getElementById('productName').value = product.name || '';
-                document.getElementById('productDescription').value = product.description || '';
-                document.getElementById('productSku').value = product.sku || '';
-                document.getElementById('productBasePrice').value = product.basePrice || 0;
-                document.getElementById('productStatus').value = product.status || 'DRAFT';
-
-                // Load images
-                if (product.images && product.images.length > 0) {
-                    productData.images = product.images.map(img => ({
-                        id: img.id,
-                        imageUrl: img.imageUrl,
-                        isThumbnail: img.isThumbnail || false,
-                        displayOrder: img.displayOrder || 0
-                    }));
-                    updateImagePreviews();
-                }
-
-                // Load variants
-                if (product.variants && product.variants.length > 0) {
-                    productData.variants = product.variants.map(v => ({
-                        id: v.id,
-                        name: v.name,
-                        value: v.value,
-                        priceModifier: v.priceModifier || 0,
-                        stockQuantity: v.stockQuantity || 0,
-                        sku: v.sku
-                    }));
-                    updateVariantList();
-                }
-
-                // Load category
-                if (product.categoryId) {
-                    productData.categoryId = product.categoryId;
-                    document.getElementById('productCategory').value = product.categoryId;
-                }
-            } catch (error) {
-                alert('Lỗi khi tải thông tin sản phẩm');
-                console.error(error);
-                window.location.href = '/seller/products';
             }
         }
 
@@ -268,7 +269,14 @@
                 formData.append('file', file);
 
                 try {
-                    const response = await AuthUtils.fetchWithAuth('/api/files/upload', {
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                                     document.querySelector('input[name="_csrf"]')?.value;
+                    if (csrfToken) {
+                        formData.append('_csrf', csrfToken);
+                    }
+                    
+                    const response = await fetch('/files/upload', {
                         method: 'POST',
                         body: formData
                     });
@@ -286,10 +294,11 @@
         }
 
         function addImagePreview(imageUrl) {
-            const previewGrid = document.getElementById('imagePreviewGrid');
+            // Add new image (without id, so backend will create new)
             const imageIndex = productData.images.length;
             
             productData.images.push({
+                id: null, // New image, no ID yet
                 imageUrl: imageUrl,
                 isThumbnail: false,
                 displayOrder: imageIndex
@@ -425,16 +434,17 @@
         }
 
         function collectStepData() {
-            if (currentStep === 1) {
-                productData.name = document.getElementById('productName').value;
-                productData.description = document.getElementById('productDescription').value;
-                productData.sku = document.getElementById('productSku').value;
-                productData.basePrice = parseFloat(document.getElementById('productBasePrice').value);
-                productData.status = document.getElementById('productStatus').value;
-            } else if (currentStep === 2) {
-                // Collect variants - preserve original IDs
+            // Always collect basic fields from step 1
+            productData.name = document.getElementById('productName').value;
+            productData.description = document.getElementById('productDescription').value;
+            productData.sku = document.getElementById('productSku').value;
+            productData.basePrice = parseFloat(document.getElementById('productBasePrice').value) || 0;
+            productData.status = document.getElementById('productStatus').value;
+            
+            // Collect variants from step 2 if available
+            const variantItems = document.querySelectorAll('.variant-item');
+            if (variantItems.length > 0) {
                 const newVariants = [];
-                const variantItems = document.querySelectorAll('.variant-item');
                 variantItems.forEach((item) => {
                     const variantId = item.getAttribute('data-variant-id');
                     newVariants.push({
@@ -447,11 +457,16 @@
                     });
                 });
                 productData.variants = newVariants;
-                
-                // Collect category
-                const categorySelect = document.getElementById('productCategory');
+            }
+            
+            // Always collect category from step 2 if available
+            const categorySelect = document.getElementById('productCategory');
+            if (categorySelect) {
                 productData.categoryId = categorySelect.value || null;
             }
+            
+            // Images are already in productData.images (from loadProductDataFromModel or addImagePreview)
+            // Don't reset images here - keep existing images + newly uploaded ones
         }
 
         function nextStep() {
@@ -606,31 +621,81 @@
             reviewContent.innerHTML = html;
         }
 
-        async function submitProduct() {
+        function submitProduct() {
             collectStepData();
 
             if (!validateStep(1)) {
                 return;
             }
 
-            try {
-                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(productData)
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Cập nhật sản phẩm thành công!');
-                    window.location.href = '/seller/products';
-                } else {
-                    alert(data.message || 'Cập nhật sản phẩm thất bại');
-                }
-            } catch (error) {
-                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-                console.error(error);
+            // Validate productId
+            if (!productId) {
+                alert('Lỗi: Không tìm thấy ID sản phẩm. Vui lòng tải lại trang.');
+                console.error('productId is null or undefined');
+                return;
             }
+
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/seller/products/edit/' + productId;
+            form.enctype = 'application/x-www-form-urlencoded';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                             document.querySelector('input[name="_csrf"]')?.value;
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+            }
+            
+            // Add basic product fields (always include required fields)
+            addInput(form, 'name', productData.name || '');
+            if (productData.description) {
+                addInput(form, 'description', productData.description);
+            }
+            addInput(form, 'sku', productData.sku || '');
+            addInput(form, 'basePrice', productData.basePrice || 0);
+            addInput(form, 'status', productData.status || 'DRAFT');
+            if (productData.categoryId) {
+                addInput(form, 'categoryId', productData.categoryId);
+            }
+            
+            // Add variants with proper Spring MVC array format
+            if (productData.variants && productData.variants.length > 0) {
+                productData.variants.forEach((variant, index) => {
+                    if (variant.id) addInput(form, `variants[${index}].id`, variant.id);
+                    if (variant.name) addInput(form, `variants[${index}].name`, variant.name);
+                    if (variant.value) addInput(form, `variants[${index}].value`, variant.value);
+                    if (variant.sku) addInput(form, `variants[${index}].sku`, variant.sku);
+                    if (variant.priceModifier !== undefined) addInput(form, `variants[${index}].priceModifier`, variant.priceModifier);
+                    if (variant.stockQuantity !== undefined) addInput(form, `variants[${index}].stockQuantity`, variant.stockQuantity);
+                });
+            }
+            
+            // Add images with proper Spring MVC array format
+            if (productData.images && productData.images.length > 0) {
+                productData.images.forEach((image, index) => {
+                    if (image.id) addInput(form, `images[${index}].id`, image.id);
+                    if (image.imageUrl) addInput(form, `images[${index}].imageUrl`, image.imageUrl);
+                    if (image.isThumbnail !== undefined) addInput(form, `images[${index}].isThumbnail`, image.isThumbnail);
+                    if (image.displayOrder !== undefined) addInput(form, `images[${index}].displayOrder`, image.displayOrder);
+                });
+            }
+            
+            function addInput(form, name, value) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
         }
 
         function getStatusText(status) {

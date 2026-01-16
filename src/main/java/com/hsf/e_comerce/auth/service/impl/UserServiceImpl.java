@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         if (!user.getIsActive()) {
@@ -55,21 +55,21 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional
     public User findById(UUID id) {
-        return userRepository.findById(id)
+        return userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
     @Override
     @Transactional
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
     }
 
     @Override
     @Transactional
     public List<String> getUserRoles(UUID userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         
         if (user.getRole() != null) {
@@ -91,13 +91,13 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional(readOnly = true)
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findByDeletedFalse();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUserResponses() {
-        return userRepository.findAll().stream()
+        return userRepository.findByDeletedFalse().stream()
                 .map(user -> UserResponse.convertToResponse(user, this))
                 .collect(Collectors.toList());
     }
@@ -105,7 +105,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional(readOnly = true)
     public UserResponse getUserResponseById(UUID id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         return UserResponse.convertToResponse(user, this);
     }
@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     @Transactional
     public User updateUser(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         
         if (fullName != null && !fullName.isEmpty()) {
@@ -121,8 +121,8 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         }
         
         if (email != null && !email.isEmpty()) {
-            // Check if email already exists for another user
-            userRepository.findByEmail(email).ifPresent(existingUser -> {
+            // Check if email already exists for another user (not deleted)
+            userRepository.findByEmailAndDeletedFalse(email).ifPresent(existingUser -> {
                 if (!existingUser.getId().equals(userId)) {
                     throw new RuntimeException("Email đã được sử dụng bởi người dùng khác");
                 }
@@ -152,14 +152,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     public UserResponse updateUserAndGetResponse(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive) {
         User user = updateUser(userId, fullName, email, phoneNumber, roleName, isActive);
         return UserResponse.convertToResponse(user, this);
-    }
-
-    @Override
-    @Transactional
-    public void deleteUser(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        userRepository.delete(user);
     }
 
     @Override

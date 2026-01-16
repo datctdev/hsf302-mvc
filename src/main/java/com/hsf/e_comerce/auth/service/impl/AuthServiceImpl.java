@@ -69,30 +69,18 @@ public class AuthServiceImpl implements AuthService {
         // Lưu user vào database (sau khi đã có role)
         user = userRepository.save(user);
 
-        // Load user details để tạo token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-
-        // Tạo JWT token với extra claims
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("userId", user.getId().toString());
-        extraClaims.put("roles", userService.getUserRoles(user.getId()));
-
-        String jwtToken = jwtService.generateToken(extraClaims, userDetails);
-
         // Lấy roles của user
         var roles = userService.getUserRoles(user.getId());
 
-        // Tính toán thời gian hết hạn
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
-
+        // MVC không cần JWT token, chỉ trả về thông tin user
         return AuthResponse.builder()
-                .token(jwtToken)
-                .type("Bearer")
+                .token(null) // Không tạo token cho MVC
+                .type(null)
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .roles(roles)
-                .expiresAt(expiresAt)
+                .expiresAt(null)
                 .build();
     }
 
@@ -119,38 +107,20 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException();
         }
 
-        // Load user details để tạo token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-
-        // Tạo JWT token với extra claims
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("userId", user.getId().toString());
-        extraClaims.put("roles", userService.getUserRoles(user.getId()));
-
-        String jwtToken = jwtService.generateToken(extraClaims, userDetails);
-
         // Lấy roles của user
         var roles = userService.getUserRoles(user.getId());
 
-        // Tính toán thời gian hết hạn
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
-
-        AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
-                .token(jwtToken)
-                .type("Bearer")
+        // MVC không cần JWT token, Spring Security sẽ xử lý authentication
+        // Login được xử lý bởi Spring Security form login
+        return AuthResponse.builder()
+                .token(null) // Không tạo token cho MVC
+                .type(null)
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .roles(roles)
-                .expiresAt(expiresAt);
-
-        // Tạo refresh token nếu rememberMe = true
-        if (request.getRememberMe() != null && request.getRememberMe()) {
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            responseBuilder.refreshToken(refreshToken.getToken());
-        }
-
-        return responseBuilder.build();
+                .expiresAt(null)
+                .build();
     }
 
     @Override
@@ -217,9 +187,8 @@ public class AuthServiceImpl implements AuthService {
         // Update password
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-
-        // Revoke all refresh tokens for security
-        refreshTokenService.revokeAllUserTokens(user);
+        
+        // MVC không cần revoke refresh tokens
     }
 
     @Override
@@ -249,9 +218,8 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.findById(userId);
         user.setIsActive(false);
         userRepository.save(user);
-
-        // Revoke all refresh tokens
-        refreshTokenService.revokeAllUserTokens(user);
+        
+        // MVC không cần revoke refresh tokens
     }
 
     @Override

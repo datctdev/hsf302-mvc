@@ -52,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new CustomException("Shop không tồn tại"));
 
         // Validate SKU uniqueness
-        if (productRepository.existsBySku(request.getSku())) {
+        if (productRepository.existsBySkuAndDeletedFalse(request.getSku())) {
             throw new CustomException("SKU đã tồn tại: " + request.getSku());
         }
 
@@ -130,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse updateProduct(UUID shopId, UUID productId, UpdateProductRequest request) {
         // Validate product belongs to shop
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         if (!product.getShop().getId().equals(shopId)) {
@@ -145,7 +145,7 @@ public class ProductServiceImpl implements ProductService {
             product.setDescription(request.getDescription());
         }
         if (request.getSku() != null && !request.getSku().equals(product.getSku())) {
-            if (productRepository.existsBySku(request.getSku())) {
+            if (productRepository.existsBySkuAndDeletedFalse(request.getSku())) {
                 throw new CustomException("SKU đã tồn tại: " + request.getSku());
             }
             product.setSku(request.getSku());
@@ -209,7 +209,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Update images - smart update: update existing, create new, delete removed
-        if (request.getImages() != null) {
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
             List<ProductImage> existingImages = imageRepository.findByProductOrderByDisplayOrderAsc(product);
             List<UUID> requestImageIds = request.getImages().stream()
                     .map(ProductImageRequest::getId)
@@ -248,10 +248,8 @@ public class ProductServiceImpl implements ProductService {
                 
                 imageRepository.save(image);
             }
-        } else {
-            // If images is null, delete all existing images
-            imageRepository.findByProductOrderByDisplayOrderAsc(product).forEach(imageRepository::delete);
         }
+        // If images is null or empty, keep existing images (don't delete)
 
         // Update category
         if (request.getCategoryId() != null) {
@@ -278,20 +276,22 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(UUID shopId, UUID productId) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         if (!product.getShop().getId().equals(shopId)) {
             throw new CustomException("Bạn không có quyền xóa sản phẩm này");
         }
 
-        productRepository.delete(product);
+        // Soft delete: set deleted flag to true
+        product.setDeleted(true);
+        productRepository.save(product);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getProductById(UUID productId) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         return ProductResponse.convertToResponse(
@@ -308,7 +308,7 @@ public class ProductServiceImpl implements ProductService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new CustomException("Shop không tồn tại"));
 
-        return productRepository.findByShop(shop).stream()
+        return productRepository.findByShopAndDeletedFalse(shop).stream()
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,
@@ -326,7 +326,7 @@ public class ProductServiceImpl implements ProductService {
 
         ProductStatus productStatus = ProductStatus.valueOf(status.toUpperCase());
 
-        return productRepository.findByShopAndStatus(shop, productStatus).stream()
+        return productRepository.findByShopAndStatusAndDeletedFalse(shop, productStatus).stream()
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,

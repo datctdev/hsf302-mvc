@@ -25,22 +25,22 @@
             <div class="dashboard-grid">
                 <div class="stat-card">
                     <h3>Tổng Users</h3>
-                    <div class="value" id="totalUsers">-</div>
+                    <div class="value" th:text="${totalUsers ?: 0}">0</div>
                     <div class="description">Tổng số người dùng</div>
                 </div>
                 <div class="stat-card success">
                     <h3>Yêu Cầu Seller</h3>
-                    <div class="value" id="pendingRequests">-</div>
+                    <div class="value" th:text="${pendingRequests ?: 0}">0</div>
                     <div class="description">Đang chờ duyệt</div>
                 </div>
                 <div class="stat-card warning">
                     <h3>Tổng Shops</h3>
-                    <div class="value" id="totalShops">-</div>
+                    <div class="value" th:text="${totalShops ?: 0}">0</div>
                     <div class="description">Shops đang hoạt động</div>
                 </div>
                 <div class="stat-card danger">
                     <h3>Tổng Đơn Hàng</h3>
-                    <div class="value" id="totalOrders">-</div>
+                    <div class="value" th:text="${totalOrders ?: 0}">0</div>
                     <div class="description">Tất cả đơn hàng</div>
                 </div>
             </div>

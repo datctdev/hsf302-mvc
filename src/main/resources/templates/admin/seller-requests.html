@@ -23,16 +23,81 @@
         <div class="container">
             <div class="filters">
                 <label for="statusFilter">Lọc theo trạng thái: </label>
-                <select id="statusFilter" onchange="loadRequests()">
+                <select id="statusFilter" onchange="filterRequests()">
                     <option value="">Tất cả</option>
-                    <option value="PENDING">Đang chờ</option>
-                    <option value="APPROVED">Đã duyệt</option>
-                    <option value="REJECTED">Đã từ chối</option>
+                    <option value="PENDING" th:selected="${status == 'PENDING'}">Đang chờ</option>
+                    <option value="APPROVED" th:selected="${status == 'APPROVED'}">Đã duyệt</option>
+                    <option value="REJECTED" th:selected="${status == 'REJECTED'}">Đã từ chối</option>
                 </select>
             </div>
 
+            <!-- Flash Messages -->
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
             <div id="requestsContainer" class="requests-list">
-                <!-- Requests will be loaded here -->
+                <!-- Requests loaded from Model -->
+                <div th:if="${requests != null and !requests.empty}" th:each="request : ${requests}">
+                    <div class="request-card">
+                        <div class="request-header">
+                            <h3 th:text="${request.shopName}">Shop Name</h3>
+                            <span class="status-badge" 
+                                  th:classappend="'status-' + ${request.status.toLowerCase()}"
+                                  th:text="${request.status == 'PENDING'} ? 'Đang chờ' : (${request.status == 'APPROVED'} ? 'Đã duyệt' : 'Đã từ chối')">Status</span>
+                        </div>
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <label>User ID:</label>
+                                <span th:text="${request.userId}">User ID</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Số điện thoại:</label>
+                                <span th:text="${request.shopPhone ?: 'N/A'}">Phone</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Địa chỉ:</label>
+                                <span th:text="${request.shopAddress ?: 'N/A'}">Address</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Ngày tạo:</label>
+                                <span th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}">Date</span>
+                            </div>
+                            <div th:if="${request.reviewedAt != null}" class="detail-item">
+                                <label>Ngày duyệt:</label>
+                                <span th:text="${#temporals.format(request.reviewedAt, 'dd/MM/yyyy HH:mm')}">Date</span>
+                            </div>
+                            <div th:if="${request.rejectionReason != null}" class="detail-item">
+                                <label>Lý do từ chối:</label>
+                                <span th:text="${request.rejectionReason}" style="color: red;">Reason</span>
+                            </div>
+                            <div th:if="${request.shopDescription != null}" class="detail-item">
+                                <label>Mô tả shop:</label>
+                                <span th:text="${request.shopDescription}">Description</span>
+                            </div>
+                        </div>
+                        <div th:if="${request.logoUrl != null or request.coverImageUrl != null}" class="request-images" style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <div th:if="${request.logoUrl != null}">
+                                <label>Logo:</label>
+                                <img th:src="${request.logoUrl}" alt="Logo" style="max-width: 150px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block; margin-top: 0.5rem;">
+                            </div>
+                            <div th:if="${request.coverImageUrl != null}">
+                                <label>Ảnh bìa:</label>
+                                <img th:src="${request.coverImageUrl}" alt="Cover" style="max-width: 300px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block; margin-top: 0.5rem;">
+                            </div>
+                        </div>
+                        <div class="request-actions" th:if="${request.status == 'PENDING'}">
+                            <form th:action="@{'/admin/seller-requests/' + ${request.id} + '/approve'}" method="post" style="display: inline;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Bạn có chắc muốn duyệt yêu cầu này?')">Duyệt</button>
+                            </form>
+                            <button class="btn btn-danger" th:attr="data-request-id=${request.id}" onclick="openRejectModal(this.getAttribute('data-request-id'))">Từ chối</button>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${requests == null or requests.empty}" class="empty-state">
+                    <h3>Không có yêu cầu nào</h3>
+                    <p>Hiện tại không có yêu cầu nào phù hợp với bộ lọc của bạn.</p>
+                </div>
             </div>
         </div>
     </main>
@@ -43,7 +108,10 @@
             <div class="modal-header">
                 <h3>Từ chối Yêu cầu</h3>
             </div>
-            <form id="rejectForm">
+            <form id="rejectForm" method="post">
+                <!-- CSRF Token -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                
                 <div class="form-group">
                     <label for="rejectionReason">Lý do từ chối *</label>
                     <textarea id="rejectionReason" name="rejectionReason" required placeholder="Nhập lý do từ chối..."></textarea>
@@ -62,223 +130,36 @@
     <script>
         let currentRejectRequestId = null;
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            const token = AuthUtils.getToken();
-            if (!token) {
-                window.location.href = '/login?expired=true';
-                return;
-            }
-
-            // Check if user is admin and load admin info
-            try {
-                const response = await AuthUtils.fetchWithAuth('/api/auth/me');
-                if (response.ok) {
-                    const user = await response.json();
-                    const roles = user.roles || [];
-                    
-                    if (!roles.includes('ROLE_ADMIN')) {
-                        alert('Bạn không có quyền truy cập trang này.');
-                        window.location.href = '/';
-                        return;
-                    }
-                    
-                    // Load admin name
-                    document.getElementById('adminName').textContent = user.fullName || user.email;
-                } else {
-                    window.location.href = '/login?expired=true';
-                    return;
-                }
-            } catch (error) {
-                window.location.href = '/login?expired=true';
-                return;
-            }
-            
-            loadRequests();
-        });
-
-        async function loadRequests() {
+        function filterRequests() {
             const statusFilter = document.getElementById('statusFilter').value;
-            let url = '/api/admin/seller-requests';
             if (statusFilter) {
-                url += '?status=' + statusFilter;
-            }
-
-            try {
-                const response = await AuthUtils.fetchWithAuth(url);
-                const requests = await response.json();
-
-                const container = document.getElementById('requestsContainer');
-                
-                if (requests.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <h3>Không có yêu cầu nào</h3>
-                            <p>Hiện tại không có yêu cầu nào phù hợp với bộ lọc của bạn.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = requests.map(request => `
-                    <div class="request-card">
-                        <div class="request-header">
-                            <h3>${escapeHtml(request.shopName)}</h3>
-                            <span class="status-badge status-${request.status.toLowerCase()}">
-                                ${getStatusText(request.status)}
-                            </span>
-                        </div>
-                        <div class="request-details">
-                            <div class="detail-item">
-                                <label>User ID:</label>
-                                <span>${request.userId}</span>
-                            </div>
-                            <div class="detail-item">
-                                <label>Số điện thoại:</label>
-                                <span>${escapeHtml(request.shopPhone || 'N/A')}</span>
-                            </div>
-                            <div class="detail-item">
-                                <label>Địa chỉ:</label>
-                                <span>${escapeHtml(request.shopAddress || 'N/A')}</span>
-                            </div>
-                            <div class="detail-item">
-                                <label>Ngày tạo:</label>
-                                <span>${formatDate(request.createdAt)}</span>
-                            </div>
-                            ${request.reviewedAt ? `
-                                <div class="detail-item">
-                                    <label>Ngày duyệt:</label>
-                                    <span>${formatDate(request.reviewedAt)}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                        ${request.shopDescription ? `
-                            <div class="detail-item">
-                                <label>Mô tả:</label>
-                                <span>${escapeHtml(request.shopDescription)}</span>
-                            </div>
-                        ` : ''}
-                        ${request.rejectionReason ? `
-                            <div style="margin-top: 1rem; padding: 1rem; background-color: #f8d7da; border-left: 4px solid #721c24; border-radius: 4px;">
-                                <strong>Lý do từ chối:</strong>
-                                <p>${escapeHtml(request.rejectionReason)}</p>
-                            </div>
-                        ` : ''}
-                        ${request.logoUrl || request.coverImageUrl ? `
-                            <div class="request-images">
-                                ${request.logoUrl ? `<img src="${request.logoUrl}" alt="Logo">` : ''}
-                                ${request.coverImageUrl ? `<img src="${request.coverImageUrl}" alt="Cover">` : ''}
-                            </div>
-                        ` : ''}
-                        ${request.status === 'PENDING' ? `
-                            <div class="request-actions">
-                                <button class="btn btn-success" onclick="approveRequest('${request.id}')">Duyệt</button>
-                                <button class="btn btn-danger" onclick="openRejectModal('${request.id}')">Từ chối</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('');
-            } catch (error) {
-                document.getElementById('requestsContainer').innerHTML = `
-                    <div class="empty-state">
-                        <h3>Lỗi</h3>
-                        <p>Không thể tải danh sách yêu cầu. Vui lòng thử lại sau.</p>
-                    </div>
-                `;
-            }
-        }
-
-        async function approveRequest(requestId) {
-            if (!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) {
-                return;
-            }
-
-            try {
-                const response = await AuthUtils.fetchWithAuth(`/api/admin/seller-requests/${requestId}/approve`, {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Duyệt yêu cầu thành công!');
-                    loadRequests();
-                } else {
-                    alert(data.message || 'Duyệt yêu cầu thất bại');
-                }
-            } catch (error) {
-                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+                window.location.href = '/admin/seller-requests?status=' + statusFilter;
+            } else {
+                window.location.href = '/admin/seller-requests';
             }
         }
 
         function openRejectModal(requestId) {
             currentRejectRequestId = requestId;
-            document.getElementById('rejectModal').style.display = 'block';
+            const modal = document.getElementById('rejectModal');
+            const form = document.getElementById('rejectForm');
+            if (modal && form) {
+                // Update form action with request ID
+                form.action = '/admin/seller-requests/' + requestId + '/reject';
+                modal.style.display = 'block';
+            }
         }
 
         function closeRejectModal() {
             currentRejectRequestId = null;
-            document.getElementById('rejectModal').style.display = 'none';
-            document.getElementById('rejectForm').reset();
-        }
-
-        document.getElementById('rejectForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await rejectRequest();
-        });
-
-        async function rejectRequest() {
-            if (!currentRejectRequestId) {
-                return;
+            const modal = document.getElementById('rejectModal');
+            const form = document.getElementById('rejectForm');
+            if (modal) {
+                modal.style.display = 'none';
             }
-
-            const rejectionReason = document.getElementById('rejectionReason').value.trim();
-            if (!rejectionReason) {
-                alert('Vui lòng nhập lý do từ chối');
-                return;
+            if (form) {
+                form.reset();
             }
-
-            try {
-                const response = await AuthUtils.fetchWithAuth(`/api/admin/seller-requests/${currentRejectRequestId}/reject`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        rejectionReason: rejectionReason
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Từ chối yêu cầu thành công!');
-                    closeRejectModal();
-                    loadRequests();
-                } else {
-                    alert(data.message || 'Từ chối yêu cầu thất bại');
-                }
-            } catch (error) {
-                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-            }
-        }
-
-        function getStatusText(status) {
-            const statusMap = {
-                'PENDING': 'Đang chờ',
-                'APPROVED': 'Đã duyệt',
-                'REJECTED': 'Đã từ chối'
-            };
-            return statusMap[status] || status;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleString('vi-VN');
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         // Close modal when clicking outside
