@@ -72,6 +72,8 @@ public class DataInitializer implements CommandLineRunner {
         createDefaultUser("admin@gmail.com", "admin123@", "Quản Trị Viên", "ROLE_ADMIN");
         
         log.info("Default users initialization completed.");
+
+        log.info("cai nay de test");
     }
 
     private void createDefaultUser(String email, String password, String fullName, String roleName) {
