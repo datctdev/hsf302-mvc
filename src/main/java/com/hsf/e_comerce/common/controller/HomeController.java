@@ -67,15 +67,8 @@ public class HomeController {
         return "coming-soon";
     }
 
-    @GetMapping("/admin/orders")
-    public String adminOrders() {
-        return "coming-soon";
-    }
-
-    @GetMapping("/seller/orders")
-    public String sellerOrders() {
-        return "coming-soon";
-    }
+    // Admin orders moved to AdminOrderMvcController
+    // Seller orders moved to SellerOrderMvcController
 
     @GetMapping("/seller/statistics")
     public String sellerStatistics() {

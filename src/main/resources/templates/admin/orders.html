@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đơn Hàng - Admin</title>
+    
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+
+    <main class="main-content admin-content">
+        <div class="container">
+            <h2>Quản Lý Đơn Hàng</h2>
+
+            <div class="filters" style="margin-bottom: 2rem;">
+                <label>Lọc theo trạng thái:</label>
+                <select id="statusFilter" onchange="filterOrders()">
+                    <option value="">Tất cả</option>
+                    <option th:each="status : ${orderStatuses}" 
+                            th:value="${status}" 
+                            th:text="${status}"
+                            th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
+                </select>
+            </div>
+
+            <div th:if="${orders == null or orders.empty}" class="empty-state">
+                <p>Chưa có đơn hàng nào.</p>
+            </div>
+
+            <div th:if="${orders != null and !orders.empty}">
+                <div th:each="order : ${orders}" class="request-card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h3>
+                            <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);" 
+                               th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
+                        </div>
+                        <span class="status-badge" 
+                              th:classappend="'status-' + ${order.status}"
+                              th:text="${order.status}">Status</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <label>Khách hàng:</label>
+                            <span th:text="${order.userName}">User</span>
+                        </div>
+                        <div>
+                            <label>Shop:</label>
+                            <span th:text="${order.shopName}">Shop</span>
+                        </div>
+                        <div>
+                            <label>Tổng tiền:</label>
+                            <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <a th:href="@{'/admin/orders/' + ${order.id}}" class="btn btn-primary">Xem Chi Tiết</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function filterOrders() {
+            const status = document.getElementById('statusFilter').value;
+            window.location.href = '/admin/orders' + (status ? '?status=' + status : '');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .checkout-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .checkout-header {
+            margin-bottom: 2rem;
+        }
+
+        .checkout-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        .checkout-form-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .checkout-form-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .shop-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .shop-section h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .checkout-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .checkout-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            flex-shrink: 0;
+        }
+
+        .checkout-item-details {
+            flex: 1;
+        }
+
+        .checkout-item-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .checkout-item-variant {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkout-item-price {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .order-summary {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .order-summary h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-content {
+                grid-template-columns: 1fr;
+            }
+
+            .order-summary {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/nav-home :: nav}"></div>
+
+    <div class="checkout-container">
+        <div class="checkout-header">
+            <h1>Thanh Toán</h1>
+        </div>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+        <form th:action="@{/orders/create}" method="post" th:object="${createOrderRequest}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="checkout-content">
+                <div>
+                    <!-- Shipping Information -->
+                    <div class="checkout-form-section">
+                        <h2>Thông Tin Giao Hàng</h2>
+                        
+                        <div class="form-group">
+                            <label for="shippingName">Họ và Tên *</label>
+                            <input type="text" id="shippingName" th:field="*{shippingName}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shippingPhone">Số Điện Thoại *</label>
+                            <input type="tel" id="shippingPhone" th:field="*{shippingPhone}" 
+                                   pattern="[0-9]{10,11}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shippingAddress">Địa Chỉ *</label>
+                            <input type="text" id="shippingAddress" th:field="*{shippingAddress}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shippingCity">Thành Phố</label>
+                            <input type="text" id="shippingCity" th:field="*{shippingCity}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shippingDistrict">Quận/Huyện</label>
+                            <input type="text" id="shippingDistrict" th:field="*{shippingDistrict}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shippingWard">Phường/Xã</label>
+                            <input type="text" id="shippingWard" th:field="*{shippingWard}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">Ghi Chú</label>
+                            <textarea id="notes" th:field="*{notes}" 
+                                      placeholder="Ghi chú cho người bán (tùy chọn)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Shop Sections - Only show first shop for now (one order per shop) -->
+                    <div th:if="${firstShop != null}">
+                        <div class="shop-section">
+                            <h3 th:text="'Shop: ' + ${firstShop.name}">Shop Name</h3>
+                            <input type="hidden" th:name="shopId" th:value="${firstShop.id}">
+                            
+                            <div th:each="item : ${itemsByShop[firstShop]}">
+                                <div class="checkout-item">
+                                    <img src="/images/placeholder.png" alt="Product" class="checkout-item-image">
+                                    <div class="checkout-item-details">
+                                        <div class="checkout-item-name" th:text="${item.product.name}">Product Name</div>
+                                        <div class="checkout-item-variant" 
+                                             th:if="${item.variant != null}"
+                                             th:text="${item.variant.name + ': ' + item.variant.value}">Variant</div>
+                                        <div class="checkout-item-price">
+                                            <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Price</span>
+                                            <span> x </span>
+                                            <span th:text="${item.quantity}">Quantity</span>
+                                            <span> = </span>
+                                            <span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="order-summary">
+                        <h2>Tóm Tắt Đơn Hàng</h2>
+                        
+                        <div class="summary-row">
+                            <span>Tạm tính:</span>
+                            <span id="subtotal" th:text="${firstShopSubtotal != null ? #numbers.formatDecimal(firstShopSubtotal, 0, 'POINT', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingFee">Phí Vận Chuyển (VNĐ)</label>
+                            <input type="number" id="shippingFee" th:field="*{shippingFee}" 
+                                   min="0" step="1000" value="0">
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Tổng tiền:</span>
+                            <span id="totalPrice">0 VNĐ</span>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                            Đặt Hàng
+                        </button>
+                        
+                        <a href="/cart" class="btn btn-outline-secondary" style="width: 100%; margin-top: 1rem; display: block; text-align: center;">
+                            Quay Lại Giỏ Hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        // Calculate total price
+        function calculateTotal() {
+            const subtotalText = document.getElementById('subtotal').textContent.trim();
+            const subtotal = parseFloat(subtotalText.replace(/[^0-9]/g, '')) || 0;
+            const shippingFee = parseFloat(document.getElementById('shippingFee').value) || 0;
+            const total = subtotal + shippingFee;
+            document.getElementById('totalPrice').textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        document.getElementById('shippingFee').addEventListener('input', calculateTotal);
+        window.addEventListener('load', calculateTotal);
+    </script>
+</body>
+</html>

@@ -20,6 +20,9 @@ public class GlobalControllerAdvice {
     
     // Request-scoped cache using ThreadLocal to avoid multiple queries per request
     private static final ThreadLocal<ConcurrentHashMap<String, Object>> REQUEST_CACHE = new ThreadLocal<>();
+    
+    // Sentinel value to represent null in cache (since ConcurrentHashMap doesn't allow null values)
+    private static final Object NULL_USER = new Object();
 
     @ModelAttribute("currentUser")
     public User getCurrentUser() {
@@ -31,10 +34,16 @@ public class GlobalControllerAdvice {
         }
         
         String cacheKey = "currentUser";
-        if (cache.containsKey(cacheKey)) {
-            return (User) cache.get(cacheKey);
+        Object cached = cache.get(cacheKey);
+        if (cached != null) {
+            // Use sentinel value NULL_USER to represent null
+            if (cached == NULL_USER) {
+                return null;
+            }
+            return (User) cached;
         }
         
+        User result = null;
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && auth.getPrincipal() != null) {
@@ -42,24 +51,27 @@ public class GlobalControllerAdvice {
                 if (username != null && !username.equals("anonymousUser") && !username.isEmpty()) {
                     try {
                         // Use optimized method that fetches role in same query
-                        User user = userService.findByEmailWithRole(username);
-                        cache.put(cacheKey, user);
-                        return user;
+                        result = userService.findByEmailWithRole(username);
                     } catch (Exception e) {
                         // User not found, return null silently
-                        cache.put(cacheKey, null);
-                        return null;
+                        result = null;
                     }
                 }
             }
         } catch (Exception e) {
             // Any error, return null silently
-            cache.put(cacheKey, null);
-            return null;
+            result = null;
         }
         
-        cache.put(cacheKey, null);
-        return null;
+        // Ensure cache is still valid before putting
+        ConcurrentHashMap<String, Object> finalCache = REQUEST_CACHE.get();
+        if (finalCache == null) {
+            finalCache = new ConcurrentHashMap<>();
+            REQUEST_CACHE.set(finalCache);
+        }
+        // Use sentinel value for null since ConcurrentHashMap doesn't allow null values
+        finalCache.put(cacheKey, result != null ? result : NULL_USER);
+        return result;
     }
 
     @ModelAttribute("cartItemCount")
@@ -76,19 +88,25 @@ public class GlobalControllerAdvice {
             return (Integer) cache.get(cacheKey);
         }
         
+        Integer result = 0;
         try {
             User currentUser = getCurrentUser(); // This will use cached value if available
             if (currentUser != null) {
-                Integer count = cartService.getCartItemCount(currentUser);
-                cache.put(cacheKey, count);
-                return count;
+                result = cartService.getCartItemCount(currentUser);
             }
         } catch (Exception e) {
             // Any error, return 0 silently
+            result = 0;
         }
         
-        cache.put(cacheKey, 0);
-        return 0;
+        // Ensure cache is still valid before putting
+        ConcurrentHashMap<String, Object> finalCache = REQUEST_CACHE.get();
+        if (finalCache == null) {
+            finalCache = new ConcurrentHashMap<>();
+            REQUEST_CACHE.set(finalCache);
+        }
+        finalCache.put(cacheKey, result);
+        return result;
     }
     
     /**

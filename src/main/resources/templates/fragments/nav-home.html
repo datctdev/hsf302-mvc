@@ -21,6 +21,7 @@
         </div>
         <!-- Show user info if authenticated -->
         <div th:if="${currentUser != null}" class="user-info">
+            <a href="/orders" class="profile-link">Đơn hàng</a>
             <a href="/profile" class="profile-link">Hồ sơ</a>
             <span class="user-name" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
             <form th:action="@{/logout}" method="post" style="display: inline;">

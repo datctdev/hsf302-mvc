@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers("/profile", "/change-password").authenticated()
                         // Cart pages (require authentication)
                         .requestMatchers("/cart", "/cart/**").authenticated()
+                        // Order pages (require authentication)
+                        .requestMatchers("/orders", "/orders/**").authenticated()
                         // Seller pages - allow authenticated users to become seller
                         .requestMatchers("/seller/become-seller", "/seller/become-seller/**").authenticated()
                         // Other seller pages (require SELLER role)
