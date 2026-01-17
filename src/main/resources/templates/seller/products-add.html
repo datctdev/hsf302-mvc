@@ -73,6 +73,13 @@
                             <label for="productBasePrice">Giá cơ bản (VNĐ) *</label>
                             <input type="number" id="productBasePrice" name="basePrice" min="0" step="0.01" required>
                         </div>
+                        <div class="form-group" id="defaultStockQuantityGroup">
+                            <label for="productStockQuantity">Số lượng tồn kho *</label>
+                            <input type="number" id="productStockQuantity" name="stockQuantity" min="0" value="0" required>
+                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Số lượng tồn kho mặc định. Nếu bạn thêm biến thể ở bước 2, số lượng này sẽ không được sử dụng.
+                            </small>
+                        </div>
                         <div class="form-group">
                             <label for="productStatus">Trạng thái</label>
                             <select id="productStatus" name="status">
@@ -314,6 +321,12 @@
             const variantList = document.getElementById('variantList');
             const variantIndex = productData.variants.length;
             
+            // Hide default stock quantity field when variants are added
+            const defaultStockGroup = document.getElementById('defaultStockQuantityGroup');
+            if (defaultStockGroup) {
+                defaultStockGroup.style.display = 'none';
+            }
+            
             const variantItem = document.createElement('div');
             variantItem.className = 'variant-item';
             variantItem.innerHTML = `
@@ -360,6 +373,16 @@
         }
 
         function updateVariantList() {
+            // Show/hide default stock quantity field based on variants
+            const defaultStockGroup = document.getElementById('defaultStockQuantityGroup');
+            if (defaultStockGroup) {
+                if (productData.variants.length === 0) {
+                    defaultStockGroup.style.display = 'block';
+                } else {
+                    defaultStockGroup.style.display = 'none';
+                }
+            }
+            
             const variantList = document.getElementById('variantList');
             variantList.innerHTML = '';
             productData.variants.forEach((variant, index) => {
@@ -410,6 +433,11 @@
                 productData.sku = document.getElementById('productSku').value;
                 productData.basePrice = parseFloat(document.getElementById('productBasePrice').value);
                 productData.status = document.getElementById('productStatus').value;
+                // Collect stock quantity for default variant (if no variants provided)
+                const stockQuantityInput = document.getElementById('productStockQuantity');
+                if (stockQuantityInput) {
+                    productData.stockQuantity = parseInt(stockQuantityInput.value) || 0;
+                }
             } else if (currentStep === 2) {
                 // Collect variants
                 productData.variants = [];
@@ -583,6 +611,11 @@
                     if (variant.priceModifier !== undefined) addInput(form, `variants[${index}].priceModifier`, variant.priceModifier);
                     if (variant.stockQuantity !== undefined) addInput(form, `variants[${index}].stockQuantity`, variant.stockQuantity);
                 });
+            } else {
+                // If no variants, send stockQuantity for default variant creation
+                if (productData.stockQuantity !== undefined) {
+                    addInput(form, 'stockQuantity', productData.stockQuantity);
+                }
             }
             
             // Add images with proper Spring MVC array format

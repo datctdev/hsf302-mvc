@@ -31,6 +31,9 @@ public class CreateProductRequest {
     @Digits(integer = 10, fraction = 2, message = "Giá không hợp lệ")
     private BigDecimal basePrice;
 
+    @Min(value = 0, message = "Số lượng tồn kho phải >= 0")
+    private Integer stockQuantity; // For default variant when no variants provided
+
     private String status; // DRAFT, PUBLISHED
 
     @Valid

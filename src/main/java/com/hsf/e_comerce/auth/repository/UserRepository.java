@@ -3,6 +3,8 @@ package com.hsf.e_comerce.auth.repository;
 import com.hsf.e_comerce.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,6 +17,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     
     Optional<User> findByEmailAndDeletedFalse(String email);
+    
+    @EntityGraph(attributePaths = {"role"})
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.deleted = false")
+    Optional<User> findByEmailAndDeletedFalseWithRole(@Param("email") String email);
     
     boolean existsByEmail(String email);
     

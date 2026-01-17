@@ -67,6 +67,13 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public User findByEmailWithRole(String email) {
+        return userRepository.findByEmailAndDeletedFalseWithRole(email)
+                .orElse(null); // Return null instead of throwing exception for GlobalControllerAdvice
+    }
+
+    @Override
     @Transactional
     public List<String> getUserRoles(UUID userId) {
         User user = userRepository.findByIdAndDeletedFalse(userId)

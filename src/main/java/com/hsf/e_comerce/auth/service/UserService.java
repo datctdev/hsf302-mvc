@@ -12,6 +12,8 @@ public interface UserService {
     
     User findByEmail(String email);
     
+    User findByEmailWithRole(String email); // Optimized: fetch role in same query
+    
     List<String> getUserRoles(UUID userId);
     
     void assignRoleToUser(User user, String roleName);

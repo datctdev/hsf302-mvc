@@ -4,7 +4,14 @@
         <div class="nav-main">
             <a href="/">Trang chủ</a>
             <a href="/products">Sản phẩm</a>
-            <a href="/cart">Giỏ hàng</a>
+            <a href="/cart">
+                Giỏ hàng
+                <span th:if="${cartItemCount != null and cartItemCount > 0}" 
+                      class="cart-badge" 
+                      th:text="${cartItemCount}"
+                      style="background: var(--primary-color); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: 4px;">
+                </span>
+            </a>
             <a href="/about">Giới thiệu</a>
         </div>
         <!-- Show login/register links if not authenticated -->

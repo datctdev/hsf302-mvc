@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ Hàng - E-commerce</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .cart-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .cart-header {
+            margin-bottom: 2rem;
+        }
+
+        .cart-header h1 {
+            margin: 0;
+        }
+
+        .cart-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        .cart-items {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            flex-shrink: 0;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-item-name a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .cart-item-name a:hover {
+            color: var(--primary-color);
+        }
+
+        .cart-item-variant {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-item-price {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-control button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-control button:hover {
+            background: var(--bg-light);
+        }
+
+        .quantity-control input {
+            width: 60px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+        }
+
+        .remove-item-btn {
+            color: var(--danger-color);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .remove-item-btn:hover {
+            color: var(--danger-color-dark);
+        }
+
+        .cart-summary {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .cart-summary h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .empty-cart-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart h2 {
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .cart-content {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-item {
+                flex-direction: column;
+            }
+
+            .cart-item-image {
+                width: 100%;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    
+    <!-- Navigation -->
+    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="cart-container">
+            <div class="cart-header">
+                <h1>Giỏ Hàng</h1>
+            </div>
+
+            <!-- Flash Messages -->
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <div th:if="${cart != null and cart.items != null and !cart.items.empty}">
+                <div class="cart-content">
+                    <!-- Cart Items -->
+                    <div class="cart-items">
+                        <div th:each="item : ${cart.items}" class="cart-item">
+                            <img th:src="${item.productImageUrl}" 
+                                 th:alt="${item.productName}" 
+                                 class="cart-item-image"
+                                 onerror="this.src='/images/placeholder.png'">
+                            
+                            <div class="cart-item-details">
+                                <div class="cart-item-name">
+                                    <a th:href="@{'/products/' + ${item.productId}}" th:text="${item.productName}">Product Name</a>
+                                </div>
+                                
+                                <div th:if="${item.variantName != null and item.variantValue != null}" class="cart-item-variant">
+                                    <span th:text="${item.variantName + ': ' + item.variantValue}">Variant</span>
+                                </div>
+                                
+                                <div class="cart-item-price">
+                                    <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
+                                </div>
+                                
+                                <div class="cart-item-actions">
+                                    <form th:action="@{'/cart/update'}" method="post" class="quantity-control">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <input type="hidden" name="cartItemId" th:value="${item.id}"/>
+                                        <button type="button" onclick="decreaseQuantity(this)">-</button>
+                                        <input type="number" name="quantity" th:value="${item.quantity}" min="1" 
+                                               onchange="this.form.submit()" required>
+                                        <button type="button" onclick="increaseQuantity(this)">+</button>
+                                    </form>
+                                    
+                                    <form th:action="@{'/cart/remove/' + ${item.id}}" method="post" style="display: inline;">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit" class="remove-item-btn" 
+                                                onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')">
+                                            Xóa
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="cart-summary">
+                        <h2>Tóm Tắt Đơn Hàng</h2>
+                        
+                        <div class="summary-row">
+                            <span>Tổng sản phẩm:</span>
+                            <span th:text="${cart.totalItems}">0</span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Tổng tiền:</span>
+                            <span th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
+                        </div>
+                        
+                        <form th:action="@{/orders/checkout}" method="get">
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                Thanh Toán
+                            </button>
+                        </form>
+                        
+                        <a href="/products" class="btn btn-outline-secondary" style="width: 100%; margin-top: 1rem; display: block; text-align: center;">
+                            Tiếp Tục Mua Sắm
+                        </a>
+                        
+                        <form th:action="@{/cart/clear}" method="post" style="margin-top: 1rem;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-outline-danger" style="width: 100%;"
+                                    onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm khỏi giỏ hàng?')">
+                                Xóa Tất Cả
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty Cart -->
+            <div th:if="${cart == null or cart.items == null or cart.items.empty}" class="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <h2>Giỏ hàng của bạn đang trống</h2>
+                <p>Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm.</p>
+                <a href="/products" class="btn btn-primary">Xem Sản Phẩm</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <!-- JavaScript -->
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        function increaseQuantity(button) {
+            const form = button.closest('form');
+            const input = form.querySelector('input[type="number"]');
+            input.value = parseInt(input.value) + 1;
+            input.dispatchEvent(new Event('change'));
+        }
+
+        function decreaseQuantity(button) {
+            const form = button.closest('form');
+            const input = form.querySelector('input[type="number"]');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+                input.dispatchEvent(new Event('change'));
+            }
+        }
+    </script>
+</body>
+</html>

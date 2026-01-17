@@ -1,6 +1,7 @@
 package com.hsf.e_comerce.product.controller;
 
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
+import com.hsf.e_comerce.product.dto.response.ProductVariantResponse;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -72,6 +74,15 @@ public class ProductMvcController {
         try {
             ProductResponse product = productService.getPublishedProductById(id);
             model.addAttribute("product", product);
+            
+            // Group variants by name for easier display in template
+            if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+                Map<String, List<ProductVariantResponse>> variantGroups = 
+                    product.getVariants().stream()
+                        .collect(Collectors.groupingBy(ProductVariantResponse::getName));
+                model.addAttribute("variantGroups", variantGroups);
+            }
+            
             return "products/detail";
         } catch (Exception e) {
             model.addAttribute("error", "Không tìm thấy sản phẩm");

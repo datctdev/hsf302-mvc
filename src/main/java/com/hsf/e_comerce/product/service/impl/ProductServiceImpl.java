@@ -84,6 +84,26 @@ public class ProductServiceImpl implements ProductService {
                 variant.setSku(variantRequest.getSku());
                 variantRepository.save(variant);
             }
+        } else {
+            // Auto-create default variant if no variants provided
+            // This ensures every product has at least one variant for stock management
+            String defaultVariantSku = product.getSku() + "-DEFAULT";
+            
+            // Check if default SKU already exists (unlikely but possible)
+            int suffix = 1;
+            while (variantRepository.existsBySku(defaultVariantSku)) {
+                defaultVariantSku = product.getSku() + "-DEFAULT-" + suffix;
+                suffix++;
+            }
+            
+            ProductVariant defaultVariant = new ProductVariant();
+            defaultVariant.setProduct(product);
+            defaultVariant.setName("Mặc định");
+            defaultVariant.setValue("Tiêu chuẩn");
+            defaultVariant.setPriceModifier(BigDecimal.ZERO);
+            defaultVariant.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+            defaultVariant.setSku(defaultVariantSku);
+            variantRepository.save(defaultVariant);
         }
 
         // Create images
@@ -160,7 +180,7 @@ public class ProductServiceImpl implements ProductService {
         product = productRepository.save(product);
 
         // Update variants - smart update: update existing, create new, delete removed
-        if (request.getVariants() != null) {
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
             List<ProductVariant> existingVariants = variantRepository.findByProduct(product);
             List<UUID> requestVariantIds = request.getVariants().stream()
                     .map(ProductVariantRequest::getId)
@@ -203,10 +223,28 @@ public class ProductServiceImpl implements ProductService {
                 variant.setSku(variantRequest.getSku());
                 variantRepository.save(variant);
             }
-        } else {
-            // If variants is null, delete all existing variants
+        } else if (request.getVariants() != null && request.getVariants().isEmpty()) {
+            // If variants is explicitly empty list, delete all and create default variant
             variantRepository.findByProduct(product).forEach(variantRepository::delete);
+            
+            // Create default variant
+            String defaultVariantSku = product.getSku() + "-DEFAULT";
+            int suffix = 1;
+            while (variantRepository.existsBySku(defaultVariantSku)) {
+                defaultVariantSku = product.getSku() + "-DEFAULT-" + suffix;
+                suffix++;
+            }
+            
+            ProductVariant defaultVariant = new ProductVariant();
+            defaultVariant.setProduct(product);
+            defaultVariant.setName("Mặc định");
+            defaultVariant.setValue("Tiêu chuẩn");
+            defaultVariant.setPriceModifier(BigDecimal.ZERO);
+            defaultVariant.setStockQuantity(0); // Default to 0 when updating
+            defaultVariant.setSku(defaultVariantSku);
+            variantRepository.save(defaultVariant);
         }
+        // If variants is null, don't change existing variants (partial update)
 
         // Update images - smart update: update existing, create new, delete removed
         if (request.getImages() != null && !request.getImages().isEmpty()) {

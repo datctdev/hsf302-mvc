@@ -240,14 +240,19 @@
                     <div class="product-description" th:utext="${product.description}">Description</div>
                     
                     <!-- Variants -->
-                    <div th:if="${product.variants != null and !product.variants.empty}" class="product-variants">
+                    <div th:if="${variantGroups != null and !variantGroups.empty}" class="product-variants">
                         <h3>Lựa chọn:</h3>
-                        <div th:each="variantGroup : ${#maps.groupBy(product.variants, 'name')}">
+                        <div th:each="variantGroup : ${variantGroups}">
                             <label th:text="${variantGroup.key}">Variant Name</label>
                             <div class="variant-options">
                                 <div th:each="variant : ${variantGroup.value}" 
                                      class="variant-option"
                                      th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''"
+                                     th:attr="data-variant-id=${variant.id}, 
+                                             data-variant-name=${variant.name}, 
+                                             data-variant-value=${variant.value},
+                                             data-stock-quantity=${variant.stockQuantity}"
+                                     onclick="handleVariantClick(this)"
                                      th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">
                                     Variant Value
                                 </div>
@@ -256,7 +261,16 @@
                     </div>
                     
                     <div class="product-actions">
-                        <button class="btn btn-primary" onclick="addToCart()">Thêm vào giỏ hàng</button>
+                        <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="productId" th:value="${product.id}"/>
+                            <input type="hidden" id="variantIdInput" name="variantId" value="">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="button" class="btn btn-primary" id="addToCartBtn" onclick="addToCart()">Thêm vào giỏ hàng</button>
+                        </form>
+                        <div th:if="${currentUser == null}">
+                            <a th:href="@{'/login?redirect=/products/' + ${product.id}}" class="btn btn-primary">Đăng nhập để mua hàng</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -273,7 +287,8 @@
     <script th:src="@{/js/common.js}"></script>
     <script>
         let productId = /*[[${product != null ? product.id : null}]]*/ null;
-        let selectedVariants = {};
+        let selectedVariants = {}; // {variantName: variantValue}
+        let selectedVariantIds = {}; // {variantName: variantId}
         let productData = /*[[${product}]]*/ null;
 
         function displayProductDetail(product) {
@@ -401,20 +416,34 @@
             thumbnail.classList.add('active');
         }
 
-        function selectVariant(name, value, available) {
+        function handleVariantClick(element) {
+            const stockQuantity = parseInt(element.dataset.stockQuantity || '0');
+            if (stockQuantity <= 0) {
+                return; // Disabled variant
+            }
+
+            const name = element.dataset.variantName;
+            const value = element.dataset.variantValue;
+            const variantId = element.dataset.variantId;
+
+            selectVariant(name, value, variantId, true);
+        }
+
+        function selectVariant(name, value, variantId, available) {
             if (!available) return;
 
-            const options = document.querySelectorAll(`[data-name="${name}"]`);
+            const options = document.querySelectorAll(`[data-variant-name="${name}"]`);
             options.forEach(opt => {
                 opt.classList.remove('selected');
             });
 
-            const selectedOption = Array.from(options).find(opt => opt.dataset.value === value);
+            const selectedOption = Array.from(options).find(opt => opt.dataset.variantValue === value);
             if (selectedOption) {
                 selectedOption.classList.add('selected');
             }
 
             selectedVariants[name] = value;
+            selectedVariantIds[name] = variantId;
             updateAddToCartButton();
         }
 
@@ -444,17 +473,57 @@
         }
 
         function addToCart() {
-            // Check if user is logged in
-            const token = AuthUtils ? AuthUtils.getToken() : null;
-            if (!token) {
+            // This function is called from the button click
+            const form = document.getElementById('addToCartForm');
+            if (!form) {
+                // User not logged in
                 if (confirm('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Đi đến trang đăng nhập?')) {
                     window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
                 }
                 return;
             }
 
-            // TODO: Implement add to cart functionality
-            alert('Chức năng thêm vào giỏ hàng sẽ được triển khai sau.');
+            // Check if product has variants and all are selected
+            if (productData && productData.variants && productData.variants.length > 0) {
+                const variantGroups = {};
+                productData.variants.forEach(v => {
+                    if (!variantGroups[v.name]) {
+                        variantGroups[v.name] = true;
+                    }
+                });
+
+                const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
+                if (!allSelected) {
+                    alert('Vui lòng chọn đầy đủ thuộc tính sản phẩm.');
+                    return;
+                }
+
+                // For now, we'll use the first selected variant ID
+                // In a more complex system, you might need to find a combination variant
+                // But based on the current schema, each variant is independent
+                // So we'll just use the first one selected
+                const firstVariantId = Object.values(selectedVariantIds)[0];
+                if (firstVariantId) {
+                    document.getElementById('variantIdInput').value = firstVariantId;
+                } else {
+                    // Fallback: try to find variant by selected values
+                    const matchingVariant = productData.variants.find(v => {
+                        return selectedVariants[v.name] === v.value;
+                    });
+                    if (matchingVariant) {
+                        document.getElementById('variantIdInput').value = matchingVariant.id;
+                    } else {
+                        alert('Không tìm thấy biến thể phù hợp. Vui lòng thử lại.');
+                        return;
+                    }
+                }
+            } else {
+                // No variants, clear variantId
+                document.getElementById('variantIdInput').value = '';
+            }
+
+            // Submit form
+            form.submit();
         }
 
         function viewShop(shopId) {
