@@ -53,7 +53,23 @@ public class SellerProductMvcController {
     }
 
     @GetMapping("/add")
-    public String showAddProductForm(Model model) {
+    public String showAddProductForm(
+            @CurrentUser User user,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        
+        // Kiểm tra shop có địa chỉ đầy đủ chưa
+        UUID shopId = getShopIdByUser(user);
+        var shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new CustomException("Shop không tồn tại"));
+        
+        if (shop.getDistrictId() == null || shop.getWardCode() == null || shop.getWardCode().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Vui lòng cập nhật địa chỉ shop đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã) trước khi thêm sản phẩm. " +
+                "Địa chỉ này cần thiết để tính phí vận chuyển GHN.");
+            return "redirect:/seller/shop";
+        }
+        
         if (!model.containsAttribute("createProductRequest")) {
             model.addAttribute("createProductRequest", new CreateProductRequest());
         }
@@ -81,6 +97,18 @@ public class SellerProductMvcController {
 
         try {
             UUID shopId = getShopIdByUser(user);
+            
+            // Kiểm tra shop có địa chỉ đầy đủ chưa
+            var shop = shopRepository.findById(shopId)
+                    .orElseThrow(() -> new CustomException("Shop không tồn tại"));
+            
+            if (shop.getDistrictId() == null || shop.getWardCode() == null || shop.getWardCode().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", 
+                    "Vui lòng cập nhật địa chỉ shop đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã) trước khi thêm sản phẩm. " +
+                    "Địa chỉ này cần thiết để tính phí vận chuyển GHN.");
+                return "redirect:/seller/shop";
+            }
+            
             productService.createProduct(shopId, request);
             redirectAttributes.addFlashAttribute("success", "Thêm sản phẩm thành công");
             return "redirect:/seller/products";

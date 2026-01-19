@@ -66,6 +66,14 @@
                 Bạn chưa có shop. Vui lòng đăng ký làm seller trước.
             </div>
 
+            <!-- Warning if shop address is incomplete -->
+            <div th:if="${shop != null and (shop.districtId == null or shop.wardCode == null or shop.wardCode.isEmpty())}" 
+                 class="alert alert-warning" 
+                 style="margin-top: 1rem; border-left: 4px solid #ffc107;">
+                <strong>⚠️ Cảnh báo:</strong> Shop của bạn chưa có địa chỉ đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã). 
+                Vui lòng cập nhật địa chỉ shop để có thể thêm sản phẩm và tính phí vận chuyển GHN.
+            </div>
+
             <!-- Shop Management Menu -->
             <div class="shop-section">
                 <h3 style="margin-top: 0;">Quản Lý Shop</h3>

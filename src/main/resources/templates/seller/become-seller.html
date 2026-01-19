@@ -68,12 +68,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="shopAddress">Địa chỉ Shop *</label>
-                        <input type="text" id="shopAddress" th:field="*{shopAddress}" required>
-                        <span th:if="${#fields.hasErrors('shopAddress')}" th:errors="*{shopAddress}" class="error-message"></span>
-                    </div>
-
-                    <div class="form-group">
                         <label for="logoFile">Logo Shop *</label>
                         <input type="file" id="logoFile" name="logoFile" accept="image/*" onchange="handleLogoPreview(event)">
                         <small>Chọn ảnh từ máy tính của bạn (JPG, PNG, GIF - tối đa 25MB)</small>
@@ -204,7 +198,6 @@
             document.getElementById('shopName').value = request.shopName || '';
             document.getElementById('shopDescription').value = request.shopDescription || '';
             document.getElementById('shopPhone').value = request.shopPhone || '';
-            document.getElementById('shopAddress').value = request.shopAddress || '';
             
             if (request.logoUrl) {
                 const logoPreviewImg = document.getElementById('logoPreviewImg');
@@ -368,9 +361,8 @@
                 const shopName = document.getElementById('shopName').value.trim();
                 const shopDescription = document.getElementById('shopDescription').value.trim();
                 const shopPhone = document.getElementById('shopPhone').value.trim();
-                const shopAddress = document.getElementById('shopAddress').value.trim();
                 const logoFile = document.getElementById('logoFile').files[0];
-                const coverFile = document.getElementById('coverFile').files[0];
+                const coverFile = document.getElementById('coverImageFile').files[0];
 
                 // Validate
                 if (!logoFile) {
@@ -430,7 +422,6 @@
                         shopName: shopName,
                         shopDescription: shopDescription,
                         shopPhone: shopPhone,
-                        shopAddress: shopAddress,
                         logoUrl: logoUrl,
                         coverImageUrl: coverImageUrl
                     })
@@ -465,9 +456,8 @@
                 const shopName = document.getElementById('shopName').value.trim();
                 const shopDescription = document.getElementById('shopDescription').value.trim();
                 const shopPhone = document.getElementById('shopPhone').value.trim();
-                const shopAddress = document.getElementById('shopAddress').value.trim();
                 const logoFile = document.getElementById('logoFile').files[0];
-                const coverFile = document.getElementById('coverFile').files[0];
+                const coverFile = document.getElementById('coverImageFile').files[0];
 
                 let logoUrl = currentRequest?.logoUrl || null;
                 let coverImageUrl = currentRequest?.coverImageUrl || null;
@@ -512,7 +502,6 @@
                         shopName: shopName,
                         shopDescription: shopDescription,
                         shopPhone: shopPhone,
-                        shopAddress: shopAddress,
                         logoUrl: logoUrl,
                         coverImageUrl: coverImageUrl
                     })

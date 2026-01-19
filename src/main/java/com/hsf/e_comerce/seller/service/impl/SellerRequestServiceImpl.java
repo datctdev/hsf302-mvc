@@ -136,16 +136,17 @@ public class SellerRequestServiceImpl implements SellerRequestService {
             userService.assignRoleToUser(user, "ROLE_SELLER");
         }
 
-        // Tạo shop
+        // Tạo shop (không yêu cầu địa chỉ - có thể cập nhật sau)
         Shop shop = new Shop();
         shop.setUser(user);
         shop.setName(sellerRequest.getShopName());
         shop.setDescription(sellerRequest.getShopDescription());
         shop.setPhoneNumber(sellerRequest.getShopPhone());
-        shop.setAddress(sellerRequest.getShopAddress());
+        shop.setAddress(sellerRequest.getShopAddress()); // Có thể null
         shop.setLogoUrl(sellerRequest.getLogoUrl());
         shop.setCoverImageUrl(sellerRequest.getCoverImageUrl());
         shop.setStatus(ShopStatus.ACTIVE);
+        // districtId và wardCode sẽ được cập nhật sau khi seller cập nhật địa chỉ
         shopRepository.save(shop);
 
         // Cập nhật request
