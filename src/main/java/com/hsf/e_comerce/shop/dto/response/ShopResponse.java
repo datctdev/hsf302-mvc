@@ -22,6 +22,8 @@ public class ShopResponse {
     private String coverImageUrl;
     private String phoneNumber;
     private String address;
+    private Integer districtId;  // Mã quận/huyện GHN
+    private String wardCode;  // Mã phường/xã GHN
     private String status;
     private Float averageRating;
     private LocalDateTime createdAt;

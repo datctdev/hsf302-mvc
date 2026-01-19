@@ -33,6 +33,10 @@ public class CreateOrderRequest {
     
     private String shippingWard;
     
+    private Integer shippingDistrictId;  // Mã quận/huyện GHN
+    
+    private String shippingWardCode;  // Mã phường/xã GHN
+    
     private String notes;
     
     @NotNull(message = "Shipping fee is required")

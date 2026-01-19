@@ -218,14 +218,36 @@
                             <input type="text" id="shippingCity" th:field="*{shippingCity}">
                         </div>
 
+                        <!-- Address Selection with GHN Master Data -->
                         <div class="form-group">
-                            <label for="shippingDistrict">Quận/Huyện</label>
-                            <input type="text" id="shippingDistrict" th:field="*{shippingDistrict}">
+                            <label for="provinceSelect">Tỉnh/Thành phố *</label>
+                            <select id="provinceSelect" class="form-control" required>
+                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="shippingWard">Phường/Xã</label>
-                            <input type="text" id="shippingWard" th:field="*{shippingWard}">
+                            <label for="districtSelect">Quận/Huyện *</label>
+                            <select id="districtSelect" class="form-control" required disabled>
+                                <option value="">-- Chọn Quận/Huyện --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wardSelect">Phường/Xã *</label>
+                            <select id="wardSelect" class="form-control" required disabled>
+                                <option value="">-- Chọn Phường/Xã --</option>
+                            </select>
+                        </div>
+
+                        <!-- Hidden fields for form submission -->
+                        <input type="hidden" id="shippingDistrict" name="shippingDistrict">
+                        <input type="hidden" id="shippingWard" name="shippingWard">
+                        <input type="hidden" id="toDistrictId" name="shippingDistrictId">
+                        <input type="hidden" id="toWardCode" name="shippingWardCode">
+
+                        <div class="form-group">
+                            <div id="shippingFeeMessage" style="margin-top: 0.5rem; font-size: 0.9rem; min-height: 1.5rem;"></div>
                         </div>
 
                         <div class="form-group">
@@ -240,6 +262,8 @@
                         <div class="shop-section">
                             <h3 th:text="'Shop: ' + ${firstShop.name}">Shop Name</h3>
                             <input type="hidden" th:name="shopId" th:value="${firstShop.id}">
+                            <input type="hidden" id="shippingDistrictId" name="shippingDistrictId">
+                            <input type="hidden" id="shippingWardCode" name="shippingWardCode">
                             
                             <div th:each="item : ${itemsByShop[firstShop]}">
                                 <div class="checkout-item">
@@ -275,7 +299,11 @@
                         <div class="form-group">
                             <label for="shippingFee">Phí Vận Chuyển (VNĐ)</label>
                             <input type="number" id="shippingFee" th:field="*{shippingFee}" 
-                                   min="0" step="1000" value="0">
+                                   min="0" step="1000" value="0" readonly 
+                                   style="background-color: #f5f5f5;">
+                            <small style="color: #666; font-size: 0.9rem;">
+                                Phí sẽ được tính tự động khi bạn nhập địa chỉ và click "Tính Phí Vận Chuyển"
+                            </small>
                         </div>
                         
                         <div class="summary-row total">
@@ -298,7 +326,17 @@
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 
-    <script>
+    <script th:inline="javascript">
+        // Get CSRF token
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+        const shopId = /*[[${firstShop != null ? firstShop.id : ''}]]*/ '';
+
+        // Address dropdowns
+        const provinceSelect = document.getElementById('provinceSelect');
+        const districtSelect = document.getElementById('districtSelect');
+        const wardSelect = document.getElementById('wardSelect');
+
         // Calculate total price
         function calculateTotal() {
             const subtotalText = document.getElementById('subtotal').textContent.trim();
@@ -308,8 +346,180 @@
             document.getElementById('totalPrice').textContent = total.toLocaleString('vi-VN') + ' VNĐ';
         }
 
-        document.getElementById('shippingFee').addEventListener('input', calculateTotal);
-        window.addEventListener('load', calculateTotal);
+        // Load provinces
+        function loadProvinces() {
+            fetch('/api/shipping/provinces')
+                .then(response => response.json())
+                .then(provinces => {
+                    provinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
+                    provinces.forEach(province => {
+                        const option = document.createElement('option');
+                        option.value = province.ProvinceID;
+                        option.textContent = province.ProvinceName;
+                        provinceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading provinces:', error);
+                    provinceSelect.innerHTML = '<option value="">Lỗi khi tải danh sách tỉnh/thành</option>';
+                });
+        }
+
+        // Load districts when province is selected
+        provinceSelect.addEventListener('change', function() {
+            const provinceId = this.value;
+            districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
+            
+            // Clear hidden fields
+            document.getElementById('toDistrictId').value = '';
+            document.getElementById('toWardCode').value = '';
+            document.getElementById('shippingDistrict').value = '';
+            document.getElementById('shippingWard').value = '';
+
+            if (!provinceId) return;
+
+            districtSelect.disabled = false;
+            fetch(`/api/shipping/districts?provinceId=${provinceId}`)
+                .then(response => response.json())
+                .then(districts => {
+                    districts.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.DistrictID;
+                        option.textContent = district.DistrictName;
+                        districtSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading districts:', error);
+                    districtSelect.innerHTML = '<option value="">Lỗi khi tải danh sách quận/huyện</option>';
+                });
+        });
+
+        // Load wards when district is selected
+        districtSelect.addEventListener('change', function() {
+            const districtId = this.value;
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            wardSelect.disabled = true;
+            
+            // Clear hidden fields
+            document.getElementById('toDistrictId').value = '';
+            document.getElementById('toWardCode').value = '';
+            document.getElementById('shippingWard').value = '';
+
+            if (!districtId) return;
+
+            wardSelect.disabled = false;
+            fetch(`/api/shipping/wards?districtId=${districtId}`)
+                .then(response => response.json())
+                .then(wards => {
+                    wards.forEach(ward => {
+                        const option = document.createElement('option');
+                        option.value = ward.WardCode;
+                        option.textContent = ward.WardName;
+                        wardSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading wards:', error);
+                    wardSelect.innerHTML = '<option value="">Lỗi khi tải danh sách phường/xã</option>';
+                });
+        });
+
+        // Calculate shipping fee when ward is selected
+        wardSelect.addEventListener('change', function() {
+            const districtId = districtSelect.value;
+            const wardCode = this.value;
+            const districtName = districtSelect.options[districtSelect.selectedIndex].text;
+            const wardName = this.options[this.selectedIndex].text;
+
+            if (!districtId || !wardCode) return;
+
+            // Set hidden fields
+            document.getElementById('toDistrictId').value = districtId;
+            document.getElementById('toWardCode').value = wardCode;
+            document.getElementById('shippingDistrict').value = districtName;
+            document.getElementById('shippingWard').value = wardName;
+
+            // Auto calculate shipping fee
+            calculateShippingFee();
+        });
+
+        // Calculate shipping fee via API
+        function calculateShippingFee() {
+            const toDistrictId = document.getElementById('toDistrictId').value;
+            const toWardCode = document.getElementById('toWardCode').value;
+            const messageDiv = document.getElementById('shippingFeeMessage');
+
+            if (!toDistrictId || !toWardCode) {
+                messageDiv.innerHTML = '<span style="color: #c33;">Vui lòng chọn đầy đủ địa chỉ</span>';
+                return;
+            }
+
+            if (!shopId) {
+                messageDiv.innerHTML = '<span style="color: #c33;">Không tìm thấy shop</span>';
+                return;
+            }
+
+            messageDiv.innerHTML = '<span style="color: #666;">Đang tính phí vận chuyển...</span>';
+
+            // Prepare request
+            const requestBody = {
+                shopId: shopId,
+                toDistrictId: parseInt(toDistrictId),
+                toWardCode: toWardCode
+            };
+
+            // Call API
+            fetch('/api/shipping/calculate-fee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update shipping fee
+                    document.getElementById('shippingFee').value = data.shippingFee;
+                    calculateTotal();
+                    messageDiv.innerHTML = '<span style="color: #3c3;">✓ Phí vận chuyển: ' + 
+                        data.shippingFee.toLocaleString('vi-VN') + ' VNĐ</span>';
+                } else {
+                    messageDiv.innerHTML = '<span style="color: #c33;">✗ ' + data.message + '</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.innerHTML = '<span style="color: #c33;">✗ Lỗi khi tính phí vận chuyển. Vui lòng thử lại.</span>';
+            });
+        }
+
+        // Form submit validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const toDistrictId = document.getElementById('toDistrictId').value;
+            const toWardCode = document.getElementById('toWardCode').value;
+            
+            if (!toDistrictId || !toWardCode) {
+                e.preventDefault();
+                alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã.');
+                return false;
+            }
+            
+            // Set hidden inputs (already set, but ensure)
+            document.getElementById('shippingDistrictId').value = toDistrictId;
+            document.getElementById('shippingWardCode').value = toWardCode;
+        });
+
+        // Initialize
+        window.addEventListener('load', function() {
+            loadProvinces();
+            calculateTotal();
+        });
     </script>
 </body>
 </html>

@@ -254,6 +254,8 @@ public class SellerMvcController {
                 updateRequest.setDescription(shop.getDescription());
                 updateRequest.setPhoneNumber(shop.getPhoneNumber());
                 updateRequest.setAddress(shop.getAddress());
+                updateRequest.setDistrictId(shop.getDistrictId());
+                updateRequest.setWardCode(shop.getWardCode());
                 updateRequest.setLogoUrl(shop.getLogoUrl());
                 updateRequest.setCoverImageUrl(shop.getCoverImageUrl());
                 model.addAttribute("updateShopRequest", updateRequest);

@@ -65,6 +65,12 @@ public class Order {
     @Column(name = "shipping_ward", length = 100)
     private String shippingWard;
 
+    @Column(name = "shipping_district_id")
+    private Integer shippingDistrictId;  // Mã quận/huyện GHN
+
+    @Column(name = "shipping_ward_code", length = 20)
+    private String shippingWardCode;  // Mã phường/xã GHN
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes; // Ghi chú của khách hàng
 
@@ -76,6 +82,9 @@ public class Order {
 
     @Column(name = "total", nullable = false, precision = 12, scale = 2)
     private BigDecimal total; // Tổng tiền = subtotal + shippingFee
+
+    @Column(name = "ghn_order_code", length = 100)
+    private String ghnOrderCode; // Mã vận đơn GHN (nếu có)
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<OrderItem> items = new HashSet<>();

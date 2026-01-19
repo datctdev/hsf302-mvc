@@ -34,6 +34,7 @@ public class OrderResponse {
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
     private BigDecimal total;
+    private String ghnOrderCode;  // Mã vận đơn GHN (nếu có)
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

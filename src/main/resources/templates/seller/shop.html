@@ -110,10 +110,36 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="address">Địa Chỉ</label>
-                        <input type="text" id="address" th:field="*{address}">
+                        <label for="address">Địa Chỉ Chi Tiết</label>
+                        <input type="text" id="address" th:field="*{address}" placeholder="Số nhà, tên đường...">
                         <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="error-message"></span>
                     </div>
+
+                    <!-- Address Selection with GHN Master Data -->
+                    <div class="form-group">
+                        <label for="shopProvinceSelect">Tỉnh/Thành phố</label>
+                        <select id="shopProvinceSelect" class="form-control">
+                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopDistrictSelect">Quận/Huyện</label>
+                        <select id="shopDistrictSelect" class="form-control" disabled>
+                            <option value="">-- Chọn Quận/Huyện --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopWardSelect">Phường/Xã</label>
+                        <select id="shopWardSelect" class="form-control" disabled>
+                            <option value="">-- Chọn Phường/Xã --</option>
+                        </select>
+                    </div>
+
+                    <!-- Hidden fields for districtId and wardCode -->
+                    <input type="hidden" id="districtId" name="districtId">
+                    <input type="hidden" id="wardCode" name="wardCode">
 
                     <div class="form-group">
                         <label for="logoUrl">URL Logo Shop</label>
@@ -141,6 +167,118 @@
     <!-- JavaScript -->
     <script th:src="@{/js/common.js}"></script>
     <script>
+        // Address dropdowns for shop
+        const shopProvinceSelect = document.getElementById('shopProvinceSelect');
+        const shopDistrictSelect = document.getElementById('shopDistrictSelect');
+        const shopWardSelect = document.getElementById('shopWardSelect');
+
+        // Load provinces for shop
+        function loadShopProvinces() {
+            if (!shopProvinceSelect) return;
+            
+            fetch('/api/shipping/provinces')
+                .then(response => response.json())
+                .then(provinces => {
+                    shopProvinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
+                    provinces.forEach(province => {
+                        const option = document.createElement('option');
+                        option.value = province.ProvinceID;
+                        option.textContent = province.ProvinceName;
+                        shopProvinceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading provinces:', error);
+                });
+        }
+
+        // Load districts when province is selected
+        if (shopProvinceSelect) {
+            shopProvinceSelect.addEventListener('change', function() {
+                const provinceId = this.value;
+                shopDistrictSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+                shopWardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                shopDistrictSelect.disabled = true;
+                shopWardSelect.disabled = true;
+
+                if (!provinceId) return;
+
+                shopDistrictSelect.disabled = false;
+                fetch(`/api/shipping/districts?provinceId=${provinceId}`)
+                    .then(response => response.json())
+                    .then(districts => {
+                        districts.forEach(district => {
+                            const option = document.createElement('option');
+                            option.value = district.DistrictID;
+                            option.textContent = district.DistrictName;
+                            shopDistrictSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading districts:', error);
+                    });
+            });
+        }
+
+        // Load wards when district is selected
+        if (shopDistrictSelect) {
+            shopDistrictSelect.addEventListener('change', function() {
+                const districtId = this.value;
+                shopWardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                shopWardSelect.disabled = true;
+
+                // Clear hidden fields
+                document.getElementById('districtId').value = '';
+                document.getElementById('wardCode').value = '';
+
+                if (!districtId) return;
+
+                shopWardSelect.disabled = false;
+                fetch(`/api/shipping/wards?districtId=${districtId}`)
+                    .then(response => response.json())
+                    .then(wards => {
+                        wards.forEach(ward => {
+                            const option = document.createElement('option');
+                            option.value = ward.WardCode;
+                            option.textContent = ward.WardName;
+                            shopWardSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading wards:', error);
+                    });
+            });
+        }
+
+        // Set hidden fields when ward is selected
+        if (shopWardSelect) {
+            shopWardSelect.addEventListener('change', function() {
+                const districtId = shopDistrictSelect.value;
+                const wardCode = this.value;
+
+                if (districtId && wardCode) {
+                    document.getElementById('districtId').value = districtId;
+                    document.getElementById('wardCode').value = wardCode;
+                }
+            });
+        }
+
+        // Initialize shop address dropdowns
+        if (shopProvinceSelect) {
+            window.addEventListener('load', function() {
+                loadShopProvinces();
+                
+                // Set existing values to hidden fields if available
+                const existingDistrictId = /*[[${updateShopRequest.districtId}]]*/ null;
+                const existingWardCode = /*[[${updateShopRequest.wardCode}]]*/ null;
+                
+                if (existingDistrictId && existingWardCode) {
+                    document.getElementById('districtId').value = existingDistrictId;
+                    document.getElementById('wardCode').value = existingWardCode;
+                }
+            });
+        }
+
         function handleManagementOptionChange() {
             const option = document.getElementById('managementOption').value;
             const updateShopSection = document.getElementById('updateShopSection');

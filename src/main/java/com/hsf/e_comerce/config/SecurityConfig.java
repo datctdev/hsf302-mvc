@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/cart", "/cart/**").authenticated()
                         // Order pages (require authentication)
                         .requestMatchers("/orders", "/orders/**").authenticated()
+                        // Shipping API (require authentication)
+                        .requestMatchers("/api/shipping/**").authenticated()
                         // Seller pages - allow authenticated users to become seller
                         .requestMatchers("/seller/become-seller", "/seller/become-seller/**").authenticated()
                         // Other seller pages (require SELLER role)
