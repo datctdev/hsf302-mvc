@@ -186,5 +186,6 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         log.info("Product categories initialization completed.");
+        log.info("Product categories initialization completed.");
     }
 }
