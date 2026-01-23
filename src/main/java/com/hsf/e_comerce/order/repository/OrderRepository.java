@@ -1,5 +1,6 @@
 package com.hsf.e_comerce.order.repository;
 
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,4 +46,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @EntityGraph(attributePaths = {"user", "shop", "items", "items.product", "items.variant"})
     @Query("SELECT o FROM Order o WHERE o.shop.id = :shopId ORDER BY o.createdAt DESC")
     List<Order> findByShopIdWithItems(@Param("shopId") UUID shopId);
+
+    Optional<Order> findByIdAndUser(UUID orderId, User currentUser);
 }

@@ -76,8 +76,9 @@ public class PaymentMvcController {
             @RequestParam UUID orderId,
             @CurrentUser User user) {
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new CustomException("Order không tồn tại"));
+        Order order = orderRepository
+                .findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Order không hợp lệ"));
 
         Payment payment = paymentRepository.findByOrder(order)
                 .orElseGet(() -> paymentService.createPayment(order, PaymentMethod.VNPAY));
@@ -109,4 +110,18 @@ public class PaymentMvcController {
         }
         return "redirect:/orders";
     }
+
+    @GetMapping("/{orderId}/select-method")
+    public String paymentPage(
+            @PathVariable UUID orderId,
+            @CurrentUser User currentUser,
+            Model model
+    ) {
+        OrderResponse order = orderService
+                .getOrderForPayment(orderId, currentUser);
+
+        model.addAttribute("order", order);
+        return "payments/select";
+    }
+
 }
