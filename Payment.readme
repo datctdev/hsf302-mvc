@@ -1,0 +1,249 @@
+SOFTWARE REQUIREMENT SPECIFICATION
+PAYMENT SYSTEM (COD & VNPAY)
+
+Phiên bản: 1.1
+Ngày: 23/01/2026
+Module: F-PAYMENT
+Phụ thuộc: F-ORDER, F-CART
+Kiến trúc: Spring MVC + Thymeleaf (SSR)
+Phạm vi: Thanh toán đơn hàng sau checkout (Single-shop per order)
+
+1. TỔNG QUAN
+1.1. Mục tiêu
+
+Payment System chịu trách nhiệm:
+
+Cho phép người mua lựa chọn phương thức thanh toán
+
+Hỗ trợ thanh toán COD và VNPay
+
+Quản lý trạng thái thanh toán của đơn hàng
+
+Đồng bộ trạng thái Payment ↔ Order
+
+Đảm bảo tính toàn vẹn dữ liệu và bảo mật giao dịch
+
+1.2. Phạm vi hệ thống
+Thành phần	Trạng thái
+COD	✅ Phase 1
+VNPay Redirect + Callback	✅ Phase 1
+Refund	🔜 Phase 2
+Webhook nâng cao	🔜 Phase 2
+Multi-payment / Split payment	❌ Không hỗ trợ
+
+Giới hạn thiết kế:
+
+Mỗi Order chỉ có 1 Payment
+
+Mỗi Order hiện tại chỉ thuộc 1 Shop
+
+1.3. Đối tượng sử dụng
+Vai trò	Mô tả
+Buyer	Chọn và thực hiện thanh toán
+System	Xử lý redirect, callback, cập nhật trạng thái
+Admin	Theo dõi trạng thái thanh toán
+2. LUỒNG NGHIỆP VỤ TỔNG QUÁT
+Cart
+  ↓
+Checkout
+  ↓
+Create Order (PENDING / PENDING_PAYMENT)
+  ↓
+Select Payment Method
+  ↓
++-------------------+--------------------+
+|       COD         |        VNPay       |
++-------------------+--------------------+
+| Payment = PENDING | Payment = INIT     |
+| Order = CONFIRMED | Redirect VNPay     |
+|                   | VNPay Callback     |
+|                   | Verify checksum    |
+|                   | Update Order       |
++-------------------+--------------------+
+
+3. YÊU CẦU CHỨC NĂNG
+3.1. Chọn phương thức thanh toán
+
+FUNC-PAY-001
+
+Mô tả:
+Người dùng chọn phương thức thanh toán cho đơn hàng sau khi checkout.
+
+Phương thức hỗ trợ:
+
+COD
+
+VNPAY
+
+Input:
+
+Trường	Kiểu	Bắt buộc
+paymentMethod	ENUM (COD, VNPAY)	✅
+
+Điều kiện:
+
+Chỉ buyer sở hữu order mới được chọn payment
+
+Order chưa có payment SUCCESS
+
+3.2. Tạo Payment khi tạo Order
+
+FUNC-PAY-002
+
+Mô tả:
+Khi đơn hàng được tạo thành công, hệ thống khởi tạo bản ghi Payment tương ứng.
+
+Xử lý:
+
+Payment Method	Payment Status	Order Status
+COD	PENDING	CONFIRMED
+VNPAY	INIT	PENDING_PAYMENT
+
+Ràng buộc:
+
+Mỗi Order chỉ có 1 Payment
+
+payments.order_id là unique
+
+3.3. Thanh toán COD
+
+FUNC-PAY-003
+
+Luồng xử lý:
+
+User chọn COD
+
+Order được tạo thành công
+
+Payment được tạo với:
+
+method = COD
+
+status = PENDING
+
+Order được xác nhận:
+
+status = CONFIRMED
+
+Redirect sang trang chi tiết đơn hàng
+
+Đặc điểm:
+
+Không gọi gateway ngoài
+
+Thanh toán thực tế xảy ra khi giao hàng
+
+3.4. Thanh toán VNPay
+
+FUNC-PAY-004
+
+Luồng chi tiết:
+
+User chọn VNPay
+
+System tạo Payment record:
+
+status = INIT
+
+System build VNPay URL
+
+Redirect user sang VNPay
+
+User thực hiện thanh toán
+
+VNPay redirect về callback URL
+
+3.5. Xử lý VNPay Callback
+
+FUNC-PAY-005
+
+Callback URL:
+
+GET /payments/vnpay/callback
+
+
+Xử lý:
+
+Trường hợp	Payment Status	Order Status
+Thành công	SUCCESS	CONFIRMED
+Thất bại	FAILED	CANCELLED
+Sai checksum	FAILED	PENDING_PAYMENT
+
+Yêu cầu:
+
+Verify checksum VNPay
+
+Lưu raw callback data để audit/debug
+
+4. TRẠNG THÁI
+4.1. PaymentStatus
+INIT        - Khởi tạo, chưa redirect
+PENDING     - COD chờ thanh toán
+SUCCESS     - Thanh toán thành công
+FAILED      - Thanh toán thất bại
+CANCELLED   - Hủy thanh toán
+
+4.2. OrderStatus (liên quan Payment)
+PENDING_PAYMENT - Chờ thanh toán online
+CONFIRMED       - Đơn đã xác nhận
+CANCELLED       - Đơn bị hủy
+
+5. THIẾT KẾ DATABASE
+5.1. Bảng payments
+Cột	Kiểu	Mô tả
+id	UUID	Primary Key
+order_id	UUID	FK → orders (unique)
+method	ENUM	COD / VNPAY
+amount	DECIMAL	Tổng tiền
+status	ENUM	INIT / PENDING / SUCCESS / FAILED / CANCELLED
+transaction_id	VARCHAR	vnp_TxnRef
+gateway_transaction_id	VARCHAR	vnp_TransactionNo
+gateway_response	TEXT	Raw callback
+created_at	TIMESTAMP	Ngày tạo
+updated_at	TIMESTAMP	Ngày cập nhật
+6. ROUTES (MVC)
+Method	URL	Mô tả
+POST	/orders/create	Tạo order + payment
+GET	/payments/{orderId}	Trang chọn payment
+POST	/payments/cod/confirm	Xác nhận COD
+GET	/payments/vnpay/redirect	Redirect VNPay
+GET	/payments/vnpay/callback	VNPay callback
+7. FRONTEND (THYMELEAF)
+7.1. Trang chọn thanh toán
+
+Template:
+
+templates/payments/select.html
+
+
+Thành phần:
+
+Radio button: COD / VNPay
+
+Hiển thị tổng tiền
+
+Button “Thanh toán”
+
+8. SECURITY & VALIDATION
+
+Chỉ user sở hữu order được thanh toán
+
+Không cho thanh toán lại order đã SUCCESS
+
+Verify checksum VNPay
+
+CSRF protection
+
+Validate order status trước mỗi bước
+
+9. XỬ LÝ LỖI
+Trường hợp	Xử lý
+VNPay timeout	Payment FAILED
+Callback sai checksum	Reject & log
+User back khi đang pay	Order giữ PENDING_PAYMENT
+Order đã CONFIRMED	Không cho pay lại
+10. PHASE MỞ RỘNG
+Phase	Nội dung
+Phase 2	Refund
+Phase 2	Webhook async
+Phase 3	Multi-shop payment

@@ -80,8 +80,9 @@ public class OrderMvcController {
 
         try {
             OrderResponse order = orderService.createOrder(currentUser, request);
-            redirectAttributes.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn hàng: " + order.getOrderNumber());
-            return "redirect:/orders/" + order.getId();
+//            redirectAttributes.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn hàng: " + order.getOrderNumber());
+//            return "redirect:/orders/" + order.getId();
+            return "redirect:/payments/" + order.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/orders/checkout";

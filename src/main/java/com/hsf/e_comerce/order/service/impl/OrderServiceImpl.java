@@ -101,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderNumber(orderNumber);
         order.setUser(user);
         order.setShop(shop);
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setShippingName(request.getShippingName());
         order.setShippingPhone(request.getShippingPhone());
         order.setShippingAddress(request.getShippingAddress());
