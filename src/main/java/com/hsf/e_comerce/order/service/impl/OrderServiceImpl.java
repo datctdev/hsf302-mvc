@@ -346,6 +346,21 @@ public class OrderServiceImpl implements OrderService {
         return mapToResponse(order);
     }
 
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderForPayment(UUID orderId, User currentUser) {
+
+        Order order = orderRepository
+                .findByIdAndUser(orderId, currentUser)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new RuntimeException("Đơn hàng không ở trạng thái chờ thanh toán");
+        }
+
+        return mapToResponse(order);
+    }
+
+
     private String generateOrderNumber() {
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String baseNumber = "ORD-" + datePrefix + "-";

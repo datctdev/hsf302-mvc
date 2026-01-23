@@ -32,4 +32,6 @@ public interface OrderService {
     OrderResponse updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request, User user);
     
     OrderResponse cancelOrder(UUID orderId, User user);
+
+    OrderResponse getOrderForPayment(UUID orderId, User currentUser);
 }
