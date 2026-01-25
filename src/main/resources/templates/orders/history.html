@@ -83,6 +83,69 @@
             background: #e0a800;
         }
 
+        /* --- CSS MỚI CHO LIST SẢN PHẨM & NÚT REVIEW --- */
+        .order-items-list {
+            padding: 0;
+            border-bottom: 1px solid #eee;
+        }
+        .order-item-row {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .order-item-row:last-child {
+            border-bottom: none;
+        }
+        .item-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: 500;
+            color: #333;
+            text-decoration: none;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .item-variant {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        .item-price-action {
+            text-align: right;
+            min-width: 120px;
+        }
+        .price-text {
+            color: #ee4d2d;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .btn-rate-shopee {
+            background-color: #ee4d2d;
+            color: white;
+            border: 1px solid #ee4d2d;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.9rem;
+            border-radius: 2px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-rate-shopee:hover {
+            background-color: #d73211;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +170,40 @@
                     <span class="order-status" 
                           th:classappend="'status-' + ${order.status}"
                           th:text="${order.status}">Status</span>
+                </div>
+
+                <div class="order-items-list">
+                    <div th:each="item : ${order.items}" class="order-item-row">
+                        <img th:src="${item.productImageUrl != null ? item.productImageUrl : '/images/placeholder.png'}"
+                             class="item-img" alt="Sản phẩm">
+
+                        <div class="item-details">
+                            <a th:href="@{'/products/' + ${item.productId}}" class="item-name" th:text="${item.productName}">Tên sản phẩm</a>
+                            <div class="item-variant" th:if="${item.variantName != null}">
+                                Phân loại: <span th:text="${item.variantName} + ' ' + ${item.variantValue}">Màu sắc</span>
+                            </div>
+                            <div class="item-variant">x<span th:text="${item.quantity}">1</span></div>
+                        </div>
+
+                        <div class="item-price-action">
+                            <div class="price-text" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' ₫'">100.000 ₫</div>
+
+                            <th:block th:if="${order.status.name() == 'DELIVERED'}">
+                                <a th:if="${!item.isReviewed}"
+                                   th:href="@{'/products/' + ${item.productId} + '/review?subOrderId=' + ${order.id}}"
+                                   class="btn-rate-shopee">
+                                    Đánh Giá
+                                </a>
+
+                                <a th:if="${item.isReviewed}"
+                                   th:href="@{'/reviews/my-review?productId=' + ${item.productId} + '&subOrderId=' + ${order.id}}"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   style="border: 1px solid #ddd; color: #555; background: #fff;">
+                                    Xem Đánh Giá
+                                </a>
+                            </th:block>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="order-info">
