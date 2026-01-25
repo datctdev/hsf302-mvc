@@ -9,6 +9,8 @@
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/review.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .product-detail-container {
             max-width: 1200px;
@@ -274,6 +276,121 @@
                     </div>
                 </div>
             </div>
+            <div th:if="${product != null}" class="reviews-container" style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 2rem;">
+                <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem;">ĐÁNH GIÁ SẢN PHẨM</h3>
+
+                <div class="review-filter-bar">
+                    <div class="filter-row">
+                        <div style="margin-right: 2rem; text-align: center;">
+                            <div style="font-size: 3rem; color: #ee4d2d;">
+                                <span style="font-weight: 500;" th:text="${avgRating != null ? #numbers.formatDecimal(avgRating, 1, 1) : '0.0'}">4.9</span>
+                                <span style="font-size: 1.5rem; color: #ee4d2d;">/ 5</span>
+                            </div>
+                            <div class="star-rating" style="color: #ee4d2d; font-size: 1.2rem;">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+
+                        <div style="flex: 1; display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a th:href="@{'/products/' + ${product.id}(reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == null and currentHasImages == null} ? 'active'">Tất Cả</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(rating=5, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == 5} ? 'active'">5 Sao</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(rating=4, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == 4} ? 'active'">4 Sao</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(rating=3, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == 3} ? 'active'">3 Sao</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(rating=2, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == 2} ? 'active'">2 Sao</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(rating=1, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentRating == 1} ? 'active'">1 Sao</a>
+
+                            <a th:href="@{'/products/' + ${product.id}(hasImages=true, reviewPage=0, sortBy=${currentSort})}"
+                               class="filter-btn"
+                               th:classappend="${currentHasImages == true} ? 'active'">Có Hình Ảnh</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <span style="font-weight: 500; margin-right: 10px;">Sắp xếp theo:</span>
+                    <select class="sort-select" onchange="window.location.href=this.value">
+                        <option th:value="@{'/products/' + ${product.id}(sortBy='newest', rating=${currentRating}, hasImages=${currentHasImages})}"
+                                th:selected="${currentSort == 'newest'}">Mới Nhất</option>
+                        <option th:value="@{'/products/' + ${product.id}(sortBy='oldest', rating=${currentRating}, hasImages=${currentHasImages})}"
+                                th:selected="${currentSort == 'oldest'}">Cũ Nhất</option>
+                    </select>
+                </div>
+
+                <div class="review-list">
+                    <div th:if="${reviews == null or reviews.isEmpty()}" style="text-align: center; color: #999; padding: 3rem;">
+                        <i class="far fa-comment-dots" style="font-size: 3rem; margin-bottom: 1rem; display: block; color: #ddd;"></i>
+                        <p>Chưa có đánh giá nào phù hợp với bộ lọc.</p>
+                    </div>
+
+                    <div th:each="review : ${reviews}" class="review-item" style="border-bottom: 1px solid #f1f1f1; padding: 1.5rem 0;">
+                        <div class="review-header" style="display: flex; gap: 15px;">
+                            <img th:src="${review.userAvatarUrl != null ? review.userAvatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #eee;">
+
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 4px;" th:text="${review.userFullName}">User</div>
+
+                                <div style="color: #ee4d2d; font-size: 0.7rem; margin-bottom: 5px;">
+                        <span th:each="i : ${#numbers.sequence(1, 5)}">
+                            <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                        </span>
+                                </div>
+
+                                <div style="color: #rgba(0,0,0,.54); font-size: 0.75rem; margin-bottom: 10px;">
+                                    <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
+                                    <span>Phân loại: Mặc định</span> <span th:if="${review.isVerifiedPurchase}" style="color: #28a745; margin-left: 10px;">
+                            <i class="fas fa-check-circle"></i> Đã mua hàng
+                        </span>
+                                </div>
+
+                                <div style="color: #333; font-size: 0.95rem; line-height: 1.5; white-space: pre-line; margin-bottom: 10px;"
+                                     th:text="${review.comment}">Nội dung...</div>
+
+                                <div th:if="${not #lists.isEmpty(review.imageUrls)}" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <img th:each="img : ${review.imageUrls}" th:src="${img}"
+                                         style="width: 72px; height: 72px; object-fit: cover; border: 1px solid #f5f5f5; cursor: zoom-in;"
+                                         onclick="window.open(this.src)">
+                                </div>
+
+                                <div th:if="${currentUser != null and currentUser.id == review.userId}" style="margin-top: 10px;">
+                                    <a th:href="@{'/reviews/' + ${review.id} + '/edit'}" style="color: #888; font-size: 0.8rem; margin-right: 10px; text-decoration: none;">Sửa</a>
+                                    <form th:action="@{'/reviews/' + ${review.id} + '/delete'}" method="post" style="display: inline;" onsubmit="return confirm('Xóa?');">
+                                        <button type="submit" style="border: none; background: none; color: #888; font-size: 0.8rem; cursor: pointer;">Xóa</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pagination" th:if="${reviews != null and reviews.totalPages > 1}" style="margin-top: 2rem; justify-content: center; display: flex; gap: 0.5rem;">
+                    <a th:if="${reviews.hasPrevious()}"
+                       th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}"
+                       class="btn btn-sm btn-secondary">Trước</a>
+                    <span style="margin: 0 10px; line-height: 30px;" th:text="'Trang ' + ${reviews.number + 1}"></span>
+                    <a th:if="${reviews.hasNext()}"
+                       th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number + 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}"
+                       class="btn btn-sm btn-secondary">Sau</a>
+                </div>
+            </div>
             <div th:if="${product == null}" class="error">
                 Sản phẩm không tồn tại hoặc chưa được xuất bản.
             </div>
@@ -295,7 +412,7 @@
             const container = document.getElementById('productDetail');
             document.getElementById('productBreadcrumb').textContent = product.name;
 
-            const thumbnail = product.images && product.images.length > 0 
+            const thumbnail = product.images && product.images.length > 0
                 ? product.images.find(img => img.isThumbnail) || product.images[0]
                 : null;
             const mainImageUrl = thumbnail ? thumbnail.imageUrl : '/images/placeholder.png';
@@ -317,7 +434,7 @@
                     const options = variants.map((variant, index) => {
                         const stockStatus = variant.stockQuantity > 0 ? '' : 'disabled';
                         return `
-                            <div class="variant-option ${stockStatus}" 
+                            <div class="variant-option ${stockStatus}"
                                  data-variant-id="${variant.id}"
                                  data-name="${escapeHtml(name)}"
                                  data-value="${escapeHtml(variant.value)}"
@@ -338,8 +455,8 @@
 
             const imagesHTML = product.images && product.images.length > 0
                 ? product.images.map((img, index) => `
-                    <img src="${img.imageUrl}" 
-                         alt="Product image ${index + 1}" 
+                    <img src="${img.imageUrl}"
+                         alt="Product image ${index + 1}"
                          class="product-thumbnail ${index === 0 ? 'active' : ''}"
                          onclick="changeMainImage('${img.imageUrl}', this)">
                 `).join('')
@@ -355,7 +472,7 @@
                     <div class="product-info">
                         <h1>${escapeHtml(product.name)}</h1>
                         <div class="product-price">${formatPrice(product.basePrice)} VNĐ</div>
-                        
+
                         ${variantHTML ? `<div class="product-variants">${variantHTML}</div>` : ''}
 
                         <div class="product-description">

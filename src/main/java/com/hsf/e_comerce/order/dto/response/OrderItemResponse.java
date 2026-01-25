@@ -24,4 +24,5 @@ public class OrderItemResponse {
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
     private String productImageUrl; // Thumbnail hoặc first image
+    private boolean isReviewed;
 }

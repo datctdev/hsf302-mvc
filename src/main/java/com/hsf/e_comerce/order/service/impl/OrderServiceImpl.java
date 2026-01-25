@@ -20,6 +20,7 @@ import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
+import com.hsf.e_comerce.review.repository.ReviewRepository;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shipping.service.GHNService;
@@ -50,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShopRepository shopRepository;
     private final ProductImageRepository productImageRepository;
     private final GHNService ghnService;
+    private final ReviewRepository reviewRepository;
 
     @Override
     @Transactional
@@ -421,7 +423,6 @@ public class OrderServiceImpl implements OrderService {
         // Get product images for order items
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> {
-                    // Get product image (thumbnail or first image)
                     String productImageUrl = null;
                     Optional<ProductImage> thumbnail = productImageRepository.findByProductAndIsThumbnailTrue(item.getProduct());
                     if (thumbnail.isPresent()) {
@@ -432,6 +433,13 @@ public class OrderServiceImpl implements OrderService {
                             productImageUrl = images.get(0).getImageUrl();
                         }
                     }
+
+                    boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderIdAndStatus(
+                            order.getUser().getId(),
+                            item.getProduct().getId(),
+                            order.getId(),
+                            com.hsf.e_comerce.review.valueobject.ReviewStatus.ACTIVE
+                    );
 
                     return OrderItemResponse.builder()
                             .id(item.getId())
@@ -444,6 +452,7 @@ public class OrderServiceImpl implements OrderService {
                             .unitPrice(item.getUnitPrice())
                             .totalPrice(item.getTotalPrice())
                             .productImageUrl(productImageUrl)
+                            .isReviewed(isReviewed)
                             .build();
                 })
                 .collect(Collectors.toList());

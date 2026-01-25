@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa Đánh Giá</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/review.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .review-form-container { max-width: 600px; margin: 3rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .rating-input { display: flex; flex-direction: row-reverse; justify-content: center; gap: 10px; }
+        .rating-input input { display: none; }
+        .rating-input label { font-size: 2.5rem; color: #ddd; cursor: pointer; }
+        .rating-input input:checked ~ label, .rating-input label:hover, .rating-input label:hover ~ label { color: #ffc107; }
+        /* Style cho ảnh cũ */
+        .old-images { display: flex; gap: 10px; margin-bottom: 15px; }
+        .old-images img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+<th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+<div class="main-content">
+    <div class="review-form-container">
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Chỉnh Sửa Đánh Giá</h2>
+
+        <form th:action="@{'/reviews/' + ${review.id} + '/edit'}" method="post" enctype="multipart/form-data" th:object="${updateReviewRequest}">
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
+                <div class="rating-input">
+                    <input type="radio" id="star5" name="rating" value="5" th:checked="${review.rating == 5}" /><label for="star5"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star4" name="rating" value="4" th:checked="${review.rating == 4}" /><label for="star4"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star3" name="rating" value="3" th:checked="${review.rating == 3}" /><label for="star3"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star2" name="rating" value="2" th:checked="${review.rating == 2}" /><label for="star2"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star1" name="rating" value="1" th:checked="${review.rating == 1}" /><label for="star1"><i class="fas fa-star"></i></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Nội dung đánh giá:</label>
+                <textarea name="comment" rows="4" class="form-control" th:text="${review.comment}"></textarea>
+            </div>
+
+            <div class="form-group" th:if="${not #lists.isEmpty(review.imageUrls)}">
+                <label>Ảnh hiện tại (Sẽ được giữ nguyên):</label>
+                <div class="old-images">
+                    <img th:each="img : ${review.imageUrls}" th:src="${img}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Thêm ảnh mới (Tùy chọn):</label>
+                <input type="file" name="newImages" multiple accept="image/*" class="form-control">
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <a href="javascript:history.back()" class="btn btn-secondary" style="flex: 1; text-align: center;">Hủy</a>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Cập Nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>
