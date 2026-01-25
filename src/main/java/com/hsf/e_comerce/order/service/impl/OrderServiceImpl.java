@@ -360,6 +360,46 @@ public class OrderServiceImpl implements OrderService {
         return mapToResponse(order);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderForEditCheckout(UUID orderId, User user) {
+
+        Order order = orderRepository
+                .findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Không tìm thấy đơn hàng"));
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new CustomException("Không thể chỉnh sửa đơn hàng ở trạng thái này");
+        }
+
+        return mapToResponse(order);
+    }
+
+    @Transactional
+    public void updateCheckoutInfo(UUID orderId, CreateOrderRequest req, User user) {
+
+        Order order = orderRepository
+                .findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Order không tồn tại"));
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new CustomException("Không thể cập nhật đơn hàng");
+        }
+
+        order.setShippingName(req.getShippingName());
+        order.setShippingPhone(req.getShippingPhone());
+        order.setShippingAddress(req.getShippingAddress());
+        order.setShippingCity(req.getShippingCity());
+        order.setShippingDistrict(req.getShippingDistrict());
+        order.setShippingWard(req.getShippingWard());
+        order.setShippingDistrictId(req.getShippingDistrictId());
+        order.setShippingWardCode(req.getShippingWardCode());
+        order.setNotes(req.getNotes());
+
+        orderRepository.save(order);
+    }
+
+
 
     private String generateOrderNumber() {
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

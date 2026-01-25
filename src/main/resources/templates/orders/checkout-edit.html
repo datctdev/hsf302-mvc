@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán - E-commerce</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .checkout-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .checkout-header {
+            margin-bottom: 2rem;
+        }
+
+        .checkout-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        .checkout-form-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .checkout-form-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .shop-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .shop-section h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .checkout-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .checkout-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            flex-shrink: 0;
+        }
+
+        .checkout-item-details {
+            flex: 1;
+        }
+
+        .checkout-item-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .checkout-item-variant {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkout-item-price {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .order-summary {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .order-summary h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-content {
+                grid-template-columns: 1fr;
+            }
+
+            .order-summary {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/nav-home :: nav}"></div>
+
+<div class="checkout-container">
+    <div class="checkout-header">
+        <h1>Thanh Toán</h1>
+    </div>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+    <form th:action="@{|/orders/${order.id}/update-checkout|}" method="post" th:object="${createOrderRequest}">
+        <!-- ✅ DEBUG SECTION (XÓA SAU KHI FIX XONG) -->
+        <div style="background: #f0f0f0; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+            <h4>🔍 Debug Info:</h4>
+            <p><strong>Order ID:</strong> <span th:text="${order.id}">N/A</span></p>
+            <p><strong>Shop ID:</strong> <span th:text="${firstShop != null ? firstShop.id : 'NULL'}">N/A</span></p>
+            <p><strong>Shop Name:</strong> <span th:text="${firstShop != null ? firstShop.name : 'NULL'}">N/A</span></p>
+            <p><strong>Shop Items Count:</strong> <span th:text="${shopItems != null ? shopItems.size() : 0}">0</span></p>
+            <p><strong>Shipping Fee:</strong> <span th:text="${createOrderRequest.shippingFee}">0</span></p>
+            <!-- Show items -->
+            <div th:if="${shopItems != null and !shopItems.isEmpty()}">
+            <p><strong>Items:</strong></p>
+                <ul>
+                    <li th:each="item : ${shopItems}">
+                        <span th:text="${item.productName}">Product</span> -
+                        <span th:text="${item.quantity}">0</span> x
+                        <span th:text="${item.unitPrice}">0</span> =
+                        <span th:text="${item.totalPrice}">0</span>
+                        <br>Image: <span th:text="${item.productImageUrl}">No image</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <input type="hidden" th:field="*{shopId}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="checkout-content">
+            <div>
+                <!-- Shipping Information -->
+                <div class="checkout-form-section">
+                    <h2>Thông Tin Giao Hàng</h2>
+
+                    <div class="form-group">
+                        <label for="shippingName">Họ và Tên *</label>
+                        <input type="text" id="shippingName" th:field="*{shippingName}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shippingPhone">Số Điện Thoại *</label>
+                        <input type="tel" id="shippingPhone" th:field="*{shippingPhone}"
+                               pattern="[0-9]{10,11}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shippingAddress">Địa Chỉ *</label>
+                        <input type="text" id="shippingAddress" th:field="*{shippingAddress}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shippingCity">Thành Phố</label>
+                        <input type="text" id="shippingCity" th:field="*{shippingCity}">
+                    </div>
+
+                    <!-- Address Selection with GHN Master Data -->
+                    <div class="form-group">
+                        <label for="provinceSelect">Tỉnh/Thành phố *</label>
+                        <select id="provinceSelect" class="form-control" required>
+                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="districtSelect">Quận/Huyện *</label>
+                        <select id="districtSelect" class="form-control" required disabled>
+                            <option value="">-- Chọn Quận/Huyện --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wardSelect">Phường/Xã *</label>
+                        <select id="wardSelect" class="form-control" required disabled>
+                            <option value="">-- Chọn Phường/Xã --</option>
+                        </select>
+                    </div>
+
+                    <!-- Hidden fields for form submission -->
+                    <input type="hidden" id="shippingDistrict" name="shippingDistrict">
+                    <input type="hidden" id="shippingWard" name="shippingWard">
+                    <input type="hidden" id="toDistrictId" name="shippingDistrictId">
+                    <input type="hidden" id="toWardCode" name="shippingWardCode">
+
+
+                    <div class="form-group">
+                        <div id="shippingFeeMessage" style="margin-top: 0.5rem; font-size: 0.9rem; min-height: 1.5rem;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Ghi Chú</label>
+                        <textarea id="notes" th:field="*{notes}"
+                                  placeholder="Ghi chú cho người bán (tùy chọn)"></textarea>
+                    </div>
+                </div>
+
+                <!-- Shop Sections - Only show first shop for now (one order per shop) -->
+                <!-- Shop Sections -->
+                <div th:if="${firstShop != null}">
+                    <div class="shop-section">
+                        <h3 th:text="'Shop: ' + ${firstShop.name}">Shop Name</h3>
+
+                        <!-- ✅ CHECK NẾU KHÔNG CÓ SẢN PHẨM -->
+                        <div th:if="${shopItems == null or shopItems.isEmpty()}" class="alert alert-warning">
+                            <p>⚠️ Không có sản phẩm trong đơn hàng.</p>
+                        </div>
+
+                        <!-- ✅ HIỂN THị SẢN PHẨM -->
+                        <div th:if="${shopItems != null and !shopItems.isEmpty()}">
+                            <div th:each="item : ${shopItems}">
+                                <div class="checkout-item">
+                                    <div class="checkout-item-details">
+                                        <div class="checkout-item-name" th:text="${item.productName}">
+                                            Product Name
+                                        </div>
+
+                                        <div class="checkout-item-variant"
+                                             th:if="${item.variantName != null}"
+                                             th:text="${item.variantName + ': ' + item.variantValue}">
+                                        </div>
+
+                                        <div class="checkout-item-price">
+                                            <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Price</span>
+                                            <span> x </span>
+                                            <span th:text="${item.quantity}">Quantity</span>
+                                            <span> = </span>
+                                            <span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ FALLBACK NẾU KHÔNG CÓ SHOP -->
+                <div th:if="${firstShop == null}" class="alert alert-warning">
+                    <p>⚠️ Không tìm thấy thông tin shop.</p>
+                </div>
+
+
+                <div>
+                <div class="order-summary">
+                    <h2>Tóm Tắt Đơn Hàng</h2>
+
+                    <div class="summary-row">
+                        <span>Tạm tính:</span>
+                        <span id="subtotal" th:text="${firstShopSubtotal != null ? #numbers.formatDecimal(firstShopSubtotal, 0, 'POINT', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shippingFee">Phí Vận Chuyển (VNĐ)</label>
+                        <input type="number" id="shippingFee" th:field="*{shippingFee}"
+                               min="0" step="1000" value="0" readonly
+                               style="background-color: #f5f5f5;">
+                        <small style="color: #666; font-size: 0.9rem;">
+                            Phí sẽ được tính tự động khi bạn nhập địa chỉ và click "Tính Phí Vận Chuyển"
+                        </small>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>Tổng tiền:</span>
+                        <span id="totalPrice">0 VNĐ</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                        Đặt Hàng
+                    </button>
+
+                    <a href="/cart" class="btn btn-outline-secondary" style="width: 100%; margin-top: 1rem; display: block; text-align: center;">
+                        Quay Lại Giỏ Hàng
+                    </a>
+                </div>
+            </div>
+        </div>
+        </div>
+    </form>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    // Get CSRF token
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+    const shopId = /*[[${firstShop != null ? firstShop.id : ''}]]*/ '';
+
+    // Address dropdowns
+    const provinceSelect = document.getElementById('provinceSelect');
+    const districtSelect = document.getElementById('districtSelect');
+    const wardSelect = document.getElementById('wardSelect');
+
+    // Calculate total price
+    function calculateTotal() {
+        const subtotalText = document.getElementById('subtotal').textContent.trim();
+        const subtotal = parseFloat(subtotalText.replace(/[^0-9]/g, '')) || 0;
+        const shippingFee = parseFloat(document.getElementById('shippingFee').value) || 0;
+        const total = subtotal + shippingFee;
+        document.getElementById('totalPrice').textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+    }
+
+    // Load provinces
+    function loadProvinces() {
+        fetch('/api/shipping/provinces')
+            .then(response => response.json())
+            .then(provinces => {
+                provinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
+                provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.ProvinceID;
+                    option.textContent = province.ProvinceName;
+                    provinceSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading provinces:', error);
+                provinceSelect.innerHTML = '<option value="">Lỗi khi tải danh sách tỉnh/thành</option>';
+            });
+    }
+
+    // Load districts when province is selected
+    provinceSelect.addEventListener('change', function() {
+        const provinceId = this.value;
+        districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
+
+        // Clear hidden fields
+        document.getElementById('toDistrictId').value = '';
+        document.getElementById('toWardCode').value = '';
+        document.getElementById('shippingDistrict').value = '';
+        document.getElementById('shippingWard').value = '';
+
+        if (!provinceId) return;
+
+        districtSelect.disabled = false;
+        fetch(`/api/shipping/districts?provinceId=${provinceId}`)
+            .then(response => response.json())
+            .then(districts => {
+                districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district.DistrictID;
+                    option.textContent = district.DistrictName;
+                    districtSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading districts:', error);
+                districtSelect.innerHTML = '<option value="">Lỗi khi tải danh sách quận/huyện</option>';
+            });
+    });
+
+    // Load wards when district is selected
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+        wardSelect.disabled = true;
+
+        // Clear hidden fields
+        document.getElementById('toDistrictId').value = '';
+        document.getElementById('toWardCode').value = '';
+        document.getElementById('shippingWard').value = '';
+
+        if (!districtId) return;
+
+        wardSelect.disabled = false;
+        fetch(`/api/shipping/wards?districtId=${districtId}`)
+            .then(response => response.json())
+            .then(wards => {
+                wards.forEach(ward => {
+                    const option = document.createElement('option');
+                    option.value = ward.WardCode;
+                    option.textContent = ward.WardName;
+                    wardSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading wards:', error);
+                wardSelect.innerHTML = '<option value="">Lỗi khi tải danh sách phường/xã</option>';
+            });
+    });
+
+    // Calculate shipping fee when ward is selected
+    wardSelect.addEventListener('change', function() {
+        const districtId = districtSelect.value;
+        const wardCode = this.value;
+        const districtName = districtSelect.options[districtSelect.selectedIndex].text;
+        const wardName = this.options[this.selectedIndex].text;
+
+        if (!districtId || !wardCode) return;
+
+        // Set hidden fields
+        document.getElementById('toDistrictId').value = districtId;
+        document.getElementById('toWardCode').value = wardCode;
+        document.getElementById('shippingDistrict').value = districtName;
+        document.getElementById('shippingWard').value = wardName;
+
+        // Auto calculate shipping fee
+        calculateShippingFee();
+    });
+
+    // Calculate shipping fee via API
+    function calculateShippingFee() {
+        const toDistrictId = document.getElementById('toDistrictId').value;
+        const toWardCode = document.getElementById('toWardCode').value;
+        const messageDiv = document.getElementById('shippingFeeMessage');
+
+        if (!toDistrictId || !toWardCode) {
+            messageDiv.innerHTML = '<span style="color: #c33;">Vui lòng chọn đầy đủ địa chỉ</span>';
+            return;
+        }
+
+        if (!shopId) {
+            console.warn("ShopId missing, skip shipping fee calculation");
+            return;
+        }
+
+        messageDiv.innerHTML = '<span style="color: #666;">Đang tính phí vận chuyển...</span>';
+
+        // Prepare request
+        const requestBody = {
+            shopId: shopId,
+            toDistrictId: parseInt(toDistrictId),
+            toWardCode: toWardCode
+        };
+
+        // Call API
+        fetch('/api/shipping/calculate-fee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update shipping fee
+                    document.getElementById('shippingFee').value = data.shippingFee;
+                    calculateTotal();
+                    messageDiv.innerHTML = '<span style="color: #3c3;">✓ Phí vận chuyển: ' +
+                        data.shippingFee.toLocaleString('vi-VN') + ' VNĐ</span>';
+                } else {
+                    messageDiv.innerHTML = '<span style="color: #c33;">✗ ' + data.message + '</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.innerHTML = '<span style="color: #c33;">✗ Lỗi khi tính phí vận chuyển. Vui lòng thử lại.</span>';
+            });
+    }
+
+    // Form submit validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const toDistrictId = document.getElementById('toDistrictId').value;
+        const toWardCode = document.getElementById('toWardCode').value;
+
+        if (!toDistrictId || !toWardCode) {
+            e.preventDefault();
+            alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã.');
+            return false;
+        }
+
+        // Set hidden inputs (already set, but ensure)
+        document.getElementById('shippingDistrictId').value = toDistrictId;
+        document.getElementById('shippingWardCode').value = toWardCode;
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+        loadProvinces();
+        calculateTotal();
+    });
+</script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        /*<![CDATA[*/
+
+        // Lấy shipping fee từ backend
+        var shippingFee = /*[[${createOrderRequest.shippingFee}]]*/ 0;
+        var subtotal = /*[[${firstShopSubtotal}]]*/ 0;
+
+        console.log('Shipping Fee from backend:', shippingFee);
+        console.log('Subtotal:', subtotal);
+
+        // Cập nhật UI
+        var shippingFeeInput = document.querySelector('input[name="shippingFee"]');
+        if (shippingFeeInput) {
+            shippingFeeInput.value = shippingFee;
+        }
+
+        // Cập nhật tổng tiền
+        var total = parseFloat(subtotal) + parseFloat(shippingFee);
+        var totalElement = document.getElementById('total-amount');
+        if (totalElement) {
+            totalElement.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        /*]]>*/
+    });
+</script>
+
+</body>
+</html>

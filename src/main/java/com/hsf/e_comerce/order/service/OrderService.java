@@ -5,6 +5,7 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.auth.entity.User;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,4 +35,8 @@ public interface OrderService {
     OrderResponse cancelOrder(UUID orderId, User user);
 
     OrderResponse getOrderForPayment(UUID orderId, User currentUser);
+
+    OrderResponse getOrderForEditCheckout(UUID orderId, User currentUser);
+
+    void updateCheckoutInfo(UUID orderId, @Valid CreateOrderRequest request, User user);
 }

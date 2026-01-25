@@ -127,7 +127,10 @@
         </form>
 
     </div>
-
+    <a th:href="@{'/orders/' + ${order.id} + '/edit-checkout'}"
+       class="btn btn-outline-secondary">
+        ← Quay lại checkout
+    </a>
 </div>
 
 </body>
