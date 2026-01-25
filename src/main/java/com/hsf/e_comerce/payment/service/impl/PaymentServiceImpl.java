@@ -1,6 +1,10 @@
 package com.hsf.e_comerce.payment.service.impl;
 
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.cart.entity.Cart;
+import com.hsf.e_comerce.cart.entity.CartItem;
+import com.hsf.e_comerce.cart.repository.CartItemRepository;
+import com.hsf.e_comerce.cart.repository.CartRepository;
 import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.repository.OrderRepository;
@@ -15,6 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,6 +31,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final VNPayService vnPayService;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
 
     @Override
     public Payment createPayment(Order order, PaymentMethod method) {
@@ -73,6 +80,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         paymentRepository.save(payment);
         orderRepository.save(order);
+
+        this.handlePaymentSuccess(order.getId());
     }
 
 
@@ -98,6 +107,8 @@ public class PaymentServiceImpl implements PaymentService {
         if ("00".equals(responseCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
             order.setStatus(OrderStatus.CONFIRMED);
+
+            this.handlePaymentSuccess(order.getId());
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             order.setStatus(OrderStatus.CANCELLED);
@@ -106,4 +117,35 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
         orderRepository.save(order);
     }
+
+    @Transactional
+    public void handlePaymentSuccess(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        Cart cart = cartRepository.findByUserIdWithItems(order.getUser().getId())
+                .orElseThrow();
+
+        List<CartItem> itemsToRemove = cart.getItems().stream()
+                .filter(i -> i.getProduct().getShop().getId().equals(order.getShop().getId()))
+                .toList();
+
+        System.out.println("Order shopId = " + order.getShop().getId());
+        System.out.println("Cart items count = " + cart.getItems().size());
+
+        cart.getItems().forEach(i -> {
+            System.out.println(
+                    "CartItem id=" + i.getId() +
+                            ", product=" + (i.getProduct() != null) +
+                            ", shop=" + (i.getProduct() != null && i.getProduct().getShop() != null)
+            );
+        });
+
+        for (CartItem item : itemsToRemove) {
+            cart.getItems().remove(item);
+            cartItemRepository.delete(item);
+        }
+        cartRepository.save(cart);
+    }
+
 }

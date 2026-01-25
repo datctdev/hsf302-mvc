@@ -1,5 +1,6 @@
 package com.hsf.e_comerce.order.dto.request;
 
+import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -41,4 +42,22 @@ public class CreateOrderRequest {
     
     @NotNull(message = "Shipping fee is required")
     private BigDecimal shippingFee = java.math.BigDecimal.ZERO;
+
+    public static CreateOrderRequest fromOrder(OrderResponse order) {
+        CreateOrderRequest req = new CreateOrderRequest();
+        req.setShopId(order.getShopId());
+        req.setShippingName(order.getShippingName());
+        req.setShippingPhone(order.getShippingPhone());
+        req.setShippingAddress(order.getShippingAddress());
+        req.setShippingCity(order.getShippingCity());
+        req.setShippingDistrict(order.getShippingDistrict());
+        req.setShippingWard(order.getShippingWard());
+        req.setShippingDistrictId(order.getShippingDistrictId());
+        req.setShippingWardCode(order.getShippingWardCode());
+        req.setNotes(order.getNotes());
+        req.setShippingFee(order.getShippingFee());
+        return req;
+    }
+
+
 }

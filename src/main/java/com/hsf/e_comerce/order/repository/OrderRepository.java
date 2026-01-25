@@ -48,4 +48,19 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByShopIdWithItems(@Param("shopId") UUID shopId);
 
     Optional<Order> findByIdAndUser(UUID orderId, User currentUser);
+
+    @Query("""
+    SELECT o
+    FROM Order o
+    LEFT JOIN FETCH o.items i
+    LEFT JOIN FETCH i.product
+    LEFT JOIN FETCH i.variant
+    WHERE o.id = :orderId
+      AND o.user = :user
+""")
+    Optional<Order> findByIdAndUserWithItems(
+            @Param("orderId") UUID orderId,
+            @Param("user") User user
+    );
+
 }

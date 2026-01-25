@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -75,6 +76,11 @@ public class ShopServiceImpl implements ShopService {
     @Transactional(readOnly = true)
     public boolean hasShop(UUID userId) {
         return shopRepository.existsByUserId(userId);
+    }
+
+    @Override
+    public Optional<Shop> getShop(UUID shopId) {
+        return this.shopRepository.findById(shopId);
     }
 
     private ShopResponse mapToResponse(Shop shop) {

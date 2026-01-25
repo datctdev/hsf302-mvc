@@ -30,6 +30,8 @@ public class OrderResponse {
     private String shippingCity;
     private String shippingDistrict;
     private String shippingWard;
+    private Integer shippingDistrictId;
+    private String shippingWardCode;
     private String notes;
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
