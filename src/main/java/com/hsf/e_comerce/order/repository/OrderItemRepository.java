@@ -12,11 +12,13 @@ import java.util.UUID;
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @Query("""
-    SELECT oi FROM OrderItem oi
+    SELECT oi
+    FROM OrderItem oi
     JOIN FETCH oi.product p
-    JOIN FETCH p.shop
+    JOIN FETCH p.shop s
     WHERE oi.order.id = :orderId
     """)
     List<OrderItem> findByOrderId(UUID orderId);
+
 
 }

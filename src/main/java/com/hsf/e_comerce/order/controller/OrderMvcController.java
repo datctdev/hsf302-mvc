@@ -6,11 +6,14 @@ import com.hsf.e_comerce.cart.entity.CartItem;
 import com.hsf.e_comerce.cart.repository.CartRepository;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.order.dto.request.CreateOrderRequest;
+import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
+import com.hsf.e_comerce.order.entity.Order;
+import com.hsf.e_comerce.order.entity.OrderItem;
+import com.hsf.e_comerce.order.repository.OrderItemRepository;
 import com.hsf.e_comerce.order.service.OrderItemService;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.auth.entity.User;
-import com.hsf.e_comerce.shop.dto.response.ShopResponse;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
@@ -36,6 +39,7 @@ public class OrderMvcController {
     private final CartRepository cartRepository;
     private final OrderItemService orderItemService;
     private final ShopService shopService;
+    private final OrderItemRepository orderItemRepository;
 
     @GetMapping("/checkout")
     public String checkout(@CurrentUser User currentUser, Model model) {
@@ -47,6 +51,10 @@ public class OrderMvcController {
             model.addAttribute("error", "Giỏ hàng trống.");
             return "redirect:/cart";
         }
+
+//        if (orderAlreadyCreatedForUser(currentUser)) {
+//            return "redirect:/orders";
+//        }
 
         // Group cart items by shop
         Map<Shop, List<CartItem>> itemsByShop = cart.getItems().stream()
@@ -138,108 +146,82 @@ public class OrderMvcController {
         try {
             // 1. Lấy thông tin order
             OrderResponse order = orderService.getOrderForEditCheckout(orderId, currentUser);
-            UUID shopId = order.getShopId();
 
-            // 2. Lấy items theo order
-            Map<UUID, List<CartItemResponse>> itemsByShop = orderItemService.getItemsByOrder(orderId);
+            // 2. Lấy items theo order (TỪ ORDER_ITEM)
+            Map<UUID, List<CartItemResponse>> itemsByShop =
+                    orderItemService.getItemsByOrder(orderId);
 
-            // ✅ CHECK NGAY SAU KHI LẤY DATA
             if (itemsByShop == null || itemsByShop.isEmpty()) {
                 model.addAttribute("error", "Không có sản phẩm trong đơn hàng.");
-                return "redirect:/orders";
+                return "redirect:/orders/" + orderId;
             }
 
-            // 3. Lấy items của shop cụ thể
+            // ✅ FIX QUAN TRỌNG: lấy shopId từ chính itemsByShop
+            UUID shopId = itemsByShop.keySet().iterator().next();
             List<CartItemResponse> shopItems = itemsByShop.get(shopId);
 
-            // ✅ CHECK SHOPITEMS
             if (shopItems == null || shopItems.isEmpty()) {
                 model.addAttribute("error", "Shop không có sản phẩm trong đơn");
-                return "redirect:/orders";
+                return "redirect:/orders/" + orderId;
             }
 
-            // 4. Lấy thông tin shop
+            // 3. Lấy thông tin shop
             Shop firstShop = shopService.getShop(shopId)
                     .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
 
-            // 5. Tính subtotal
+            // 4. Tính subtotal
             BigDecimal firstShopSubtotal = shopItems.stream()
                     .map(CartItemResponse::getTotalPrice)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // 6. Add attributes
+            // 5. Add attributes
             model.addAttribute("order", order);
             model.addAttribute("itemsByShop", itemsByShop);
             model.addAttribute("shopItems", shopItems);
             model.addAttribute("firstShop", firstShop);
             model.addAttribute("firstShopSubtotal", firstShopSubtotal);
 
-            // ✅ DEBUG
-            // Thêm vào editCheckout() để debug
-            System.out.println("=== DEBUG EDIT CHECKOUT ===");
-            System.out.println("Order ID: " + orderId);
-            System.out.println("Shop ID: " + shopId);
-            System.out.println("Items by shop keys: " + itemsByShop.keySet());
-            System.out.println("Shop items count: " + (shopItems != null ? shopItems.size() : 0));
-            System.out.println("Order shipping address: " + order.getShippingAddress());
-            System.out.println("Order shipping fee: " + order.getShippingFee());
+            UpdateOrderRequest updateOrderRequest = UpdateOrderRequest.fromOrder(order);
+            model.addAttribute("updateOrderRequest", updateOrderRequest);
 
-            CreateOrderRequest createOrderRequest = CreateOrderRequest.fromOrder(order);
-            System.out.println("=== DEBUG CREATE ORDER REQUEST ===");
-            System.out.println("Shipping Fee: " + createOrderRequest.getShippingFee());
-            System.out.println("Shipping Name: " + createOrderRequest.getShippingName());
-            System.out.println("Shipping Address: " + createOrderRequest.getShippingAddress());
-            System.out.println("Shipping District ID: " + createOrderRequest.getShippingDistrictId());
-            System.out.println("Shipping Ward Code: " + createOrderRequest.getShippingWardCode());
-            model.addAttribute("createOrderRequest", createOrderRequest);
-
-
-            return "orders/checkout-edit";
+            return "orders/update";
 
         } catch (Exception e) {
             model.addAttribute("error", "Lỗi: " + e.getMessage());
-            return "redirect:/orders";
+            return "redirect:/orders/" + orderId;
         }
     }
-
-
 
     @PostMapping("/{orderId}/update-checkout")
     public String updateCheckout(
             @PathVariable UUID orderId,
-            @Valid @ModelAttribute("createOrderRequest") CreateOrderRequest request,
+            @Valid @ModelAttribute("updateOrderRequest") UpdateOrderRequest request,
             BindingResult bindingResult,
             @CurrentUser User user,
-            Model model   // ✅ BẮT BUỘC
+            Model model
     ) {
 
         if (bindingResult.hasErrors()) {
-
             OrderResponse order = orderService.getOrderForEditCheckout(orderId, user);
             UUID shopId = order.getShopId();
 
             Map<UUID, List<CartItemResponse>> itemsByShop =
                     orderItemService.getItemsByOrder(orderId);
 
-            List<CartItemResponse> shopItems = itemsByShop.get(shopId);
-            Shop firstShop = shopService.getShop(shopId).orElse(null);
-
             model.addAttribute("order", order);
-            model.addAttribute("createOrderRequest", request); // giữ data user nhập
-            model.addAttribute("shopItems", shopItems);
             model.addAttribute("itemsByShop", itemsByShop);
-            model.addAttribute("firstShop", firstShop);
-            model.addAttribute("firstShopSubtotal",
-                    shopItems.stream()
-                            .map(CartItemResponse::getTotalPrice)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add)
-            );
-            model.addAttribute("error", "Thông tin không hợp lệ");
+            model.addAttribute("shopItems", itemsByShop.get(shopId));
+            model.addAttribute("firstShopSubtotal", order.getSubtotal());
+            model.addAttribute("firstShop",
+                    shopService.getShop(shopId).orElse(null));
 
-            return "orders/checkout-edit"; // ✅ render lại view
+
+            return "orders/update";
         }
 
         orderService.updateCheckoutInfo(orderId, request, user);
         return "redirect:/payments/" + orderId;
     }
+
+
 }

@@ -26,11 +26,13 @@ public class OrderItemServiceImpl implements OrderItemService {
 
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
 
-        if (orderItems.isEmpty()) {
-            return Map.of();
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new RuntimeException("Order không có item");
         }
 
         return orderItems.stream()
+                .filter(oi -> oi.getProduct() != null
+                        && oi.getProduct().getShop() != null)
                 .collect(Collectors.groupingBy(
                         oi -> oi.getProduct().getShop().getId(),
                         Collectors.mapping(
@@ -40,11 +42,5 @@ public class OrderItemServiceImpl implements OrderItemService {
                 ));
     }
 
-    @Override
-    public BigDecimal calculateSubtotal(Shop shop, List<CartItemResponse> items) {
-        return items.stream()
-                .map(CartItemResponse::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 }
 

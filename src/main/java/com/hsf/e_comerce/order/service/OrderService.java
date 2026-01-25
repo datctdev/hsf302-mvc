@@ -1,6 +1,7 @@
 package com.hsf.e_comerce.order.service;
 
 import com.hsf.e_comerce.order.dto.request.CreateOrderRequest;
+import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
@@ -38,5 +39,5 @@ public interface OrderService {
 
     OrderResponse getOrderForEditCheckout(UUID orderId, User currentUser);
 
-    void updateCheckoutInfo(UUID orderId, @Valid CreateOrderRequest request, User user);
+    void updateCheckoutInfo(UUID orderId, @Valid UpdateOrderRequest request, User user);
 }

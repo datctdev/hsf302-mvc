@@ -6,6 +6,7 @@ import com.hsf.e_comerce.cart.repository.CartItemRepository;
 import com.hsf.e_comerce.cart.repository.CartRepository;
 import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.dto.request.CreateOrderRequest;
+import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderItemResponse;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
@@ -149,11 +150,11 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Remove cart items from cart
-        for (CartItem cartItem : shopCartItems) {
-            cart.getItems().remove(cartItem);
-            cartItemRepository.delete(cartItem);
-        }
-        cartRepository.save(cart);
+//        for (CartItem cartItem : shopCartItems) {
+//            cart.getItems().remove(cartItem);
+//            cartItemRepository.delete(cartItem);
+//        }
+//        cartRepository.save(cart);
 
         return mapToResponse(order);
     }
@@ -169,7 +170,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderByIdAndUser(UUID orderId, User user) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdAndUserWithItems(orderId, user)
                 .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
         
         if (!order.getUser().getId().equals(user.getId())) {
@@ -352,7 +353,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderForPayment(UUID orderId, User currentUser) {
 
         Order order = orderRepository
-                .findByIdAndUser(orderId, currentUser)
+                .findByIdAndUserWithItems(orderId, currentUser)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
@@ -367,7 +368,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderForEditCheckout(UUID orderId, User user) {
 
         Order order = orderRepository
-                .findByIdAndUser(orderId, user)
+                .findByIdAndUserWithItems(orderId, user)
                 .orElseThrow(() -> new CustomException("Không tìm thấy đơn hàng"));
 
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
@@ -378,30 +379,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Transactional
-    public void updateCheckoutInfo(UUID orderId, CreateOrderRequest req, User user) {
+    @Override
+    public void updateCheckoutInfo(UUID orderId, UpdateOrderRequest request, User user) {
 
-        Order order = orderRepository
-                .findByIdAndUser(orderId, user)
-                .orElseThrow(() -> new CustomException("Order không tồn tại"));
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Không tìm thấy đơn hàng"));
 
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
             throw new CustomException("Không thể cập nhật đơn hàng");
         }
 
-        order.setShippingName(req.getShippingName());
-        order.setShippingPhone(req.getShippingPhone());
-        order.setShippingAddress(req.getShippingAddress());
-        order.setShippingCity(req.getShippingCity());
-        order.setShippingDistrict(req.getShippingDistrict());
-        order.setShippingWard(req.getShippingWard());
-        order.setShippingDistrictId(req.getShippingDistrictId());
-        order.setShippingWardCode(req.getShippingWardCode());
-        order.setNotes(req.getNotes());
+        // ✅ SHIPPING INFO
+        order.setShippingName(request.getShippingName());
+        order.setShippingPhone(request.getShippingPhone());
+        order.setShippingAddress(request.getShippingAddress());
+        order.setShippingCity(request.getShippingCity());
+        order.setShippingDistrictId(request.getShippingDistrictId());
+        order.setShippingWardCode(request.getShippingWardCode());
+        order.setNotes(request.getNotes());
+
+        // 🔥 FIX QUAN TRỌNG
+        order.setShippingFee(request.getShippingFee());
+
+        // 🔥 TÍNH LẠI TOTAL
+        BigDecimal subtotal = order.getSubtotal();
+        BigDecimal shippingFee = request.getShippingFee() != null
+                ? request.getShippingFee()
+                : BigDecimal.ZERO;
+
+        order.setTotal(subtotal.add(shippingFee));
 
         orderRepository.save(order);
     }
-
-
 
     private String generateOrderNumber() {
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
