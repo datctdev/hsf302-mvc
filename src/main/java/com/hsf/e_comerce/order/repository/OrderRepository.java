@@ -63,4 +63,5 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("user") User user
     );
 
+    List<Order> findByShopIdAndStatusNot(UUID shopId, OrderStatus orderStatus);
 }

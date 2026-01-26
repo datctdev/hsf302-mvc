@@ -53,7 +53,12 @@ public class SellerOrderMvcController {
 
         model.addAttribute("orders", orders);
         model.addAttribute("currentStatus", status);
-        model.addAttribute("orderStatuses", OrderStatus.values());
+        model.addAttribute("orderStatuses",
+                List.of(OrderStatus.values()).stream()
+                        .filter(s -> s != OrderStatus.PENDING_PAYMENT)
+                        .toList()
+        );
+
         return "seller/orders";
     }
 

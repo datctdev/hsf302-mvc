@@ -189,7 +189,11 @@ public class OrderServiceImpl implements OrderService {
         if (!order.getShop().getId().equals(shopId)) {
             throw new CustomException("Đơn hàng không thuộc về shop này.");
         }
-        
+
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+            throw new CustomException("Bạn không có quyền xem đơn hàng này.");
+        }
+
         return mapToResponse(order);
     }
 
@@ -205,7 +209,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByShop(UUID shopId) {
-        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
+//        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
+        List<Order> orders = orderRepository
+                .findByShopIdAndStatusNot(shopId, OrderStatus.PENDING_PAYMENT);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -214,6 +220,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByShopAndStatus(UUID shopId, OrderStatus status) {
+
+        if (status == OrderStatus.PENDING_PAYMENT) {
+            return List.of();
+        }
+
         List<Order> orders = orderRepository.findByShopIdAndStatus(shopId, status);
         return orders.stream()
                 .map(this::mapToResponse)
@@ -258,13 +269,13 @@ public class OrderServiceImpl implements OrderService {
 
         // Only allow cancellation if order is PENDING or CONFIRMED
         if (newStatus == OrderStatus.CANCELLED && 
-            currentStatus != OrderStatus.PENDING && currentStatus != OrderStatus.CONFIRMED) {
+            currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CONFIRMED) {
             throw new CustomException("Không thể hủy đơn hàng ở trạng thái " + currentStatus);
         }
 
         // If cancelling, restore stock and cancel GHN order
         if (newStatus == OrderStatus.CANCELLED && 
-            (currentStatus == OrderStatus.PENDING || currentStatus == OrderStatus.CONFIRMED)) {
+            (currentStatus == OrderStatus.PENDING_PAYMENT || currentStatus == OrderStatus.CONFIRMED)) {
             for (OrderItem item : order.getItems()) {
                 if (item.getVariant() != null) {
                     item.getVariant().setStockQuantity(
@@ -286,7 +297,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Create GHN order when seller confirms (PENDING -> CONFIRMED)
-        if (currentStatus == OrderStatus.PENDING && newStatus == OrderStatus.CONFIRMED) {
+        if (currentStatus == OrderStatus.PENDING_PAYMENT && newStatus == OrderStatus.CONFIRMED) {
             if (order.getGhnOrderCode() == null || order.getGhnOrderCode().isEmpty()) {
                 try {
                     GHNCreateOrderRequest ghnRequest = buildGHNCreateOrderRequest(order);
@@ -319,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Only allow cancellation if order is PENDING or CONFIRMED
-        if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new CustomException("Không thể hủy đơn hàng ở trạng thái " + order.getStatus());
         }
 
