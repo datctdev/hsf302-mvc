@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head>
+    <title>Quản Lý KYC</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <h3 class="card-title mb-4">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Quản Lý Xác Minh Danh Tính
+                        </h3>
+
+                        <!-- Current session status -->
+                        <div class="card mb-4">
+                            <div class="card-header" th:classappend="${kycSession.status.name() == 'VERIFIED' ? 'bg-success text-white' : 'bg-info text-white'}">
+                                <h5 class="mb-0">Phiên KYC Hiện Tại</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Mã phiên:</label>
+                                        <p th:text="${kycSession.id}" class="form-control-plaintext font-monospace"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Trạng thái:</label>
+                                        <p>
+                                            <span th:text="${kycSession.status}" 
+                                                  class="badge"
+                                                  th:classappend="${kycSession.status.name() == 'VERIFIED' ? 'bg-success' : 
+                                                                   kycSession.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                                                   kycSession.status.name() == 'IN_PROGRESS' ? 'bg-warning' : 'bg-secondary'}">
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Ngày tạo:</label>
+                                        <p th:text="${#temporals.format(kycSession.createdAt, 'dd/MM/yyyy HH:mm')}" class="form-control-plaintext"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Cập nhật lần cuối:</label>
+                                        <p th:text="${#temporals.format(kycSession.updatedAt, 'dd/MM/yyyy HH:mm')}" class="form-control-plaintext"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Status-specific actions -->
+                                <div th:if="${kycSession.status.name() == 'DRAFT' or kycSession.status.name() == 'IN_PROGRESS'}">
+                                    <a th:href="@{/kyc/session/{id}(id=${kycSession.id})}" 
+                                       class="btn btn-primary">
+                                        <i class="bi bi-arrow-right-circle me-2"></i>Tiếp Tục Xác Minh
+                                    </a>
+                                </div>
+
+                                <div th:if="${kycSession.status.name() == 'VERIFIED'}" class="alert alert-success mb-0">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Tài khoản của bạn đã được xác minh thành công!
+                                </div>
+
+                                <div th:if="${kycSession.status.name() == 'REJECTED'}" class="alert alert-danger mb-0">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Xác minh không thành công. Vui lòng thử lại hoặc liên hệ hỗ trợ.
+                                    <div class="mt-2">
+                                        <form th:action="@{/kyc/start}" method="post">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="bi bi-arrow-clockwise me-2"></i>Thử Lại
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress checklist -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Tiến Trình</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-card-image me-2"></i>
+                                            CCCD Mặt Trước
+                                        </div>
+                                        <span th:if="${kycSession.frontHash}" class="badge bg-success">
+                                            <i class="bi bi-check-lg"></i> Hoàn thành
+                                        </span>
+                                        <span th:unless="${kycSession.frontHash}" class="badge bg-secondary">
+                                            Chưa hoàn thành
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-card-image me-2"></i>
+                                            CCCD Mặt Sau (Tùy chọn)
+                                        </div>
+                                        <span th:if="${kycSession.backHash}" class="badge bg-success">
+                                            <i class="bi bi-check-lg"></i> Hoàn thành
+                                        </span>
+                                        <span th:unless="${kycSession.backHash}" class="badge bg-secondary">
+                                            Chưa hoàn thành
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            Ảnh Selfie
+                                        </div>
+                                        <span th:if="${kycSession.selfieHash}" class="badge bg-success">
+                                            <i class="bi bi-check-lg"></i> Hoàn thành
+                                        </span>
+                                        <span th:unless="${kycSession.selfieHash}" class="badge bg-secondary">
+                                            Chưa hoàn thành
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

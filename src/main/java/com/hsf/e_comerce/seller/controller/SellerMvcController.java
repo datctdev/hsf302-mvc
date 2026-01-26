@@ -3,6 +3,7 @@ package com.hsf.e_comerce.seller.controller;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.file.service.FileService;
+import com.hsf.e_comerce.kyc.service.KycVerificationService;
 import com.hsf.e_comerce.seller.dto.request.SellerRequestRequest;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
@@ -26,11 +27,26 @@ public class SellerMvcController {
     private final SellerRequestService sellerRequestService;
     private final ShopService shopService;
     private final FileService fileService;
+    private final KycVerificationService kycVerificationService;
 
     @GetMapping("/become-seller")
     public String showBecomeSellerForm(@CurrentUser User user, Model model) {
         if (user == null) {
             return "redirect:/login";
+        }
+
+        // Check KYC verification status
+        boolean isKycVerified = kycVerificationService.isKycVerified(user.getId());
+        model.addAttribute("isKycVerified", isKycVerified);
+
+        // Always add empty form object to prevent Thymeleaf errors
+        if (!model.containsAttribute("sellerRequestRequest")) {
+            model.addAttribute("sellerRequestRequest", new SellerRequestRequest());
+        }
+
+        if (!isKycVerified) {
+            model.addAttribute("error", "Bạn cần hoàn thành xác minh danh tính (KYC) trước khi đăng ký làm seller.");
+            return "seller/become-seller";
         }
 
         // Check if already seller
@@ -44,10 +60,6 @@ public class SellerMvcController {
             SellerRequestResponse request = sellerRequestService.getRequestByUserId(user.getId());
             model.addAttribute("request", request);
             model.addAttribute("message", "Bạn có request đang chờ duyệt");
-        }
-
-        if (!model.containsAttribute("sellerRequestRequest")) {
-            model.addAttribute("sellerRequestRequest", new SellerRequestRequest());
         }
 
         return "seller/become-seller";
