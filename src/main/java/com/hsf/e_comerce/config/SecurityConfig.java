@@ -30,6 +30,7 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
+    private final CustomAuthenticationFailureHandler authenticationFailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/.well-known/**").permitAll()
                         // Public pages
                         .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/verify-email", "/resend-verification").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // Public product pages
                         // File upload/download (require authentication)
                         .requestMatchers("/files/upload").authenticated()
@@ -68,7 +70,7 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .successHandler(authenticationSuccessHandler)
-                        .failureUrl("/login?error=true")
+                        .failureHandler(authenticationFailureHandler)
                         .permitAll()
                     )
                 .logout(logout -> logout

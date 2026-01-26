@@ -683,6 +683,12 @@
             collectStepData();
             const reviewContent = document.getElementById('reviewContent');
             
+            let catName = '';
+            const catSel = document.getElementById('productCategory');
+            if (catSel && catSel.value) {
+                const opt = catSel.options[catSel.selectedIndex];
+                if (opt) catName = opt.text;
+            }
             let html = `
                 <div class="review-section">
                     <h4>Thông Tin Cơ Bản</h4>
@@ -691,6 +697,7 @@
                     <p><strong>Giá:</strong> ${formatPrice(productData.basePrice)} VNĐ</p>
                     <p><strong>Trạng thái:</strong> ${productData.status === 'PUBLISHED' ? 'Xuất bản' : 'Nháp'}</p>
                     ${productData.description ? `<p><strong>Mô tả:</strong> ${escapeHtml(productData.description)}</p>` : ''}
+                    ${catName ? `<p><strong>Danh mục:</strong> ${escapeHtml(catName)}</p>` : ''}
                 </div>
             `;
 

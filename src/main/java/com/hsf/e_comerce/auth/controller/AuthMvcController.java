@@ -29,6 +29,40 @@ public class AuthMvcController {
     private final UserService userService;
     private final FileService fileService;
 
+    @GetMapping("/verify-email")
+    public String verifyEmail(
+            @RequestParam String token,
+            RedirectAttributes redirectAttributes) {
+        try {
+            authService.verifyEmail(token);
+            redirectAttributes.addFlashAttribute("success", "Email đã được xác minh. Vui lòng đăng nhập.");
+            return "redirect:/login";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/login";
+        }
+    }
+
+    @GetMapping("/resend-verification")
+    public String showResendVerificationForm(Model model) {
+        return "auth/resend-verification";
+    }
+
+    @PostMapping("/resend-verification")
+    public String resendVerification(
+            @RequestParam String email,
+            RedirectAttributes redirectAttributes) {
+        try {
+            authService.resendVerificationEmail(email.trim());
+            redirectAttributes.addFlashAttribute("success", "Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.");
+            return "redirect:/login";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addAttribute("email", email);
+            return "redirect:/resend-verification";
+        }
+    }
+
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         if (!model.containsAttribute("registerRequest")) {
@@ -52,7 +86,7 @@ public class AuthMvcController {
 
         try {
             authService.register(request);
-            redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
+            redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản trước khi đăng nhập.");
             return "redirect:/login";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

@@ -89,6 +89,7 @@ public class DataInitializer implements CommandLineRunner {
                 user.setPassword(passwordEncoder.encode(password));
                 user.setFullName(fullName);
                 user.setIsActive(true);
+                user.setEmailVerified(true); // Tài khoản mặc định (test) coi như đã xác minh
                 user.setRole(role); // Set role cho user
                 
                 user = userRepository.save(user);
@@ -105,8 +106,16 @@ public class DataInitializer implements CommandLineRunner {
                 User existingUser = userRepository.findByEmail(email)
                         .orElse(null);
                 if (existingUser != null) {
+                    boolean needSave = false;
                     if (existingUser.getRole() == null || !existingUser.getRole().getName().equals(roleName)) {
                         existingUser.setRole(role);
+                        needSave = true;
+                    }
+                    if (!Boolean.TRUE.equals(existingUser.getEmailVerified())) {
+                        existingUser.setEmailVerified(true); // Tài khoản mặc định coi như đã xác minh
+                        needSave = true;
+                    }
+                    if (needSave) {
                         userRepository.save(existingUser);
                         log.info("✓ Updated existing user: {} with role {}", email, roleName);
                     } else {

@@ -241,6 +241,11 @@
                     </div>
                     <div class="product-description" th:utext="${product.description}">Description</div>
                     
+                    <div class="product-meta">
+                        <div class="product-meta-item"><strong>SKU:</strong> <span th:text="${product.sku}">SKU</span></div>
+                        <div class="product-meta-item" th:if="${product.categoryName}"><strong>Danh mục:</strong> <span th:text="${product.categoryName}">Category</span></div>
+                    </div>
+                    
                     <!-- Variants -->
                     <div th:if="${variantGroups != null and !variantGroups.empty}" class="product-variants">
                         <h3>Lựa chọn:</h3>

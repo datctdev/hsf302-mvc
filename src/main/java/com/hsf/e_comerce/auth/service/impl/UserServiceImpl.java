@@ -6,6 +6,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
 import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.common.exception.EmailNotVerifiedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,6 +37,11 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
         if (!user.getIsActive()) {
             throw new UsernameNotFoundException("User account is disabled");
+        }
+
+        // Chặn đăng nhập nếu email chưa xác minh (emailVerified=false). null coi như đã xác minh (user cũ trước khi có tính năng).
+        if (Boolean.FALSE.equals(user.getEmailVerified())) {
+            throw new EmailNotVerifiedException("Email chưa được xác minh. Vui lòng kiểm tra hộp thư và nhấn link trong email.");
         }
 
         return new org.springframework.security.core.userdetails.User(

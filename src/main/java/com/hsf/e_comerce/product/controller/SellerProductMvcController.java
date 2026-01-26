@@ -141,6 +141,7 @@ public class SellerProductMvcController {
                 updateRequest.setDescription(product.getDescription());
                 updateRequest.setBasePrice(product.getBasePrice());
                 updateRequest.setStatus(product.getStatus());
+                updateRequest.setCategoryId(product.getCategoryId());
                 model.addAttribute("updateProductRequest", updateRequest);
             }
             

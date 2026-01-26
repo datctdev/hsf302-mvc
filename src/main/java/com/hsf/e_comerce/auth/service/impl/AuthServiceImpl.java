@@ -7,12 +7,15 @@ import com.hsf.e_comerce.auth.dto.request.RegisterRequest;
 import com.hsf.e_comerce.auth.dto.request.UpdateProfileRequest;
 import com.hsf.e_comerce.auth.dto.response.AuthResponse;
 import com.hsf.e_comerce.auth.dto.response.UserResponse;
+import com.hsf.e_comerce.auth.entity.EmailVerificationToken;
 import com.hsf.e_comerce.auth.entity.RefreshToken;
 import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.auth.repository.EmailVerificationTokenRepository;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
 import com.hsf.e_comerce.auth.service.AuthService;
+import com.hsf.e_comerce.auth.service.EmailService;
 import com.hsf.e_comerce.auth.service.JwtService;
 import com.hsf.e_comerce.auth.service.RefreshTokenService;
 import com.hsf.e_comerce.auth.service.UserService;
@@ -26,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -38,12 +42,17 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final EmailService emailService;
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
+
+    @Value("${app.email-verification-expiry-hours:24}")
+    private int verificationExpiryHours;
 
     @Override
     @Transactional
@@ -53,13 +62,14 @@ public class AuthServiceImpl implements AuthService {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
 
-        // Tạo user mới
+        // Tạo user mới (chưa xác minh email)
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setIsActive(true);
+        user.setEmailVerified(false);
 
         // Gán role mặc định ROLE_BUYER TRƯỚC KHI save
         Role buyerRole = roleRepository.findByName("ROLE_BUYER")
@@ -68,6 +78,17 @@ public class AuthServiceImpl implements AuthService {
 
         // Lưu user vào database (sau khi đã có role)
         user = userRepository.save(user);
+
+        // Tạo token xác minh và gửi email
+        String token = UUID.randomUUID().toString();
+        EmailVerificationToken evToken = new EmailVerificationToken();
+        evToken.setUser(user);
+        evToken.setToken(token);
+        evToken.setExpiresAt(LocalDateTime.now().plusHours(verificationExpiryHours));
+        emailVerificationTokenRepository.save(evToken);
+
+        String verificationLink = "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
 
         // Lấy roles của user
         var roles = userService.getUserRoles(user.getId());
@@ -82,6 +103,43 @@ public class AuthServiceImpl implements AuthService {
                 .roles(roles)
                 .expiresAt(null)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(String token) {
+        EmailVerificationToken evToken = emailVerificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Link xác minh không hợp lệ hoặc đã hết hạn."));
+        if (evToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            emailVerificationTokenRepository.delete(evToken);
+            throw new IllegalArgumentException("Link xác minh đã hết hạn. Vui lòng yêu cầu gửi lại email.");
+        }
+        User user = evToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        emailVerificationTokenRepository.delete(evToken);
+    }
+
+    @Override
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmailAndDeletedFalse(email)
+                .orElseThrow(() -> new IllegalArgumentException("Email chưa đăng ký. Vui lòng đăng ký tài khoản."));
+        if (user.getEmailVerified()) {
+            throw new IllegalArgumentException("Email đã được xác minh. Bạn có thể đăng nhập.");
+        }
+        // Xóa token cũ nếu có
+        emailVerificationTokenRepository.findByUser(user).ifPresent(emailVerificationTokenRepository::delete);
+
+        String token = UUID.randomUUID().toString();
+        EmailVerificationToken evToken = new EmailVerificationToken();
+        evToken.setUser(user);
+        evToken.setToken(token);
+        evToken.setExpiresAt(LocalDateTime.now().plusHours(verificationExpiryHours));
+        emailVerificationTokenRepository.save(evToken);
+
+        String verificationLink = "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
     }
 
     @Override
