@@ -24,9 +24,8 @@ public class SellerRequestRequest {
     @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự")
     private String shopPhone;
 
-    @NotBlank(message = "Địa chỉ shop không được để trống")
     @Size(max = 255, message = "Địa chỉ không được vượt quá 255 ký tự")
-    private String shopAddress;
+    private String shopAddress; // Optional - có thể cập nhật sau
 
     private String logoUrl;
 

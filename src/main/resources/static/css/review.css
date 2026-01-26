@@ -1,0 +1,54 @@
+/* --- Filter Section --- */
+.review-filter-bar {
+    background-color: #fffbf8;
+    border: 1px solid #f9ede5;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 2px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-label {
+    margin-right: 10px;
+    color: #555;
+}
+
+.filter-btn {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border: 1px solid rgba(0,0,0,.09);
+    background: #fff;
+    color: #555;
+    text-decoration: none;
+    border-radius: 2px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    border-color: #ee4d2d;
+    color: #ee4d2d;
+}
+
+.filter-btn.active {
+    border-color: #ee4d2d;
+    background-color: #fff;
+    color: #ee4d2d;
+    font-weight: 500;
+}
+
+/* Dropdown sắp xếp */
+.sort-select {
+    padding: 0.4rem;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    outline: none;
+    margin-left: auto;
+}

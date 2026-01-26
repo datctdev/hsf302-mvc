@@ -8,10 +8,8 @@ import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductCategory;
-import com.hsf.e_comerce.product.entity.ProductCategoryMapping;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
-import com.hsf.e_comerce.product.repository.ProductCategoryMappingRepository;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
 import com.hsf.e_comerce.product.repository.ProductRepository;
@@ -41,7 +39,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final ProductCategoryRepository categoryRepository;
-    private final ProductCategoryMappingRepository categoryMappingRepository;
     private final ShopRepository shopRepository;
 
     @Override
@@ -52,7 +49,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new CustomException("Shop không tồn tại"));
 
         // Validate SKU uniqueness
-        if (productRepository.existsBySku(request.getSku())) {
+        if (productRepository.existsBySkuAndDeletedFalse(request.getSku())) {
             throw new CustomException("SKU đã tồn tại: " + request.getSku());
         }
 
@@ -64,6 +61,13 @@ public class ProductServiceImpl implements ProductService {
         product.setSku(request.getSku());
         product.setBasePrice(request.getBasePrice());
         product.setStatus(ProductStatus.valueOf(request.getStatus().toUpperCase()));
+
+        // Set category (N-1: 1 product có 0 hoặc 1 category)
+        if (request.getCategoryId() != null) {
+            ProductCategory category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
+            product.setCategory(category);
+        }
 
         product = productRepository.save(product);
 
@@ -84,6 +88,26 @@ public class ProductServiceImpl implements ProductService {
                 variant.setSku(variantRequest.getSku());
                 variantRepository.save(variant);
             }
+        } else {
+            // Auto-create default variant if no variants provided
+            // This ensures every product has at least one variant for stock management
+            String defaultVariantSku = product.getSku() + "-DEFAULT";
+            
+            // Check if default SKU already exists (unlikely but possible)
+            int suffix = 1;
+            while (variantRepository.existsBySku(defaultVariantSku)) {
+                defaultVariantSku = product.getSku() + "-DEFAULT-" + suffix;
+                suffix++;
+            }
+            
+            ProductVariant defaultVariant = new ProductVariant();
+            defaultVariant.setProduct(product);
+            defaultVariant.setName("Mặc định");
+            defaultVariant.setValue("Tiêu chuẩn");
+            defaultVariant.setPriceModifier(BigDecimal.ZERO);
+            defaultVariant.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+            defaultVariant.setSku(defaultVariantSku);
+            variantRepository.save(defaultVariant);
         }
 
         // Create images
@@ -107,22 +131,10 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Set category
-        if (request.getCategoryId() != null) {
-            ProductCategory category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
-            
-            ProductCategoryMapping mapping = new ProductCategoryMapping();
-            mapping.setProduct(product);
-            mapping.setCategory(category);
-            categoryMappingRepository.save(mapping);
-        }
-
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -130,7 +142,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse updateProduct(UUID shopId, UUID productId, UpdateProductRequest request) {
         // Validate product belongs to shop
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         if (!product.getShop().getId().equals(shopId)) {
@@ -145,7 +157,7 @@ public class ProductServiceImpl implements ProductService {
             product.setDescription(request.getDescription());
         }
         if (request.getSku() != null && !request.getSku().equals(product.getSku())) {
-            if (productRepository.existsBySku(request.getSku())) {
+            if (productRepository.existsBySkuAndDeletedFalse(request.getSku())) {
                 throw new CustomException("SKU đã tồn tại: " + request.getSku());
             }
             product.setSku(request.getSku());
@@ -160,7 +172,7 @@ public class ProductServiceImpl implements ProductService {
         product = productRepository.save(product);
 
         // Update variants - smart update: update existing, create new, delete removed
-        if (request.getVariants() != null) {
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
             List<ProductVariant> existingVariants = variantRepository.findByProduct(product);
             List<UUID> requestVariantIds = request.getVariants().stream()
                     .map(ProductVariantRequest::getId)
@@ -203,13 +215,31 @@ public class ProductServiceImpl implements ProductService {
                 variant.setSku(variantRequest.getSku());
                 variantRepository.save(variant);
             }
-        } else {
-            // If variants is null, delete all existing variants
+        } else if (request.getVariants() != null && request.getVariants().isEmpty()) {
+            // If variants is explicitly empty list, delete all and create default variant
             variantRepository.findByProduct(product).forEach(variantRepository::delete);
+            
+            // Create default variant
+            String defaultVariantSku = product.getSku() + "-DEFAULT";
+            int suffix = 1;
+            while (variantRepository.existsBySku(defaultVariantSku)) {
+                defaultVariantSku = product.getSku() + "-DEFAULT-" + suffix;
+                suffix++;
+            }
+            
+            ProductVariant defaultVariant = new ProductVariant();
+            defaultVariant.setProduct(product);
+            defaultVariant.setName("Mặc định");
+            defaultVariant.setValue("Tiêu chuẩn");
+            defaultVariant.setPriceModifier(BigDecimal.ZERO);
+            defaultVariant.setStockQuantity(0); // Default to 0 when updating
+            defaultVariant.setSku(defaultVariantSku);
+            variantRepository.save(defaultVariant);
         }
+        // If variants is null, don't change existing variants (partial update)
 
         // Update images - smart update: update existing, create new, delete removed
-        if (request.getImages() != null) {
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
             List<ProductImage> existingImages = imageRepository.findByProductOrderByDisplayOrderAsc(product);
             List<UUID> requestImageIds = request.getImages().stream()
                     .map(ProductImageRequest::getId)
@@ -248,57 +278,52 @@ public class ProductServiceImpl implements ProductService {
                 
                 imageRepository.save(image);
             }
-        } else {
-            // If images is null, delete all existing images
-            imageRepository.findByProductOrderByDisplayOrderAsc(product).forEach(imageRepository::delete);
         }
+        // If images is null or empty, keep existing images (don't delete)
 
-        // Update category
-        if (request.getCategoryId() != null) {
-            // Remove old category
-            categoryMappingRepository.deleteByProduct(product);
-            
+        // Update category (N-1: 1 product có 0 hoặc 1 category)
+        if (Boolean.TRUE.equals(request.getClearCategory())) {
+            product.setCategory(null);
+            product = productRepository.save(product);
+        } else if (request.getCategoryId() != null) {
             ProductCategory category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
-            
-            ProductCategoryMapping mapping = new ProductCategoryMapping();
-            mapping.setProduct(product);
-            mapping.setCategory(category);
-            categoryMappingRepository.save(mapping);
+            product.setCategory(category);
+            product = productRepository.save(product);
         }
 
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
     @Override
     @Transactional
     public void deleteProduct(UUID shopId, UUID productId) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         if (!product.getShop().getId().equals(shopId)) {
             throw new CustomException("Bạn không có quyền xóa sản phẩm này");
         }
 
-        productRepository.delete(product);
+        // Soft delete: set deleted flag to true
+        product.setDeleted(true);
+        productRepository.save(product);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getProductById(UUID productId) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại"));
 
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -308,12 +333,11 @@ public class ProductServiceImpl implements ProductService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new CustomException("Shop không tồn tại"));
 
-        return productRepository.findByShop(shop).stream()
+        return productRepository.findByShopAndDeletedFalse(shop).stream()
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,
-                        imageRepository,
-                        categoryMappingRepository
+                        imageRepository
                 ))
                 .collect(Collectors.toList());
     }
@@ -326,12 +350,11 @@ public class ProductServiceImpl implements ProductService {
 
         ProductStatus productStatus = ProductStatus.valueOf(status.toUpperCase());
 
-        return productRepository.findByShopAndStatus(shop, productStatus).stream()
+        return productRepository.findByShopAndStatusAndDeletedFalse(shop, productStatus).stream()
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,
-                        imageRepository,
-                        categoryMappingRepository
+                        imageRepository
                 ))
                 .collect(Collectors.toList());
     }
@@ -377,8 +400,7 @@ public class ProductServiceImpl implements ProductService {
             return products.map(product -> ProductResponse.convertToResponse(
                     product,
                     variantRepository,
-                    imageRepository,
-                    categoryMappingRepository
+                    imageRepository
             ));
         }
         
@@ -388,8 +410,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 
@@ -402,8 +423,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -424,8 +444,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 
@@ -442,8 +461,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 

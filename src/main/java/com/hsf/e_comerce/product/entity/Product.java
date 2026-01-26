@@ -53,14 +53,21 @@ public class Product {
     @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal basePrice;
 
+    @Column(name = "weight")
+    private Integer weight = 500; // Cân nặng (gram), mặc định 500g
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductVariant> variants = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductImage> images = new HashSet<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ProductCategoryMapping> categoryMappings = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private ProductCategory category; // nullable: 1 product có 0 hoặc 1 category
+
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

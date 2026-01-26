@@ -16,18 +16,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        String requestPath = request.getRequestURI();
-        
-        // Nếu là API request, trả về JSON
-        if (requestPath.startsWith("/api/")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(
-                    "{\"error\":\"Unauthorized\",\"message\":\"Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.\"}"
-            );
-        } else {
-            // Nếu là HTML request, redirect về trang login
-            response.sendRedirect("/login?expired=true");
-        }
+        // MVC: Luôn redirect về trang login
+        response.sendRedirect("/login?error=true");
     }
 }

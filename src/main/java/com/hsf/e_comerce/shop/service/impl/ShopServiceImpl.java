@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -54,6 +55,12 @@ public class ShopServiceImpl implements ShopService {
         if (request.getAddress() != null) {
             shop.setAddress(request.getAddress());
         }
+        if (request.getDistrictId() != null) {
+            shop.setDistrictId(request.getDistrictId());
+        }
+        if (request.getWardCode() != null) {
+            shop.setWardCode(request.getWardCode());
+        }
         if (request.getLogoUrl() != null) {
             shop.setLogoUrl(request.getLogoUrl());
         }
@@ -71,6 +78,11 @@ public class ShopServiceImpl implements ShopService {
         return shopRepository.existsByUserId(userId);
     }
 
+    @Override
+    public Optional<Shop> getShop(UUID shopId) {
+        return this.shopRepository.findById(shopId);
+    }
+
     private ShopResponse mapToResponse(Shop shop) {
         return ShopResponse.builder()
                 .id(shop.getId())
@@ -81,6 +93,8 @@ public class ShopServiceImpl implements ShopService {
                 .coverImageUrl(shop.getCoverImageUrl())
                 .phoneNumber(shop.getPhoneNumber())
                 .address(shop.getAddress())
+                .districtId(shop.getDistrictId())
+                .wardCode(shop.getWardCode())
                 .status(shop.getStatus().getCode())
                 .averageRating(shop.getAverageRating())
                 .createdAt(shop.getCreatedAt())

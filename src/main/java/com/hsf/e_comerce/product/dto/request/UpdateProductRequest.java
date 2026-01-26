@@ -37,4 +37,7 @@ public class UpdateProductRequest {
     private List<ProductImageRequest> images;
 
     private UUID categoryId;
+
+    /** Khi true: bỏ danh mục khỏi sản phẩm (set category = null). */
+    private Boolean clearCategory;
 }

@@ -240,6 +240,9 @@
                             <label>Danh mục</label>
                             <select id="categoryFilter">
                                 <option value="">Tất cả</option>
+                                <option th:each="category : ${categories}" 
+                                        th:value="${category.id}" 
+                                        th:text="${category.name}">Category</option>
                             </select>
                         </div>
 
@@ -275,7 +278,26 @@
                     </div>
 
                     <div id="productsGrid" class="products-grid">
-                        <div class="loading">Đang tải sản phẩm...</div>
+                        <!-- Products loaded from Model -->
+                        <div th:if="${products != null and !products.empty}" th:each="product : ${products}">
+                            <div class="product-card" th:attr="data-product-id=${product.id}" onclick="window.location.href='/products/' + this.getAttribute('data-product-id')">
+                                <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, 
+                                              firstImage=${product.images != null and !product.images.empty ? product.images[0] : null},
+                                              displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
+                                     th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" 
+                                     th:alt="${product.name}" 
+                                     class="product-card-image" 
+                                     onerror="this.src='/images/placeholder.png'">
+                                <div class="product-card-body">
+                                    <h3 class="product-card-title" th:text="${product.name}">Product Name</h3>
+                                    <div class="product-card-price" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
+                                    <div class="product-card-shop" th:text="${product.shopName ?: 'N/A'}">Shop Name</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${products == null or products.empty}" class="empty-state">
+                            Không tìm thấy sản phẩm nào.
+                        </div>
                     </div>
 
                     <div id="pagination" class="pagination"></div>
@@ -302,9 +324,37 @@
             sortDir: 'desc'
         };
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadCategories();
-            await loadProducts();
+        // Initialize from URL params or Model data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial values from URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            currentPage = parseInt(urlParams.get('page') || '0');
+            currentFilters.search = urlParams.get('search') || null;
+            currentFilters.categoryId = urlParams.get('categoryId') || null;
+            currentFilters.minPrice = urlParams.get('minPrice') ? parseFloat(urlParams.get('minPrice')) : null;
+            currentFilters.maxPrice = urlParams.get('maxPrice') ? parseFloat(urlParams.get('maxPrice')) : null;
+            currentFilters.sortBy = urlParams.get('sortBy') || 'createdAt';
+            currentFilters.sortDir = urlParams.get('sortDir') || 'desc';
+            
+            // Set form values
+            if (currentFilters.search) {
+                document.getElementById('searchInput').value = currentFilters.search;
+            }
+            if (currentFilters.categoryId) {
+                document.getElementById('categoryFilter').value = currentFilters.categoryId;
+            }
+            if (currentFilters.minPrice) {
+                document.getElementById('minPrice').value = currentFilters.minPrice;
+            }
+            if (currentFilters.maxPrice) {
+                document.getElementById('maxPrice').value = currentFilters.maxPrice;
+            }
+            
+            // Update product count from Model
+            document.getElementById('productCount').textContent = /*[[${totalItems}]]*/ 0;
+            
+            // Display pagination from Model
+            displayPaginationFromModel();
             
             // Search on Enter
             document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -314,55 +364,19 @@
             });
         });
 
-        async function loadCategories() {
-            try {
-                const response = await fetch('/api/products/categories');
-                if (response.ok) {
-                    const categories = await response.json();
-                    const select = document.getElementById('categoryFilter');
-                    categories.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category.id;
-                        option.textContent = category.name;
-                        select.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading categories:', error);
+        function displayPaginationFromModel() {
+            const totalPages = /*[[${totalPages}]]*/ 1;
+            const currentPageNum = /*[[${currentPage}]]*/ 0;
+            
+            if (totalPages <= 1) {
+                document.getElementById('pagination').innerHTML = '';
+                return;
             }
-        }
-
-        async function loadProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '<div class="loading">Đang tải sản phẩm...</div>';
-
-            try {
-                const params = new URLSearchParams({
-                    page: currentPage,
-                    size: pageSize,
-                    sortBy: currentFilters.sortBy,
-                    sortDir: currentFilters.sortDir
-                });
-
-                if (currentFilters.search) params.append('search', currentFilters.search);
-                if (currentFilters.categoryId) params.append('categoryId', currentFilters.categoryId);
-                if (currentFilters.shopId) params.append('shopId', currentFilters.shopId);
-                if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
-                if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
-
-                const response = await fetch(`/api/products?${params}`);
-                if (!response.ok) {
-                    throw new Error('Failed to load products');
-                }
-
-                const data = await response.json();
-                displayProducts(data.content);
-                displayPagination(data);
-                document.getElementById('productCount').textContent = data.totalElements;
-            } catch (error) {
-                grid.innerHTML = '<div class="empty-state">Không thể tải sản phẩm. Vui lòng thử lại sau.</div>';
-                console.error('Error loading products:', error);
-            }
+            
+            displayPagination({
+                totalPages: totalPages,
+                number: currentPageNum
+            });
         }
 
         function displayProducts(products) {
@@ -431,7 +445,7 @@
 
         function goToPage(page) {
             currentPage = page;
-            loadProducts();
+            reloadProducts();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -439,7 +453,7 @@
             const searchTerm = document.getElementById('searchInput').value.trim();
             currentFilters.search = searchTerm || null;
             currentPage = 0;
-            loadProducts();
+            reloadProducts();
         }
 
         function applyFilters() {
@@ -451,7 +465,7 @@
             currentFilters.minPrice = minPrice ? parseFloat(minPrice) : null;
             currentFilters.maxPrice = maxPrice ? parseFloat(maxPrice) : null;
             currentPage = 0;
-            loadProducts();
+            reloadProducts();
         }
 
         function clearFilters() {
@@ -469,7 +483,24 @@
                 sortDir: 'desc'
             };
             currentPage = 0;
-            loadProducts();
+            reloadProducts();
+        }
+
+        function reloadProducts() {
+            // Build URL with filters
+            const params = new URLSearchParams();
+            params.append('page', currentPage);
+            params.append('size', pageSize);
+            params.append('sortBy', currentFilters.sortBy);
+            params.append('sortDir', currentFilters.sortDir);
+            
+            if (currentFilters.search) params.append('search', currentFilters.search);
+            if (currentFilters.categoryId) params.append('categoryId', currentFilters.categoryId);
+            if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
+            if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
+            
+            // Reload page with new params
+            window.location.href = '/products?' + params.toString();
         }
 
         // Update sort when select changes
@@ -478,7 +509,7 @@
             currentFilters.sortBy = sortBy;
             currentFilters.sortDir = sortDir;
             currentPage = 0;
-            loadProducts();
+            reloadProducts();
         });
 
         function formatPrice(price) {

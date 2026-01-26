@@ -1,10 +1,8 @@
 package com.hsf.e_comerce.product.dto.response;
 
 import com.hsf.e_comerce.product.entity.Product;
-import com.hsf.e_comerce.product.entity.ProductCategory;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
-import com.hsf.e_comerce.product.repository.ProductCategoryMappingRepository;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
 import com.hsf.e_comerce.product.repository.ProductVariantRepository;
 import lombok.AllArgsConstructor;
@@ -42,8 +40,7 @@ public class ProductResponse {
     public static ProductResponse convertToResponse(
             Product product,
             ProductVariantRepository variantRepository,
-            ProductImageRepository imageRepository,
-            ProductCategoryMappingRepository categoryMappingRepository) {
+            ProductImageRepository imageRepository) {
         
         List<ProductVariantResponse> variants = variantRepository.findByProduct(product).stream()
                 .map(ProductVariantResponse::convertToResponse)
@@ -55,12 +52,9 @@ public class ProductResponse {
 
         UUID categoryId = null;
         String categoryName = null;
-        var categoryMapping = categoryMappingRepository.findByProduct(product).stream()
-                .findFirst();
-        if (categoryMapping.isPresent()) {
-            ProductCategory category = categoryMapping.get().getCategory();
-            categoryId = category.getId();
-            categoryName = category.getName();
+        if (product.getCategory() != null) {
+            categoryId = product.getCategory().getId();
+            categoryName = product.getCategory().getName();
         }
 
         return ProductResponse.builder()

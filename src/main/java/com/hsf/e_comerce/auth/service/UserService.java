@@ -12,6 +12,8 @@ public interface UserService {
     
     User findByEmail(String email);
     
+    User findByEmailWithRole(String email); // Optimized: fetch role in same query
+    
     List<String> getUserRoles(UUID userId);
     
     void assignRoleToUser(User user, String roleName);
@@ -26,8 +28,6 @@ public interface UserService {
     User updateUser(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive);
     
     UserResponse updateUserAndGetResponse(UUID userId, String fullName, String email, String phoneNumber, String roleName, Boolean isActive);
-    
-    void deleteUser(UUID userId);
     
     void activateUser(UUID userId);
     

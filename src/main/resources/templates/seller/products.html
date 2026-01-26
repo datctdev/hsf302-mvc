@@ -29,16 +29,61 @@
 
                 <div class="filters">
                     <label for="statusFilter">Lọc theo trạng thái: </label>
-                    <select id="statusFilter" onchange="loadProducts()">
+                    <select id="statusFilter" onchange="filterProducts()">
                         <option value="">Tất cả</option>
-                        <option value="DRAFT">Nháp</option>
-                        <option value="PUBLISHED">Đã xuất bản</option>
-                        <option value="ARCHIVED">Đã lưu trữ</option>
+                        <option value="DRAFT" th:selected="${status == 'DRAFT'}">Nháp</option>
+                        <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">Đã xuất bản</option>
+                        <option value="ARCHIVED" th:selected="${status == 'ARCHIVED'}">Đã lưu trữ</option>
                     </select>
                 </div>
 
+                <!-- Flash Messages -->
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
                 <div id="productsContainer" class="products-list">
-                    <!-- Products will be loaded here -->
+                    <!-- Products loaded from Model -->
+                    <div th:if="${products != null and !products.empty}" th:each="product : ${products}">
+                        <div class="product-card" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, 
+                                                          firstImage=${product.images != null and !product.images.empty ? product.images[0] : null},
+                                                          displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
+                            <div class="product-image">
+                                <img th:if="${displayImage != null}" 
+                                     th:src="${displayImage.imageUrl}" 
+                                     th:alt="${product.name}"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="product-image-placeholder" th:if="${displayImage == null}">
+                                    📦
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <h3 th:text="${product.name}">Product Name</h3>
+                                <p class="product-sku">SKU: <span th:text="${product.sku}">SKU</span></p>
+                                <p class="product-price" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</p>
+                                <p class="product-description" th:text="${product.description != null and product.description.length() > 100 ? product.description.substring(0, 100) + '...' : (product.description ?: '')}">Description</p>
+                                <div class="product-meta">
+                                    <span class="status-badge" 
+                                          th:classappend="'status-' + ${product.status.toLowerCase()}"
+                                          th:text="${product.status == 'PUBLISHED'} ? 'Đã xuất bản' : (${product.status == 'DRAFT'} ? 'Nháp' : 'Đã lưu trữ')">Status</span>
+                                    <span th:if="${product.variants != null and !product.variants.empty}" 
+                                          class="variant-count"
+                                          th:text="${product.variants.size()} + ' biến thể'">Variants</span>
+                                </div>
+                            </div>
+                            <div class="product-actions">
+                                <a th:href="@{'/seller/products/edit/' + ${product.id}}" class="btn btn-primary">Chỉnh sửa</a>
+                                <form th:action="@{'/seller/products/delete/' + ${product.id}}" method="post" style="display: inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này? Hành động này không thể hoàn tác!')">Xóa</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${products == null or products.empty}" class="empty-state">
+                        <h3>Chưa có sản phẩm nào</h3>
+                        <p>Bắt đầu bằng cách thêm sản phẩm đầu tiên của bạn.</p>
+                        <a href="/seller/products/add" class="btn btn-primary">Thêm Sản Phẩm</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -47,109 +92,12 @@
     <!-- JavaScript -->
     <script th:src="@{/js/common.js}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            const token = AuthUtils.getToken();
-            if (!token) {
-                window.location.href = '/login?expired=true';
-                return;
-            }
+        // No need for DOMContentLoaded - data loaded from Model
 
-            // Show seller products link
-            document.getElementById('sellerProductsLink').style.display = 'inline-block';
-            
-            loadProducts();
-        });
-
-        async function loadProducts() {
-            try {
-                const statusFilter = document.getElementById('statusFilter').value;
-                let url = '/api/seller/products';
-                if (statusFilter) {
-                    url += '?status=' + statusFilter;
-                }
-
-                const response = await AuthUtils.fetchWithAuth(url);
-                const products = await response.json();
-
-                const container = document.getElementById('productsContainer');
-                
-                if (products.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <h3>Chưa có sản phẩm nào</h3>
-                            <p>Bắt đầu bằng cách thêm sản phẩm đầu tiên của bạn.</p>
-                            <a href="/seller/products/add" class="btn btn-primary">Thêm Sản Phẩm</a>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = products.map(product => {
-                    const thumbnail = product.images && product.images.find(img => img.isThumbnail);
-                    const thumbnailUrl = thumbnail ? thumbnail.imageUrl : (product.images && product.images[0] ? product.images[0].imageUrl : null);
-                    
-                    return `
-                        <div class="product-card">
-                            <div class="product-image">
-                                ${thumbnailUrl ? 
-                                    `<img src="${thumbnailUrl}" alt="${escapeHtml(product.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
-                                    ''
-                                }
-                                <div class="product-image-placeholder" style="${thumbnailUrl ? 'display: none;' : ''}">
-                                    📦
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h3>${escapeHtml(product.name)}</h3>
-                                <p class="product-sku">SKU: ${escapeHtml(product.sku)}</p>
-                                <p class="product-price">${formatPrice(product.basePrice)} VNĐ</p>
-                                <p class="product-description">${escapeHtml(product.description ? (product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description) : '')}</p>
-                                <div class="product-meta">
-                                    <span class="status-badge status-${product.status.toLowerCase()}">${getStatusText(product.status)}</span>
-                                    ${product.variants && product.variants.length > 0 ? 
-                                        `<span class="variant-count">${product.variants.length} biến thể</span>` : 
-                                        ''
-                                    }
-                                </div>
-                            </div>
-                            <div class="product-actions">
-                                <a href="/seller/products/edit/${product.id}" class="btn btn-primary">Chỉnh sửa</a>
-                                <button class="btn btn-danger" onclick="deleteProduct('${product.id}', '${escapeHtml(product.name)}')">Xóa</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                document.getElementById('productsContainer').innerHTML = `
-                    <div class="empty-state">
-                        <h3>Lỗi</h3>
-                        <p>Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.</p>
-                    </div>
-                `;
-            }
-        }
-
-        async function deleteProduct(productId, productName) {
-            if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${productName}"? Hành động này không thể hoàn tác!`)) {
-                return;
-            }
-
-            try {
-                const response = await AuthUtils.fetchWithAuth(`/api/seller/products/${productId}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Xóa sản phẩm thành công!');
-                    loadProducts();
-                } else {
-                    alert(data.message || 'Xóa sản phẩm thất bại');
-                }
-            } catch (error) {
-                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-            }
+        function filterProducts() {
+            const status = document.getElementById('statusFilter').value;
+            const url = status ? '/seller/products?status=' + status : '/seller/products';
+            window.location.href = url;
         }
 
         function getStatusText(status) {

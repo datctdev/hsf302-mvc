@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.repository.UserRepository;
 import com.hsf.e_comerce.auth.service.UserService;
 import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.kyc.service.KycVerificationService;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shop.valueobject.ShopStatus;
@@ -31,10 +32,16 @@ public class SellerRequestServiceImpl implements SellerRequestService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final ShopRepository shopRepository;
+    private final KycVerificationService kycVerificationService;
 
     @Override
     @Transactional
     public SellerRequestResponse createRequest(UUID userId, SellerRequestRequest request) {
+        // Kiểm tra user đã hoàn thành KYC chưa
+        if (!kycVerificationService.isKycVerified(userId)) {
+            throw new CustomException("Bạn cần hoàn thành xác minh danh tính (KYC) trước khi đăng ký làm seller.");
+        }
+
         // Kiểm tra user đã là seller chưa
         if (isSeller(userId)) {
             throw new CustomException("Bạn đã là seller. Không thể tạo request mới.");
@@ -136,16 +143,17 @@ public class SellerRequestServiceImpl implements SellerRequestService {
             userService.assignRoleToUser(user, "ROLE_SELLER");
         }
 
-        // Tạo shop
+        // Tạo shop (không yêu cầu địa chỉ - có thể cập nhật sau)
         Shop shop = new Shop();
         shop.setUser(user);
         shop.setName(sellerRequest.getShopName());
         shop.setDescription(sellerRequest.getShopDescription());
         shop.setPhoneNumber(sellerRequest.getShopPhone());
-        shop.setAddress(sellerRequest.getShopAddress());
+        shop.setAddress(sellerRequest.getShopAddress()); // Có thể null
         shop.setLogoUrl(sellerRequest.getLogoUrl());
         shop.setCoverImageUrl(sellerRequest.getCoverImageUrl());
         shop.setStatus(ShopStatus.ACTIVE);
+        // districtId và wardCode sẽ được cập nhật sau khi seller cập nhật địa chỉ
         shopRepository.save(shop);
 
         // Cập nhật request

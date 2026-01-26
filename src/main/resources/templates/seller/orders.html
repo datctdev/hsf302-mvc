@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đơn Hàng - Seller</title>
+    
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .orders-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .filters {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .order-card {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-status {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
+
+        .status-PENDING { background: #fff3cd; color: #856404; }
+        .status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
+        .status-PROCESSING { background: #d4edda; color: #155724; }
+        .status-SHIPPED { background: #cce5ff; color: #004085; }
+        .status-DELIVERED { background: #d4edda; color: #155724; }
+        .status-CANCELLED { background: #f8d7da; color: #721c24; }
+        .status-REFUNDED { background: #e2e3e5; color: #383d41; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/nav-home :: nav}"></div>
+
+    <div class="orders-container">
+        <h1>Quản Lý Đơn Hàng</h1>
+
+        <div class="filters">
+            <label>Lọc theo trạng thái:</label>
+            <select id="statusFilter" onchange="filterOrders()">
+                <option value="">Tất cả</option>
+                <option th:each="status : ${orderStatuses}" 
+                        th:value="${status}" 
+                        th:text="${status}"
+                        th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
+            </select>
+        </div>
+
+        <div th:if="${orders == null or orders.empty}" class="empty-state">
+            <p>Chưa có đơn hàng nào.</p>
+        </div>
+
+        <div th:if="${orders != null and !orders.empty}">
+            <div th:each="order : ${orders}" class="order-card">
+                <div class="order-header">
+                    <div>
+                        <h3 th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h3>
+                        <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);" 
+                           th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
+                    </div>
+                    <span class="order-status" 
+                          th:classappend="'status-' + ${order.status}"
+                          th:text="${order.status}">Status</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label>Khách hàng:</label>
+                        <span th:text="${order.userName}">User</span>
+                    </div>
+                    <div>
+                        <label>Tổng tiền:</label>
+                        <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                    </div>
+                    <div>
+                        <label>Số sản phẩm:</label>
+                        <span th:text="${order.items != null ? order.items.size() : 0}">Items</span>
+                    </div>
+                </div>
+
+                <div>
+                    <a th:href="@{'/seller/orders/' + ${order.id}}" class="btn btn-primary">Xem Chi Tiết</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        function filterOrders() {
+            const status = document.getElementById('statusFilter').value;
+            window.location.href = '/seller/orders' + (status ? '?status=' + status : '');
+        }
+    </script>
+</body>
+</html>
