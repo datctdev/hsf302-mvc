@@ -189,7 +189,11 @@ public class OrderServiceImpl implements OrderService {
         if (!order.getShop().getId().equals(shopId)) {
             throw new CustomException("Đơn hàng không thuộc về shop này.");
         }
-        
+
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+            throw new CustomException("Bạn không có quyền xem đơn hàng này.");
+        }
+
         return mapToResponse(order);
     }
 
@@ -205,7 +209,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByShop(UUID shopId) {
-        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
+//        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
+        List<Order> orders = orderRepository
+                .findByShopIdAndStatusNot(shopId, OrderStatus.PENDING_PAYMENT);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -214,6 +220,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByShopAndStatus(UUID shopId, OrderStatus status) {
+
+        if (status == OrderStatus.PENDING_PAYMENT) {
+            return List.of();
+        }
+
         List<Order> orders = orderRepository.findByShopIdAndStatus(shopId, status);
         return orders.stream()
                 .map(this::mapToResponse)
