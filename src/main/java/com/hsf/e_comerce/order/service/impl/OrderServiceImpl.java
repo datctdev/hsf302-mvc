@@ -269,13 +269,13 @@ public class OrderServiceImpl implements OrderService {
 
         // Only allow cancellation if order is PENDING or CONFIRMED
         if (newStatus == OrderStatus.CANCELLED && 
-            currentStatus != OrderStatus.PENDING && currentStatus != OrderStatus.CONFIRMED) {
+            currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CONFIRMED) {
             throw new CustomException("Không thể hủy đơn hàng ở trạng thái " + currentStatus);
         }
 
         // If cancelling, restore stock and cancel GHN order
         if (newStatus == OrderStatus.CANCELLED && 
-            (currentStatus == OrderStatus.PENDING || currentStatus == OrderStatus.CONFIRMED)) {
+            (currentStatus == OrderStatus.PENDING_PAYMENT || currentStatus == OrderStatus.CONFIRMED)) {
             for (OrderItem item : order.getItems()) {
                 if (item.getVariant() != null) {
                     item.getVariant().setStockQuantity(
@@ -297,7 +297,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Create GHN order when seller confirms (PENDING -> CONFIRMED)
-        if (currentStatus == OrderStatus.PENDING && newStatus == OrderStatus.CONFIRMED) {
+        if (currentStatus == OrderStatus.PENDING_PAYMENT && newStatus == OrderStatus.CONFIRMED) {
             if (order.getGhnOrderCode() == null || order.getGhnOrderCode().isEmpty()) {
                 try {
                     GHNCreateOrderRequest ghnRequest = buildGHNCreateOrderRequest(order);
@@ -330,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Only allow cancellation if order is PENDING or CONFIRMED
-        if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new CustomException("Không thể hủy đơn hàng ở trạng thái " + order.getStatus());
         }
 

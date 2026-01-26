@@ -39,7 +39,6 @@ public class OrderMvcController {
     private final CartRepository cartRepository;
     private final OrderItemService orderItemService;
     private final ShopService shopService;
-    private final OrderItemRepository orderItemRepository;
 
     @GetMapping("/checkout")
     public String checkout(@CurrentUser User currentUser, Model model) {
@@ -51,10 +50,6 @@ public class OrderMvcController {
             model.addAttribute("error", "Giỏ hàng trống.");
             return "redirect:/cart";
         }
-
-//        if (orderAlreadyCreatedForUser(currentUser)) {
-//            return "redirect:/orders";
-//        }
 
         // Group cart items by shop
         Map<Shop, List<CartItem>> itemsByShop = cart.getItems().stream()
