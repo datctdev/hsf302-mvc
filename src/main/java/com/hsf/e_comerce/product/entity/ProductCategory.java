@@ -37,6 +37,9 @@ public class ProductCategory {
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<ProductCategory> children = new HashSet<>();
 
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    private Set<Product> products = new HashSet<>(); // 1 category có nhiều product
+
     @Column(name = "name", nullable = false, unique = true, length = 255)
     private String name;
 

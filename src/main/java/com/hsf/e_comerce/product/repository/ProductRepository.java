@@ -51,11 +51,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Page<Product> searchPublishedProducts(@Param("keyword") String keyword, Pageable pageable);
     
     @Query("SELECT DISTINCT p FROM Product p " +
-           "LEFT JOIN ProductCategoryMapping m ON m.product.id = p.id " +
            "WHERE p.status = 'PUBLISHED' " +
            "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true " +
            "AND p.deleted = false " +
-           "AND (:categoryId IS NULL OR m.category.id = :categoryId) " +
+           "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
            "AND (:shopId IS NULL OR p.shop.id = :shopId) " +
            "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) " +
            "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice) " +

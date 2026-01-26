@@ -44,6 +44,9 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 

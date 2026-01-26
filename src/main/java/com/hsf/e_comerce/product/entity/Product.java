@@ -62,8 +62,9 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductImage> images = new HashSet<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ProductCategoryMapping> categoryMappings = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private ProductCategory category; // nullable: 1 product có 0 hoặc 1 category
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;

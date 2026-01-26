@@ -8,10 +8,8 @@ import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductCategory;
-import com.hsf.e_comerce.product.entity.ProductCategoryMapping;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
-import com.hsf.e_comerce.product.repository.ProductCategoryMappingRepository;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
 import com.hsf.e_comerce.product.repository.ProductRepository;
@@ -41,7 +39,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final ProductCategoryRepository categoryRepository;
-    private final ProductCategoryMappingRepository categoryMappingRepository;
     private final ShopRepository shopRepository;
 
     @Override
@@ -64,6 +61,13 @@ public class ProductServiceImpl implements ProductService {
         product.setSku(request.getSku());
         product.setBasePrice(request.getBasePrice());
         product.setStatus(ProductStatus.valueOf(request.getStatus().toUpperCase()));
+
+        // Set category (N-1: 1 product có 0 hoặc 1 category)
+        if (request.getCategoryId() != null) {
+            ProductCategory category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
+            product.setCategory(category);
+        }
 
         product = productRepository.save(product);
 
@@ -127,22 +131,10 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Set category
-        if (request.getCategoryId() != null) {
-            ProductCategory category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
-            
-            ProductCategoryMapping mapping = new ProductCategoryMapping();
-            mapping.setProduct(product);
-            mapping.setCategory(category);
-            categoryMappingRepository.save(mapping);
-        }
-
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -289,25 +281,21 @@ public class ProductServiceImpl implements ProductService {
         }
         // If images is null or empty, keep existing images (don't delete)
 
-        // Update category
-        if (request.getCategoryId() != null) {
-            // Remove old category
-            categoryMappingRepository.deleteByProduct(product);
-            
+        // Update category (N-1: 1 product có 0 hoặc 1 category)
+        if (Boolean.TRUE.equals(request.getClearCategory())) {
+            product.setCategory(null);
+            product = productRepository.save(product);
+        } else if (request.getCategoryId() != null) {
             ProductCategory category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new CustomException("Danh mục không tồn tại"));
-            
-            ProductCategoryMapping mapping = new ProductCategoryMapping();
-            mapping.setProduct(product);
-            mapping.setCategory(category);
-            categoryMappingRepository.save(mapping);
+            product.setCategory(category);
+            product = productRepository.save(product);
         }
 
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -335,8 +323,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -350,8 +337,7 @@ public class ProductServiceImpl implements ProductService {
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,
-                        imageRepository,
-                        categoryMappingRepository
+                        imageRepository
                 ))
                 .collect(Collectors.toList());
     }
@@ -368,8 +354,7 @@ public class ProductServiceImpl implements ProductService {
                 .map(product -> ProductResponse.convertToResponse(
                         product,
                         variantRepository,
-                        imageRepository,
-                        categoryMappingRepository
+                        imageRepository
                 ))
                 .collect(Collectors.toList());
     }
@@ -415,8 +400,7 @@ public class ProductServiceImpl implements ProductService {
             return products.map(product -> ProductResponse.convertToResponse(
                     product,
                     variantRepository,
-                    imageRepository,
-                    categoryMappingRepository
+                    imageRepository
             ));
         }
         
@@ -426,8 +410,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 
@@ -440,8 +423,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         );
     }
 
@@ -462,8 +444,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 
@@ -480,8 +461,7 @@ public class ProductServiceImpl implements ProductService {
         return products.map(product -> ProductResponse.convertToResponse(
                 product,
                 variantRepository,
-                imageRepository,
-                categoryMappingRepository
+                imageRepository
         ));
     }
 
