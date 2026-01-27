@@ -1,0 +1,34 @@
+package com.hsf.e_comerce.review.repository;
+
+import com.hsf.e_comerce.review.entity.Review;
+import com.hsf.e_comerce.review.entity.SellerReviewReply;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface SellerReviewReplyRepository extends JpaRepository<SellerReviewReply, UUID> {
+
+    Optional<SellerReviewReply> findByReviewId(UUID reviewId);
+
+    boolean existsByReviewId(UUID reviewId);
+
+    @Query("""
+    SELECT r
+    FROM Review r
+    JOIN r.product p
+    JOIN p.shop s
+    JOIN Order o ON o.id = r.subOrderId
+    WHERE s.user.id = :sellerId
+      AND r.status = 'ACTIVE'
+      AND o.status = 'DELIVERED'
+    ORDER BY r.createdAt DESC
+    """)
+    List<Review> findReviewsForSeller(@Param("sellerId") UUID sellerId);
+
+}

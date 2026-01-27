@@ -96,7 +96,7 @@
                         <div id="logoPreview" style="display: none; margin-top: 10px;">
                             <img id="logoPreviewImg" style="max-width: 200px; max-height: 200px;" />
                         </div>
-                        <div th:if="${request != null and request.logoUrl}" style="margin-top: 10px;">
+                        <div th:if="${request != null and request.logoUrl != null}" style="margin-top: 10px;">
                             <p>Logo hiện tại:</p>
                             <img th:src="${request.logoUrl}" style="max-width: 200px; max-height: 200px;" />
                         </div>
@@ -110,7 +110,7 @@
                         <div id="coverPreview" style="display: none; margin-top: 10px;">
                             <img id="coverPreviewImg" style="max-width: 400px; max-height: 200px;" />
                         </div>
-                        <div th:if="${request != null and request.coverImageUrl}" style="margin-top: 10px;">
+                        <div th:if="${request != null and request.coverImageUrl != null}" style="margin-top: 10px;">
                             <p>Ảnh bìa hiện tại:</p>
                             <img th:src="${request.coverImageUrl}" style="max-width: 400px; max-height: 200px;" />
                         </div>

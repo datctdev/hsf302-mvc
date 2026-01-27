@@ -1,5 +1,6 @@
 package com.hsf.e_comerce.product.controller;
 
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.dto.response.ProductVariantResponse;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
@@ -81,13 +82,14 @@ public class ProductMvcController {
             @RequestParam(defaultValue = "newest") String sortBy, // Sắp xếp
             Model model) {
         try {
+            User currentUser = (User) model.getAttribute("currentUser");
             // 1. Load Product
             ProductResponse product = productService.getPublishedProductById(id);
             model.addAttribute("product", product);
 
             // 2. Load Reviews (Truyền đủ tham số lọc vào Service)
             Page<ReviewResponse> reviews = reviewService.getProductReviews(
-                    id, reviewPage, 5, rating, hasImages, sortBy
+                    id, reviewPage, 5, rating, hasImages, sortBy, currentUser
             );
             model.addAttribute("reviews", reviews);
 
