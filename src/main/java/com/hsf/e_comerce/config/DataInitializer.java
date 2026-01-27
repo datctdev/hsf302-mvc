@@ -4,6 +4,8 @@ import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
+import com.hsf.e_comerce.platform.entity.PlatformSetting;
+import com.hsf.e_comerce.platform.repository.PlatformSettingRepository;
 import com.hsf.e_comerce.product.entity.ProductCategory;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.shop.entity.Shop;
@@ -32,6 +34,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ProductCategoryRepository categoryRepository;
     private final ShopRepository shopRepository;
+    private final PlatformSettingRepository platformSettingRepository;
 
     @Override
     @Transactional
@@ -39,6 +42,25 @@ public class DataInitializer implements CommandLineRunner {
         initializeRoles();
         initializeDefaultUsers();
         initializeProductCategories();
+        initializePlatformSettings();
+    }
+
+    private void initializePlatformSettings() {
+        log.info("Starting platform settings initialization...");
+        try {
+            if (!platformSettingRepository.existsByKey(PlatformSetting.KEY_COMMISSION_RATE)) {
+                PlatformSetting setting = new PlatformSetting();
+                setting.setKey(PlatformSetting.KEY_COMMISSION_RATE);
+                setting.setValue("10");
+                platformSettingRepository.save(setting);
+                log.info("✓ Created platform setting: commission_rate = 10%");
+            } else {
+                log.info("→ Platform setting commission_rate already exists.");
+            }
+        } catch (Exception e) {
+            log.error("✗ Error initializing platform settings: {}", e.getMessage(), e);
+        }
+        log.info("Platform settings initialization completed.");
     }
 
     private void initializeRoles() {

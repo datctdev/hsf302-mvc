@@ -37,6 +37,8 @@ public class OrderResponse {
     private BigDecimal shippingFee;
     private BigDecimal total;
     private String ghnOrderCode;  // Mã vận đơn GHN (nếu có)
+    private BigDecimal platformCommission; // Hoa hồng nền tảng (VNĐ)
+    private Double commissionRate;        // % hoa hồng áp dụng tại thời điểm tạo đơn
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -55,6 +55,7 @@
                         <h3>Tóm Tắt Đơn Hàng</h3>
                         <p><strong>Shop:</strong> <span th:text="${order.shopName}">Shop</span></p>
                         <p><strong>Tạm tính:</strong> <span th:text="${#numbers.formatDecimal(order.subtotal, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Subtotal</span></p>
+                        <p><strong>Hoa hồng nền tảng:</strong> <span th:text="${order.platformCommission != null ? (#numbers.formatDecimal(order.platformCommission, 0, 'POINT', 0, 'POINT') + ' VNĐ') : '0 VNĐ'}">0 VNĐ</span><span th:if="${order.commissionRate != null}" style="color: var(--text-muted); font-size: 0.9rem;" th:text="' (Tỷ lệ áp dụng: ' + order.commissionRate + '%)'">(%)</span></p>
                         <p><strong>Phí vận chuyển:</strong> <span th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Shipping</span></p>
                         <p><strong>Tổng tiền:</strong> <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span></p>
                     </div>
