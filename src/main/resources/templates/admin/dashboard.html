@@ -21,6 +21,32 @@
     <!-- Main Content -->
     <main class="main-content admin-content">
         <div class="container">
+            <!-- Thống kê theo thời gian -->
+            <div class="section" style="margin-bottom: 1.5rem;">
+                <h2 style="margin-bottom: 0.75rem;">Thống kê theo thời gian</h2>
+                <form th:action="@{/admin/dashboard}" method="get" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
+                    <div>
+                        <label for="fromDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Từ ngày</label>
+                        <input type="date" id="fromDate" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label for="toDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Đến ngày</label>
+                        <input type="date" id="toDate" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Xem</button>
+                </form>
+                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a th:href="${urlLast7}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">7 ngày qua</a>
+                    <a th:href="${urlLast30}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">30 ngày qua</a>
+                    <a th:href="${urlLast90}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">90 ngày qua</a>
+                    <a th:href="${urlAll}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">Tất cả</a>
+                </div>
+                <p th:if="${fromDate != null or toDate != null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">
+                    Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
+                </p>
+                <p th:if="${fromDate == null and toDate == null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">Đang xem: Tất cả thời gian</p>
+            </div>
+
             <!-- Statistics Cards -->
             <div class="dashboard-grid">
                 <div class="stat-card">
