@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống Kê - Seller</title>
+    
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .stats-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        .stat-card.success { border-left-color: #28a745; }
+        .stat-card.warning { border-left-color: #ffc107; }
+        .stat-card.danger { border-left-color: #dc3545; }
+        .stat-card h3 { margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--text-muted); }
+        .stat-card .value { font-size: 1.5rem; font-weight: 700; }
+        .stat-card .description { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .section { margin-bottom: 2rem; }
+        .section h2 { margin-bottom: 1rem; }
+        .status-table { width: 100%; border-collapse: collapse; }
+        .status-table th, .status-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .status-table th { background: var(--bg-light); font-weight: 600; }
+        .status-badge { padding: 0.25rem 0.5rem; border-radius: var(--border-radius); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/nav-home :: nav}"></div>
+
+    <div class="stats-container">
+        <h1>Thống Kê Shop</h1>
+        <p th:if="${shopName != null}" style="color: var(--text-muted); margin-bottom: 1.5rem;" th:text="'Shop: ' + ${shopName}">Shop name</p>
+
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Tổng Đơn Hàng</h3>
+                <div class="value" th:text="${totalOrders ?: 0}">0</div>
+                <div class="description">Tất cả đơn (trừ chờ thanh toán)</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Doanh Thu</h3>
+                <div class="value" th:text="${totalRevenue != null ? (#numbers.formatDecimal(totalRevenue, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                <div class="description">Đơn đã xác nhận → đã giao</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Hoa Hồng Nền Tảng</h3>
+                <div class="value" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                <div class="description">Trừ trên doanh thu đã ghi nhận</div>
+            </div>
+            <div class="stat-card danger">
+                <h3>Bạn Nhận (ước tính)</h3>
+                <div class="value" th:text="${(totalRevenue != null and totalCommission != null) ? (#numbers.formatDecimal(totalRevenue.subtract(totalCommission), 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                <div class="description">Doanh thu − hoa hồng</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Đơn Theo Trạng Thái</h2>
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        <th>Trạng thái</th>
+                        <th>Số đơn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="statusName : ${orderStatusNames}">
+                        <td><span class="status-badge" th:text="${statusName}">Status</span></td>
+                        <td th:text="${orderCountByStatus != null ? (orderCountByStatus[statusName] != null ? orderCountByStatus[statusName] : 0) : 0}">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <a href="/seller/orders" class="btn btn-primary">Xem Danh Sách Đơn Hàng</a>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

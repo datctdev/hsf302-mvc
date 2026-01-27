@@ -1,7 +1,9 @@
 package com.hsf.e_comerce.common.controller;
 
 import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
+import com.hsf.e_comerce.shop.repository.ShopRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -16,6 +18,8 @@ public class HomeController {
 
     private final UserService userService;
     private final SellerRequestService sellerRequestService;
+    private final ShopRepository shopRepository;
+    private final OrderRepository orderRepository;
 
     @GetMapping("/")
     public String hello(Model model) {
@@ -45,11 +49,13 @@ public class HomeController {
         try {
             long totalUsers = userService.getAllUsers().size();
             long pendingRequests = sellerRequestService.getRequestsByStatus("PENDING").size();
+            long totalShops = shopRepository.count();
+            long totalOrders = orderRepository.count();
 
             model.addAttribute("totalUsers", totalUsers);
             model.addAttribute("pendingRequests", pendingRequests);
-            model.addAttribute("totalShops", 0); // TODO: Implement when ShopService is available
-            model.addAttribute("totalOrders", 0); // TODO: Implement when OrderService is available
+            model.addAttribute("totalShops", totalShops);
+            model.addAttribute("totalOrders", totalOrders);
         } catch (Exception e) {
             // If error, set defaults
             model.addAttribute("totalUsers", 0);
@@ -69,11 +75,7 @@ public class HomeController {
 
     // Admin orders moved to AdminOrderMvcController
     // Seller orders moved to SellerOrderMvcController
-
-    @GetMapping("/seller/statistics")
-    public String sellerStatistics() {
-        return "coming-soon";
-    }
+    // Seller statistics moved to SellerStatisticsMvcController
 
     // Handle favicon requests to avoid warnings
     @GetMapping("/favicon.ico")
