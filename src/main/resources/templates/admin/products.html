@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .product-table { width: 100%; border-collapse: collapse; }
+        .product-table th, .product-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color, #dee2e6); }
+        .product-table th { background: var(--bg-light, #f8f9fa); font-weight: 600; }
+        .product-table tr:hover { background: #f8f9fa; }
+        .status-DRAFT { background: #fff3cd; color: #856404; }
+        .status-PUBLISHED { background: #d4edda; color: #155724; }
+        .status-ARCHIVED { background: #e2e3e5; color: #383d41; }
+        .deleted-badge { background: #f8d7da; color: #721c24; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .filter-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+        .filter-form label { margin-right: 0.5rem; }
+        .filter-form select { padding: 0.5rem; min-width: 160px; }
+        .filter-form button { padding: 0.5rem 1rem; }
+        .action-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .action-btns form { display: inline; }
+        .pagination { display: flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; flex-wrap: wrap; }
+        .pagination a, .pagination span { padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; }
+        .pagination a:hover { background: var(--bg-light); }
+        .pagination .current { background: var(--primary-color, #007bff); color: white; border-color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+
+    <main class="main-content admin-content">
+        <div class="container">
+            <h2>Quản Lý Sản Phẩm</h2>
+
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form method="get" action="/admin/products" class="filter-form">
+                <input type="hidden" name="page" value="0"/>
+                <label>Shop:</label>
+                <select name="shopId" onchange="this.form.submit()">
+                    <option value="">Tất cả</option>
+                    <option th:each="s : ${shops}"
+                            th:value="${s.id}"
+                            th:text="${s.name}"
+                            th:selected="${currentShopId != null and currentShopId.equals(s.id)}">Shop</option>
+                </select>
+                <label>Trạng thái:</label>
+                <select name="status" onchange="this.form.submit()">
+                    <option value="">Tất cả</option>
+                    <option th:each="st : ${productStatuses}"
+                            th:value="${st.name()}"
+                            th:text="${st.name()}"
+                            th:selected="${currentStatus != null and currentStatus.equals(st.name())}">Status</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Lọc</button>
+            </form>
+
+            <div th:if="${products == null or products.empty}" class="empty-state">
+                <p>Chưa có sản phẩm nào.</p>
+            </div>
+
+            <div th:if="${products != null and !products.empty}">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>SKU</th>
+                            <th>Shop</th>
+                            <th>Trạng thái</th>
+                            <th>Giá gốc</th>
+                            <th>Ẩn</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${products}">
+                            <td>
+                                <a th:href="@{'/products/' + ${p.id}}" th:text="${p.name}" target="_blank"></a>
+                            </td>
+                            <td th:text="${p.sku}">SKU</td>
+                            <td th:text="${p.shop != null ? p.shop.name : 'N/A'}">Shop</td>
+                            <td>
+                                <span class="status-badge" th:classappend="'status-' + ${p.status.name()}" th:text="${p.status.name()}">Status</span>
+                            </td>
+                            <td th:text="${p.basePrice != null ? (#numbers.formatDecimal(p.basePrice, 0, 'POINT', 0, 'POINT') + ' đ') : 'N/A'}">Price</td>
+                            <td>
+                                <span th:if="${p.deleted}" class="deleted-badge">Đã ẩn</span>
+                                <span th:unless="${p.deleted}">—</span>
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <th:block th:if="${!p.deleted and p.status.name() == 'PUBLISHED'}">
+                                        <form th:action="@{'/admin/products/' + ${p.id} + '/unpublish'}" method="post" style="display:inline;">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Gỡ xuất bản sản phẩm này?')">Gỡ xuất bản</button>
+                                        </form>
+                                        <form th:action="@{'/admin/products/' + ${p.id} + '/hide'}" method="post" style="display:inline;">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Ẩn sản phẩm khỏi danh sách?')">Ẩn</button>
+                                        </form>
+                                    </th:block>
+                                    <th:block th:if="${!p.deleted and (p.status.name() == 'DRAFT' or p.status.name() == 'ARCHIVED')}">
+                                        <form th:action="@{'/admin/products/' + ${p.id} + '/publish'}" method="post" style="display:inline;">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-success btn-sm">Xuất bản</button>
+                                        </form>
+                                    </th:block>
+                                    <th:block th:if="${p.deleted}">
+                                        <form th:action="@{'/admin/products/' + ${p.id} + '/restore'}" method="post" style="display:inline;">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-success btn-sm">Khôi phục</button>
+                                        </form>
+                                    </th:block>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div th:if="${productPage.totalPages > 1}" class="pagination">
+                    <span th:if="${!productPage.first}">
+                        <a th:href="@{/admin/products(shopId=${currentShopId}, status=${currentStatus}, page=${productPage.number - 1}, size=${productPage.size})}">Trước</a>
+                    </span>
+                    <span th:text="'Trang ' + (${productPage.number + 1}) + ' / ' + (${productPage.totalPages}) + ' (Tổng: ' + (${productPage.totalElements}) + ' SP)'">Trang</span>
+                    <span th:if="${!productPage.last}">
+                        <a th:href="@{/admin/products(shopId=${currentShopId}, status=${currentStatus}, page=${productPage.number + 1}, size=${productPage.size})}">Sau</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

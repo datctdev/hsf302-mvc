@@ -8,6 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/seller.css}">
     <style>
         .order-detail-container {
             max-width: 1000px;
@@ -39,7 +40,8 @@
     </style>
 </head>
 <body>
-    <div th:replace="~{fragments/nav-home :: nav}"></div>
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
 
     <div class="order-detail-container">
         <div th:if="${order != null}" class="order-detail-card">

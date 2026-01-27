@@ -68,11 +68,7 @@ public class HomeController {
         return "admin/dashboard";
     }
 
-    @GetMapping("/admin/products")
-    public String adminProducts() {
-        return "coming-soon";
-    }
-
+    // Admin products moved to AdminProductMvcController
     // Admin orders moved to AdminOrderMvcController
     // Seller orders moved to SellerOrderMvcController
     // Seller statistics moved to SellerStatisticsMvcController
