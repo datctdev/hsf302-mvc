@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/files/upload").authenticated()
                         .requestMatchers("/files/view/**", "/files/download/**").permitAll() // Public file access
                         // User pages (require authentication)
-                        .requestMatchers("/profile", "/change-password").authenticated()
+                        .requestMatchers("/profile", "/change-password", "/my-summary").authenticated()
                         // Cart pages (require authentication)
                         .requestMatchers("/cart", "/cart/**").authenticated()
                         // Order pages (require authentication)
