@@ -5,6 +5,7 @@ import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,8 +21,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -124,7 +128,44 @@ public class HomeController {
             model.addAttribute("totalCommission", BigDecimal.ZERO);
         }
 
+        // Hoạt động gần đây: trích từ orders + seller_requests, N bản ghi mới nhất
+        try {
+            List<RecentActivityItem> activities = new ArrayList<>();
+            List<OrderResponse> orders = orderService.getAllOrders();
+            int orderLimit = Math.min(5, orders.size());
+            for (int i = 0; i < orderLimit; i++) {
+                OrderResponse o = orders.get(i);
+                String title = "Đơn #" + (o.getOrderNumber() != null ? o.getOrderNumber() : o.getId().toString())
+                        + " – " + (o.getShopName() != null ? o.getShopName() : "")
+                        + " – " + (o.getStatus() != null ? o.getStatus().name() : "");
+                activities.add(new RecentActivityItem("ORDER", title, o.getCreatedAt(), "/admin/orders/" + o.getId()));
+            }
+            List<SellerRequestResponse> reqs = sellerRequestService.getAllRequests();
+            reqs.sort(Comparator.comparing(SellerRequestResponse::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
+            int reqLimit = Math.min(5, reqs.size());
+            for (int i = 0; i < reqLimit; i++) {
+                SellerRequestResponse r = reqs.get(i);
+                String title = "Yêu cầu seller – " + (r.getShopName() != null ? r.getShopName() : "") + " – " + (r.getStatus() != null ? r.getStatus() : "");
+                activities.add(new RecentActivityItem("SELLER_REQUEST", title, r.getCreatedAt(), "/admin/seller-requests"));
+            }
+            activities.sort(Comparator.comparing(RecentActivityItem::getAt, Comparator.nullsLast(Comparator.reverseOrder())));
+            List<RecentActivityItem> recentActivities = activities.stream().limit(10).collect(Collectors.toList());
+            model.addAttribute("recentActivities", recentActivities);
+        } catch (Exception e) {
+            model.addAttribute("recentActivities", List.<RecentActivityItem>of());
+        }
+
         return "admin/dashboard";
+    }
+
+    /** Một dòng trong "Hoạt động gần đây": đơn hàng hoặc yêu cầu seller. */
+    @lombok.Getter
+    @lombok.AllArgsConstructor
+    public static class RecentActivityItem {
+        private final String type;
+        private final String title;
+        private final LocalDateTime at;
+        private final String linkUrl;
     }
 
     // Admin products moved to AdminProductMvcController

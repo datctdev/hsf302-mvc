@@ -111,7 +111,15 @@
             <!-- Recent Activity -->
             <div class="section">
                 <h2>Hoạt Động Gần Đây</h2>
-                <p style="color: #666;">Tính năng đang phát triển...</p>
+                <p th:if="${recentActivities == null or recentActivities.empty}" style="color: #666;">Chưa có hoạt động nào.</p>
+                <ul th:if="${recentActivities != null and !recentActivities.empty}" style="list-style: none; padding: 0; margin: 0.5rem 0 0 0;">
+                    <li th:each="act : ${recentActivities}" style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color, #eee); display: flex; align-items: center; gap: 0.75rem;">
+                        <span th:if="${act.type == 'ORDER'}" style="background: var(--primary-color, #007bff); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Đơn</span>
+                        <span th:if="${act.type == 'SELLER_REQUEST'}" style="background: #6f42c1; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Yêu cầu</span>
+                        <a th:href="${act.linkUrl}" th:text="${act.title}" style="flex: 1; text-decoration: none; color: inherit;"></a>
+                        <span th:if="${act.at != null}" th:text="${#temporals.format(act.at, 'dd/MM/yyyy HH:mm')}" style="font-size: 0.85rem; color: var(--text-muted, #666);"></span>
+                    </li>
+                </ul>
             </div>
         </div>
     </main>
