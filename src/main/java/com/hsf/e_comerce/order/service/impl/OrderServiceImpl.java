@@ -22,6 +22,7 @@ import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
+import com.hsf.e_comerce.platform.service.PlatformSettingService;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shipping.service.GHNService;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -53,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductImageRepository productImageRepository;
     private final GHNService ghnService;
     private final ReviewRepository reviewRepository;
+    private final PlatformSettingService platformSettingService;
 
     @Override
     @Transactional
@@ -116,6 +119,11 @@ public class OrderServiceImpl implements OrderService {
         order.setNotes(request.getNotes());
         order.setSubtotal(subtotal);
         order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
+        // Hoa hồng nền tảng: platform_commission = subtotal * (commission_rate / 100)
+        BigDecimal commissionRate = platformSettingService.getCommissionRate();
+        BigDecimal platformCommission = subtotal.multiply(commissionRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        order.setPlatformCommission(platformCommission != null ? platformCommission : BigDecimal.ZERO);
+        order.setCommissionRate(commissionRate != null ? commissionRate.doubleValue() : null);
         order.calculateTotal();
 
         order = orderRepository.save(order);
@@ -496,6 +504,8 @@ public class OrderServiceImpl implements OrderService {
                 .shippingFee(order.getShippingFee())
                 .total(order.getTotal())
                 .ghnOrderCode(order.getGhnOrderCode())
+                .platformCommission(order.getPlatformCommission() != null ? order.getPlatformCommission() : BigDecimal.ZERO)
+                .commissionRate(order.getCommissionRate())
                 .items(itemResponses)
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())

@@ -5,6 +5,7 @@ import com.hsf.e_comerce.product.valueobject.ProductStatus;
 import com.hsf.e_comerce.shop.entity.Shop;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -78,4 +79,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true " +
            "AND p.deleted = false")
     Page<Product> findPublishedProductsByShop(@Param("shopId") UUID shopId, Pageable pageable);
+
+    /** Admin: list all products (including deleted) with optional shop/status filter. */
+    @Query("SELECT p FROM Product p WHERE (:shopId IS NULL OR p.shop.id = :shopId) " +
+           "AND (:status IS NULL OR p.status = :status)")
+    @EntityGraph(attributePaths = {"shop"})
+    Page<Product> findAllForAdmin(@Param("shopId") UUID shopId, @Param("status") ProductStatus status, Pageable pageable);
 }

@@ -237,7 +237,7 @@
                     <div class="product-price" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
                     <div class="product-shop">
                         <span>Shop: </span>
-                        <a th:href="@{'/products?shopId=' + ${product.shopId}}" th:text="${product.shopName}">Shop Name</a>
+                        <a th:href="@{'/shops/' + ${product.shopId}}" th:text="${product.shopName}">Shop Name</a>
                     </div>
                     <div class="product-description" th:utext="${product.description}">Description</div>
                     
@@ -649,8 +649,9 @@
         }
 
         function viewShop(shopId) {
-            // TODO: Implement shop view page
-            alert('Trang shop sẽ được triển khai sau.');
+            if (shopId) {
+                window.location.href = '/shops/' + shopId;
+            }
         }
 
         function formatPrice(price) {

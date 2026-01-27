@@ -74,24 +74,8 @@
                 Vui lòng cập nhật địa chỉ shop để có thể thêm sản phẩm và tính phí vận chuyển GHN.
             </div>
 
-            <!-- Shop Management Menu -->
-            <div class="shop-section">
-                <h3 style="margin-top: 0;">Quản Lý Shop</h3>
-                <div class="form-group">
-                    <label for="managementOption">Chọn chức năng:</label>
-                    <select id="managementOption" class="form-control" onchange="handleManagementOptionChange()">
-                        <option value="">-- Chọn chức năng --</option>
-                        <option value="update">Cập Nhật Thông Tin Shop</option>
-                        <option value="products">Quản Lý Sản Phẩm</option>
-                        <option value="orders">Quản Lý Đơn Hàng</option>
-                        <option value="statistics">Thống Kê</option>
-                    </select>
-                    <small>Một số chức năng đang được phát triển</small>
-                </div>
-            </div>
-
-            <!-- Update Shop Form -->
-            <div class="shop-section" id="updateShopSection" th:if="${shop != null}" style="display: none;">
+            <!-- Cập nhật thông tin shop – luôn hiển thị khi có shop; điều hướng qua header -->
+            <div class="shop-section" id="updateShopSection" th:if="${shop != null}">
                 <h3 style="margin-top: 0;">Cập Nhật Thông Tin Shop</h3>
                 <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}">
                     <!-- CSRF Token -->
@@ -287,31 +271,6 @@
             });
         }
 
-        function handleManagementOptionChange() {
-            const option = document.getElementById('managementOption').value;
-            const updateShopSection = document.getElementById('updateShopSection');
-            
-            // Show/hide update form section
-            if (option === 'update') {
-                if (updateShopSection) {
-                    updateShopSection.style.display = 'block';
-                }
-            } else if (option === 'products') {
-                window.location.href = '/seller/products';
-                return;
-            } else if (option === 'orders') {
-                window.location.href = '/seller/orders';
-                return;
-            } else if (option === 'statistics') {
-                window.location.href = '/seller/statistics';
-                return;
-            } else {
-                if (updateShopSection) {
-                    updateShopSection.style.display = 'none';
-                }
-            }
-        }
-        
         // File upload helper
         async function uploadFileAndSetUrl(fileInput, urlInputId, folder) {
             if (!fileInput.files || fileInput.files.length === 0) return;

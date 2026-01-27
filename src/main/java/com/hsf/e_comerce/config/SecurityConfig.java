@@ -43,14 +43,15 @@ public class SecurityConfig {
                         // Chrome DevTools và các well-known paths
                         .requestMatchers("/.well-known/**").permitAll()
                         // Public pages
-                        .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/about").permitAll()
                         .requestMatchers("/verify-email", "/resend-verification").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // Public product pages
+                        .requestMatchers("/shops", "/shops/**").permitAll() // Public shop view (buyer)
                         // File upload/download (require authentication)
                         .requestMatchers("/files/upload").authenticated()
                         .requestMatchers("/files/view/**", "/files/download/**").permitAll() // Public file access
                         // User pages (require authentication)
-                        .requestMatchers("/profile", "/change-password").authenticated()
+                        .requestMatchers("/profile", "/change-password", "/my-summary").authenticated()
                         // Cart pages (require authentication)
                         .requestMatchers("/cart", "/cart/**").authenticated()
                         // Order pages (require authentication)

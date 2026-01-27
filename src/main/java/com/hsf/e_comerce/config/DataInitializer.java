@@ -4,8 +4,22 @@ import com.hsf.e_comerce.auth.entity.Role;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.repository.RoleRepository;
 import com.hsf.e_comerce.auth.repository.UserRepository;
+import com.hsf.e_comerce.order.entity.Order;
+import com.hsf.e_comerce.order.entity.OrderItem;
+import com.hsf.e_comerce.order.repository.OrderItemRepository;
+import com.hsf.e_comerce.order.repository.OrderRepository;
+import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.platform.entity.PlatformSetting;
+import com.hsf.e_comerce.platform.repository.PlatformSettingRepository;
+import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductCategory;
+import com.hsf.e_comerce.product.entity.ProductImage;
+import com.hsf.e_comerce.product.entity.ProductVariant;
 import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
+import com.hsf.e_comerce.product.repository.ProductImageRepository;
+import com.hsf.e_comerce.product.repository.ProductRepository;
+import com.hsf.e_comerce.product.repository.ProductVariantRepository;
+import com.hsf.e_comerce.product.valueobject.ProductStatus;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shop.valueobject.ShopStatus;
@@ -16,11 +30,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +48,12 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ProductCategoryRepository categoryRepository;
     private final ShopRepository shopRepository;
+    private final PlatformSettingRepository platformSettingRepository;
+    private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final ProductImageRepository productImageRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     @Transactional
@@ -39,6 +61,26 @@ public class DataInitializer implements CommandLineRunner {
         initializeRoles();
         initializeDefaultUsers();
         initializeProductCategories();
+        initializePlatformSettings();
+        initializeSampleShopsProductsAndOrders();
+    }
+
+    private void initializePlatformSettings() {
+        log.info("Starting platform settings initialization...");
+        try {
+            if (!platformSettingRepository.existsByKey(PlatformSetting.KEY_COMMISSION_RATE)) {
+                PlatformSetting setting = new PlatformSetting();
+                setting.setKey(PlatformSetting.KEY_COMMISSION_RATE);
+                setting.setValue("10");
+                platformSettingRepository.save(setting);
+                log.info("✓ Created platform setting: commission_rate = 10%");
+            } else {
+                log.info("→ Platform setting commission_rate already exists.");
+            }
+        } catch (Exception e) {
+            log.error("✗ Error initializing platform settings: {}", e.getMessage(), e);
+        }
+        log.info("Platform settings initialization completed.");
     }
 
     private void initializeRoles() {
@@ -276,5 +318,191 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         log.info("Product categories initialization completed.");
+    }
+
+    /**
+     * Tạo dữ liệu mẫu: thêm shop, sản phẩm, đơn hàng để thống kê hiển thị rõ.
+     * Chỉ chạy khi chưa có đơn nào (tránh trùng khi restart).
+     */
+    private void initializeSampleShopsProductsAndOrders() {
+        log.info("Starting sample shops/products/orders initialization...");
+        try {
+            if (orderRepository.count() > 0) {
+                log.info("→ Đã có đơn hàng, bỏ qua tạo dữ liệu mẫu.");
+                return;
+            }
+
+            User buyer = userRepository.findByEmail("buyer@gmail.com").orElse(null);
+            User seller = userRepository.findByEmail("seller@gmail.com").orElse(null);
+            if (buyer == null || seller == null) {
+                log.warn("⚠ Buyer hoặc Seller chưa tồn tại, bỏ qua sample data.");
+                return;
+            }
+
+            Shop shop1 = shopRepository.findByUserId(seller.getId()).orElse(null);
+            if (shop1 == null) {
+                log.warn("⚠ Shop của seller chưa tồn tại, bỏ qua sample data.");
+                return;
+            }
+
+            // Thêm 1 seller + shop nữa
+            User seller2 = createDefaultUser("seller2@gmail.com", "seller123@", "Seller Thứ Hai", "ROLE_SELLER");
+            Shop shop2 = null;
+            if (seller2 != null && "ROLE_SELLER".equals(seller2.getRole().getName())) {
+                if (!shopRepository.existsByUserId(seller2.getId())) {
+                    Shop s = new Shop();
+                    s.setUser(seller2);
+                    s.setName("Shop Tech Store");
+                    s.setDescription("Shop điện tử mẫu 2");
+                    s.setStatus(ShopStatus.ACTIVE);
+                    shop2 = shopRepository.save(s);
+                    log.info("✓ Created sample shop: Shop Tech Store");
+                } else {
+                    shop2 = shopRepository.findByUserId(seller2.getId()).orElse(null);
+                }
+            }
+
+            Optional<ProductCategory> catOpt = categoryRepository.findByName("Điện Thoại");
+            ProductCategory category = catOpt.orElse(null);
+
+            // Sản phẩm shop 1
+            Product p1 = createProduct(shop1, "Điện thoại Galaxy A54", "Mô tả mẫu", "SEED-SKU-001", new BigDecimal("7990000"), category);
+            ProductVariant v1 = createVariant(p1, "Màu", "Đen", "SEED-V-001", 50);
+            Product p2 = createProduct(shop1, "Tai nghe AirPods Pro", "Tai nghe chống ồn", "SEED-SKU-002", new BigDecimal("5990000"), category);
+            ProductVariant v2 = createVariant(p2, "Phiên bản", "Gen 2", "SEED-V-002", 30);
+            Product p3 = createProduct(shop1, "Sạc dự phòng 20000mAh", "Sạc nhanh", "SEED-SKU-003", new BigDecimal("490000"), category);
+            ProductVariant v3 = createVariant(p3, "Màu", "Xanh", "SEED-V-003", 100);
+            Product p4 = createProduct(shop1, "Loa Bluetooth Mini", "Loa portable", "SEED-SKU-004", new BigDecimal("350000"), category);
+            ProductVariant v4 = createVariant(p4, "Màu", "Đỏ", "SEED-V-004", 40);
+
+            if (shop2 != null) {
+                Product p5 = createProduct(shop2, "Bàn phím cơ Gaming", "Bàn phím RGB", "SEED-SKU-005", new BigDecimal("1290000"), category);
+                ProductVariant v5 = createVariant(p5, "Switch", "Blue", "SEED-V-005", 20);
+                Product p6 = createProduct(shop2, "Chuột không dây", "Chuột ergonomic", "SEED-SKU-006", new BigDecimal("299000"), category);
+                ProductVariant v6 = createVariant(p6, "Màu", "Đen", "SEED-V-006", 60);
+                Product p7 = createProduct(shop2, "Tai nghe Gaming", "7.1 virtual", "SEED-SKU-007", new BigDecimal("890000"), category);
+                ProductVariant v7 = createVariant(p7, "Màu", "Đen", "SEED-V-007", 25);
+
+                createOrder(buyer, shop2, "SEED-ORD-S2-001", OrderStatus.DELIVERED,
+                        new BigDecimal("1589000"), new BigDecimal("30000"), 10.0, p5, v5, 1, new BigDecimal("1290000"));
+                createOrder(buyer, shop2, "SEED-ORD-S2-002", OrderStatus.CONFIRMED,
+                        new BigDecimal("299000"), new BigDecimal("25000"), 10.0, p6, v6, 1, new BigDecimal("299000"));
+                createOrder(buyer, shop2, "SEED-ORD-S2-003", OrderStatus.DELIVERED,
+                        new BigDecimal("890000"), new BigDecimal("28000"), 10.0, p7, v7, 1, new BigDecimal("890000"));
+            }
+
+            // Đơn từ shop1 – đa dạng trạng thái
+            createOrder(buyer, shop1, "SEED-ORD-001", OrderStatus.DELIVERED,
+                    new BigDecimal("7990000"), new BigDecimal("35000"), 10.0, p1, v1, 1, new BigDecimal("7990000"));
+            createOrder(buyer, shop1, "SEED-ORD-002", OrderStatus.DELIVERED,
+                    new BigDecimal("5980000"), new BigDecimal("30000"), 10.0, p2, v2, 1, new BigDecimal("5990000"));
+            createOrder(buyer, shop1, "SEED-ORD-003", OrderStatus.CONFIRMED,
+                    new BigDecimal("980000"), new BigDecimal("22000"), 10.0, p3, v3, 2, new BigDecimal("490000"));
+            createOrder(buyer, shop1, "SEED-ORD-004", OrderStatus.PROCESSING,
+                    new BigDecimal("700000"), new BigDecimal("25000"), 10.0, p4, v4, 2, new BigDecimal("350000"));
+            createOrder(buyer, shop1, "SEED-ORD-005", OrderStatus.CANCELLED,
+                    new BigDecimal("350000"), new BigDecimal("20000"), 10.0, p4, v4, 1, new BigDecimal("350000"));
+            createOrder(buyer, shop1, "SEED-ORD-006", OrderStatus.PENDING_PAYMENT,
+                    new BigDecimal("490000"), new BigDecimal("22000"), 10.0, p3, v3, 1, new BigDecimal("490000"));
+            createOrder(buyer, shop1, "SEED-ORD-007", OrderStatus.SHIPPED,
+                    new BigDecimal("350000"), new BigDecimal("20000"), 10.0, p4, v4, 1, new BigDecimal("350000"));
+
+            log.info("✓ Sample shops, products and orders created.");
+        } catch (Exception e) {
+            log.error("✗ Error creating sample data: {}", e.getMessage(), e);
+        }
+        log.info("Sample data initialization completed.");
+    }
+
+    /** URL ảnh mẫu cho sản phẩm seed (cdn cellphones). */
+    private static final String SAMPLE_PRODUCT_IMAGE_URL =
+            "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_d_i_4__2_15.png";
+
+    private Product createProduct(Shop shop, String name, String desc, String sku, BigDecimal basePrice, ProductCategory category) {
+        if (productRepository.existsBySku(sku)) {
+            return productRepository.findBySku(sku).orElse(null);
+        }
+        Product p = new Product();
+        p.setShop(shop);
+        p.setName(name);
+        p.setDescription(desc);
+        p.setSku(sku);
+        p.setStatus(ProductStatus.PUBLISHED);
+        p.setBasePrice(basePrice);
+        p.setWeight(500);
+        p.setCategory(category);
+        p.setDeleted(false);
+        p = productRepository.save(p);
+        attachProductImage(p, SAMPLE_PRODUCT_IMAGE_URL);
+        log.info("✓ Created sample product: {}", name);
+        return p;
+    }
+
+    private void attachProductImage(Product product, String imageUrl) {
+        if (product == null || imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+        ProductImage img = new ProductImage();
+        img.setProduct(product);
+        img.setImageUrl(imageUrl);
+        img.setIsThumbnail(true);
+        img.setDisplayOrder(0);
+        productImageRepository.save(img);
+    }
+
+    private ProductVariant createVariant(Product product, String name, String value, String sku, int stock) {
+        if (productVariantRepository.existsBySku(sku)) {
+            return productVariantRepository.findBySku(sku).orElse(null);
+        }
+        ProductVariant v = new ProductVariant();
+        v.setProduct(product);
+        v.setName(name);
+        v.setValue(value);
+        v.setSku(sku);
+        v.setStockQuantity(stock);
+        v.setPriceModifier(BigDecimal.ZERO);
+        v = productVariantRepository.save(v);
+        return v;
+    }
+
+    /** Hoa hồng tính theo tiền hàng (theo sản phẩm): PlatformCommission = subtotal × rate%. VD: sản phẩm 100k → hoa hồng 10k (10%). */
+    private void createOrder(User buyer, Shop shop, String orderNumber, OrderStatus status,
+                            BigDecimal subtotal, BigDecimal shippingFee, double commissionRate,
+                            Product product, ProductVariant variant, int qty, BigDecimal unitPrice) {
+        if (orderRepository.findByOrderNumber(orderNumber).isPresent()) {
+            return;
+        }
+        BigDecimal ship = shippingFee != null ? shippingFee : BigDecimal.ZERO;
+        BigDecimal base = subtotal != null ? subtotal : BigDecimal.ZERO; // tiền hàng (tổng tiền sản phẩm)
+        BigDecimal platformCommission = base.multiply(BigDecimal.valueOf(commissionRate / 100.0)).setScale(0, RoundingMode.HALF_UP);
+
+        Order order = new Order();
+        order.setOrderNumber(orderNumber);
+        order.setUser(buyer);
+        order.setShop(shop);
+        order.setStatus(status);
+        order.setShippingName("Nguyễn Văn Mua");
+        order.setShippingPhone("0901234567");
+        order.setShippingAddress("123 Đường Mẫu, Quận 1, TP.HCM");
+        order.setShippingCity("TP. Hồ Chí Minh");
+        order.setSubtotal(subtotal);
+        order.setShippingFee(ship);
+        order.setPlatformCommission(platformCommission);
+        order.setCommissionRate(commissionRate);
+        order.calculateTotal();
+        order = orderRepository.save(order);
+
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setVariant(variant);
+        item.setProductName(product.getName());
+        item.setVariantName(variant.getName());
+        item.setVariantValue(variant.getValue());
+        item.setQuantity(qty);
+        item.setUnitPrice(unitPrice);
+        item.calculateTotalPrice();
+        orderItemRepository.save(item);
+        log.info("✓ Created sample order: {} status={}", orderNumber, status);
     }
 }

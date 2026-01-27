@@ -58,6 +58,10 @@
                             <label>Tổng tiền:</label>
                             <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
                         </div>
+                        <div>
+                            <label>Hoa hồng nền tảng:</label>
+                            <span th:text="${order.platformCommission != null ? (#numbers.formatDecimal(order.platformCommission, 0, 'POINT', 0, 'POINT') + ' VNĐ') : '0 VNĐ'}">0 VNĐ</span>
+                        </div>
                     </div>
                     <div style="margin-top: 1rem;">
                         <a th:href="@{'/admin/orders/' + ${order.id}}" class="btn btn-primary">Xem Chi Tiết</a>
