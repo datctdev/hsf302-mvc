@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -383,38 +384,28 @@ public class DataInitializer implements CommandLineRunner {
                 ProductVariant v7 = createVariant(p7, "Màu", "Đen", "SEED-V-007", 25);
 
                 createOrder(buyer, shop2, "SEED-ORD-S2-001", OrderStatus.DELIVERED,
-                        new BigDecimal("1589000"), new BigDecimal("30000"), new BigDecimal("129000"),
-                        10.0, p5, v5, 1, new BigDecimal("1290000"));
+                        new BigDecimal("1589000"), new BigDecimal("30000"), 10.0, p5, v5, 1, new BigDecimal("1290000"));
                 createOrder(buyer, shop2, "SEED-ORD-S2-002", OrderStatus.CONFIRMED,
-                        new BigDecimal("299000"), new BigDecimal("25000"), new BigDecimal("29900"),
-                        10.0, p6, v6, 1, new BigDecimal("299000"));
+                        new BigDecimal("299000"), new BigDecimal("25000"), 10.0, p6, v6, 1, new BigDecimal("299000"));
                 createOrder(buyer, shop2, "SEED-ORD-S2-003", OrderStatus.DELIVERED,
-                        new BigDecimal("890000"), new BigDecimal("28000"), new BigDecimal("89000"),
-                        10.0, p7, v7, 1, new BigDecimal("890000"));
+                        new BigDecimal("890000"), new BigDecimal("28000"), 10.0, p7, v7, 1, new BigDecimal("890000"));
             }
 
             // Đơn từ shop1 – đa dạng trạng thái
             createOrder(buyer, shop1, "SEED-ORD-001", OrderStatus.DELIVERED,
-                    new BigDecimal("7990000"), new BigDecimal("35000"), new BigDecimal("799000"),
-                    10.0, p1, v1, 1, new BigDecimal("7990000"));
+                    new BigDecimal("7990000"), new BigDecimal("35000"), 10.0, p1, v1, 1, new BigDecimal("7990000"));
             createOrder(buyer, shop1, "SEED-ORD-002", OrderStatus.DELIVERED,
-                    new BigDecimal("5980000"), new BigDecimal("30000"), new BigDecimal("598000"),
-                    10.0, p2, v2, 1, new BigDecimal("5990000"));
+                    new BigDecimal("5980000"), new BigDecimal("30000"), 10.0, p2, v2, 1, new BigDecimal("5990000"));
             createOrder(buyer, shop1, "SEED-ORD-003", OrderStatus.CONFIRMED,
-                    new BigDecimal("980000"), new BigDecimal("22000"), new BigDecimal("98000"),
-                    10.0, p3, v3, 2, new BigDecimal("490000"));
+                    new BigDecimal("980000"), new BigDecimal("22000"), 10.0, p3, v3, 2, new BigDecimal("490000"));
             createOrder(buyer, shop1, "SEED-ORD-004", OrderStatus.PROCESSING,
-                    new BigDecimal("700000"), new BigDecimal("25000"), new BigDecimal("70000"),
-                    10.0, p4, v4, 2, new BigDecimal("350000"));
+                    new BigDecimal("700000"), new BigDecimal("25000"), 10.0, p4, v4, 2, new BigDecimal("350000"));
             createOrder(buyer, shop1, "SEED-ORD-005", OrderStatus.CANCELLED,
-                    new BigDecimal("350000"), new BigDecimal("20000"), new BigDecimal("35000"),
-                    10.0, p4, v4, 1, new BigDecimal("350000"));
+                    new BigDecimal("350000"), new BigDecimal("20000"), 10.0, p4, v4, 1, new BigDecimal("350000"));
             createOrder(buyer, shop1, "SEED-ORD-006", OrderStatus.PENDING_PAYMENT,
-                    new BigDecimal("490000"), new BigDecimal("22000"), new BigDecimal("49000"),
-                    10.0, p3, v3, 1, new BigDecimal("490000"));
+                    new BigDecimal("490000"), new BigDecimal("22000"), 10.0, p3, v3, 1, new BigDecimal("490000"));
             createOrder(buyer, shop1, "SEED-ORD-007", OrderStatus.SHIPPED,
-                    new BigDecimal("350000"), new BigDecimal("20000"), new BigDecimal("35000"),
-                    10.0, p4, v4, 1, new BigDecimal("350000"));
+                    new BigDecimal("350000"), new BigDecimal("20000"), 10.0, p4, v4, 1, new BigDecimal("350000"));
 
             log.info("✓ Sample shops, products and orders created.");
         } catch (Exception e) {
@@ -474,12 +465,17 @@ public class DataInitializer implements CommandLineRunner {
         return v;
     }
 
+    /** Hoa hồng tính theo tiền hàng (theo sản phẩm): PlatformCommission = subtotal × rate%. VD: sản phẩm 100k → hoa hồng 10k (10%). */
     private void createOrder(User buyer, Shop shop, String orderNumber, OrderStatus status,
-                            BigDecimal subtotal, BigDecimal shippingFee, BigDecimal platformCommission,
-                            double commissionRate, Product product, ProductVariant variant, int qty, BigDecimal unitPrice) {
+                            BigDecimal subtotal, BigDecimal shippingFee, double commissionRate,
+                            Product product, ProductVariant variant, int qty, BigDecimal unitPrice) {
         if (orderRepository.findByOrderNumber(orderNumber).isPresent()) {
             return;
         }
+        BigDecimal ship = shippingFee != null ? shippingFee : BigDecimal.ZERO;
+        BigDecimal base = subtotal != null ? subtotal : BigDecimal.ZERO; // tiền hàng (tổng tiền sản phẩm)
+        BigDecimal platformCommission = base.multiply(BigDecimal.valueOf(commissionRate / 100.0)).setScale(0, RoundingMode.HALF_UP);
+
         Order order = new Order();
         order.setOrderNumber(orderNumber);
         order.setUser(buyer);
@@ -490,8 +486,8 @@ public class DataInitializer implements CommandLineRunner {
         order.setShippingAddress("123 Đường Mẫu, Quận 1, TP.HCM");
         order.setShippingCity("TP. Hồ Chí Minh");
         order.setSubtotal(subtotal);
-        order.setShippingFee(shippingFee != null ? shippingFee : BigDecimal.ZERO);
-        order.setPlatformCommission(platformCommission != null ? platformCommission : BigDecimal.ZERO);
+        order.setShippingFee(ship);
+        order.setPlatformCommission(platformCommission);
         order.setCommissionRate(commissionRate);
         order.calculateTotal();
         order = orderRepository.save(order);

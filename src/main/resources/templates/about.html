@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới thiệu - E-commerce</title>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .about-container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+        .about-container h1 { margin-bottom: 1.5rem; font-size: 1.75rem; }
+        .about-container h2 { margin: 2rem 0 0.75rem 0; font-size: 1.25rem; color: var(--text-muted, #555); }
+        .about-container p { line-height: 1.6; margin-bottom: 1rem; }
+        .about-container ul { margin: 0.5rem 0 1rem 1.5rem; line-height: 1.6; }
+        .about-container .contact-info { margin-top: 1rem; padding: 1rem; background: var(--bg-light, #f5f5f5); border-radius: var(--border-radius-lg, 8px); }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+    <main class="main-content">
+        <div class="about-container">
+            <h1>Giới thiệu</h1>
+
+            <h2>Về nền tảng</h2>
+            <p>E-commerce HSF là nền tảng mua sắm trực tuyến kết nối người mua và cửa hàng, hỗ trợ thanh toán VNPay, vận chuyển qua đối tác và quản lý đơn hàng thuận tiện.</p>
+            <p>Chúng tôi hướng tới trải nghiệm mua sắm minh bạch, an toàn và nhanh chóng cho cả người mua và người bán.</p>
+
+            <h2>Quy chế & Chính sách</h2>
+            <ul>
+                <li>Người mua và người bán tuân thủ pháp luật Việt Nam và nội quy nền tảng.</li>
+                <li>Sản phẩm không được vi phạm bản quyền, hàng cấm hoặc hàng nhái.</li>
+                <li>Giao dịch được bảo vệ qua thanh toán trung gian và chính sách hoàn trả theo quy định.</li>
+                <li>Nền tảng thu một phần hoa hồng theo cấu hình từ đơn hàng đã xác nhận.</li>
+            </ul>
+
+            <h2>Liên hệ</h2>
+            <p>Mọi góp ý hoặc khiếu nại, vui lòng liên hệ:</p>
+            <div class="contact-info">
+                <p style="margin: 0;"><strong>E-mail:</strong> support@hsf-ecommerce.example</p>
+                <p style="margin: 0.5rem 0 0 0;"><strong>Trang quản trị:</strong> dành cho Admin cấu hình hoa hồng, quản lý đơn và người dùng.</p>
+            </div>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>

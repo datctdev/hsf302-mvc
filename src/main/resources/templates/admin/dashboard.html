@@ -43,6 +43,16 @@
                     <div class="value" th:text="${totalOrders ?: 0}">0</div>
                     <div class="description">Tất cả đơn hàng</div>
                 </div>
+                <div class="stat-card" style="border-left-color: #0d9488;">
+                    <h3>Tổng Doanh Thu Các Shop</h3>
+                    <div class="value" th:text="${totalRevenueShops != null ? (#numbers.formatDecimal(totalRevenueShops, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                    <div class="description">Doanh thu hàng (tiền đơn − phí ship), đơn đã xác nhận → đã giao</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #6f42c1;">
+                    <h3>Tổng Hoa Hồng Nền Tảng</h3>
+                    <div class="value" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                    <div class="description">Hoa hồng thu từ đơn đã xác nhận → đã giao</div>
+                </div>
             </div>
 
             <!-- Quick Actions -->

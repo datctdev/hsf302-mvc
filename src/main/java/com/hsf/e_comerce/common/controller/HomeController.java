@@ -1,7 +1,10 @@
 package com.hsf.e_comerce.common.controller;
 
 import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.repository.OrderRepository;
+import com.hsf.e_comerce.order.service.OrderService;
+import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,15 +14,26 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
 public class HomeController {
 
+    private static final Set<OrderStatus> REVENUE_STATUSES = Set.of(
+            OrderStatus.CONFIRMED,
+            OrderStatus.PROCESSING,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERED
+    );
+
     private final UserService userService;
     private final SellerRequestService sellerRequestService;
     private final ShopRepository shopRepository;
     private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
     @GetMapping("/")
     public String hello(Model model) {
@@ -31,6 +45,11 @@ public class HomeController {
     @GetMapping("/login")
     public String login() {
         return "auth/login";
+    }
+
+    @GetMapping("/about")
+    public String about() {
+        return "about";
     }
 
     // Register moved to AuthMvcController
@@ -62,6 +81,28 @@ public class HomeController {
             model.addAttribute("pendingRequests", 0);
             model.addAttribute("totalShops", 0);
             model.addAttribute("totalOrders", 0);
+        }
+
+        // Doanh thu các shop (total - shippingFee), hoa hồng nền tảng. Chỉ tính cho đơn đã xác nhận → đã giao.
+        try {
+            List<OrderResponse> orders = orderService.getAllOrders();
+            BigDecimal totalRevenueShops = BigDecimal.ZERO;
+            BigDecimal totalCommission = BigDecimal.ZERO;
+            for (OrderResponse o : orders) {
+                if (REVENUE_STATUSES.contains(o.getStatus())) {
+                    BigDecimal tot = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
+                    BigDecimal ship = o.getShippingFee() != null ? o.getShippingFee() : BigDecimal.ZERO;
+                    totalRevenueShops = totalRevenueShops.add(tot.subtract(ship));
+                    if (o.getPlatformCommission() != null) {
+                        totalCommission = totalCommission.add(o.getPlatformCommission());
+                    }
+                }
+            }
+            model.addAttribute("totalRevenueShops", totalRevenueShops);
+            model.addAttribute("totalCommission", totalCommission);
+        } catch (Exception e) {
+            model.addAttribute("totalRevenueShops", BigDecimal.ZERO);
+            model.addAttribute("totalCommission", BigDecimal.ZERO);
         }
 
         // currentUser is automatically added by GlobalControllerAdvice
