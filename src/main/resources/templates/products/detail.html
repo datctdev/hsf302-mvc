@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,6 +120,10 @@
             background: var(--bg-white);
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         .variant-option:hover {
             border-color: var(--primary-color);
         }
@@ -182,6 +187,57 @@
             text-align: center;
             padding: 3rem;
             color: var(--danger-color);
+        }
+
+        .seller-reply-box {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #fff7f4;
+            border-left: 4px solid #ee4d2d;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .seller-reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .shop-badge {
+            background: #ee4d2d;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .reply-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .seller-reply-content {
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .seller-reply-edit {
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .seller-reply-edit a {
+            font-size: 0.75rem;
+            color: #ee4d2d;
+            text-decoration: none;
+        }
+
+        .seller-reply-edit a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -354,16 +410,17 @@
                                 <div style="font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 4px;" th:text="${review.userFullName}">User</div>
 
                                 <div style="color: #ee4d2d; font-size: 0.7rem; margin-bottom: 5px;">
-                        <span th:each="i : ${#numbers.sequence(1, 5)}">
-                            <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
-                        </span>
+                                    <span th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                                    </span>
                                 </div>
 
                                 <div style="color: #rgba(0,0,0,.54); font-size: 0.75rem; margin-bottom: 10px;">
                                     <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
-                                    <span>Phân loại: Mặc định</span> <span th:if="${review.isVerifiedPurchase}" style="color: #28a745; margin-left: 10px;">
-                            <i class="fas fa-check-circle"></i> Đã mua hàng
-                        </span>
+                                    <span>Phân loại: Mặc định</span>
+                                    <span th:if="${review.isVerifiedPurchase}" style="color: #28a745; margin-left: 10px;">
+                                        <i class="fas fa-check-circle"></i> Đã mua hàng
+                                    </span>
                                 </div>
 
                                 <div style="color: #333; font-size: 0.95rem; line-height: 1.5; white-space: pre-line; margin-bottom: 10px;"
@@ -383,9 +440,82 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- SELLER REPLY -->
+                        <div class="seller-reply-box" th:if="${review.sellerReply != null or review.sellerCanReply}">
+                            <!-- ĐÃ CÓ REPLY -->
+                            <div th:if="${review.sellerReply != null}">
+                                <div class="seller-reply-header">
+                                    <span class="shop-badge">Phản hồi từ Shop</span>
+                                    <span class="reply-time"
+                                          th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}">
+                                    </span>
+                                </div>
+
+                                <div th:id="'reply-content-' + ${review.id}"
+                                     class="seller-reply-content"
+                                     th:text="${review.sellerReply.reply}">
+                                </div>
+
+                                <div th:if="${review.sellerCanReply}">
+                                    <a href="javascript:void(0)"
+                                       class="edit-reply-btn"
+                                       th:attr="data-review-id=${review.id}">
+                                        Chỉnh sửa
+                                    </a>
+
+                                </div>
+                            </div>
+
+                            <!-- CHƯA REPLY -->
+                            <form th:if="${review.sellerReply == null and review.sellerCanReply}"
+                                  th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}"
+                                  method="post"
+                                  style="margin-top:8px;">
+
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+
+                                <textarea name="reply" rows="3"
+                                          placeholder="Nhập phản hồi cho khách hàng..."></textarea>
+
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Gửi phản hồi
+                                </button>
+                            </form>
+
+
+                            <!-- FORM EDIT -->
+                            <form th:if="${review.sellerReply != null and review.sellerCanReply}"
+                                  th:id="'reply-form-' + ${review.id}"
+                                  th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}"
+                                  method="post"
+                                  class="hidden"
+                                  style="margin-top:8px;">
+
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+
+                                <textarea name="reply"
+                                          rows="3"
+                                          th:text="${review.sellerReply.reply}">
+                                </textarea>
+
+                                <div style="margin-top:6px;">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Lưu phản hồi
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-secondary edit-reply-btn"
+                                            th:attr="data-review-id=${review.id}">
+                                        Hủy
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-
                 <div class="pagination" th:if="${reviews != null and reviews.totalPages > 1}" style="margin-top: 2rem; justify-content: center; display: flex; gap: 0.5rem;">
                     <a th:if="${reviews.hasPrevious()}"
                        th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}"
@@ -663,6 +793,30 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('edit-reply-btn')) {
+                const reviewId = e.target.dataset.reviewId;
+                toggleEditReply(reviewId);
+            }
+        });
+
+        function toggleEditReply(reviewId) {
+            const form = document.getElementById('reply-form-' + reviewId);
+            const content = document.getElementById('reply-content-' + reviewId);
+            if (!form) return;
+
+            const isHidden = form.classList.contains('hidden');
+
+            form.classList.toggle('hidden');
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+
+            if (isHidden) {
+                const textarea = form.querySelector('textarea');
+                if (textarea) textarea.focus();
+            }
         }
     </script>
 </body>

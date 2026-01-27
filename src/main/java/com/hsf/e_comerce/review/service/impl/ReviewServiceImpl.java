@@ -2,6 +2,7 @@ package com.hsf.e_comerce.review.service.impl;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.config.SecurityConfig;
 import com.hsf.e_comerce.file.service.FileService;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.repository.OrderRepository;
@@ -13,8 +14,10 @@ import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
+import com.hsf.e_comerce.review.entity.SellerReviewReply;
 import com.hsf.e_comerce.review.repository.ReviewImageRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
+import com.hsf.e_comerce.review.repository.SellerReviewReplyRepository;
 import com.hsf.e_comerce.review.service.ReviewService;
 import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +44,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final FileService fileService;
+    private final SellerReviewReplyRepository sellerReviewReplyRepository;
 
     // --- 1. TẠO ĐÁNH GIÁ ---
     @Override
@@ -114,7 +118,7 @@ public class ReviewServiceImpl implements ReviewService {
     // --- 2. LẤY DANH SÁCH REVIEW ---
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy) {
+    public Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy, User currentUser) {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         if ("oldest".equals(sortBy)) {
             sort = Sort.by(Sort.Direction.ASC, "createdAt");
@@ -129,7 +133,18 @@ public class ReviewServiceImpl implements ReviewService {
                 pageable
         );
 
-        return reviewPage.map(ReviewResponse::fromEntity);
+        return reviewPage.map(review -> {
+            SellerReviewReply reply =
+                    sellerReviewReplyRepository
+                            .findByReviewId(review.getId())
+                            .orElse(null);
+
+            return ReviewResponse.fromEntityWithSellerReply(
+                    review,
+                    reply,
+                    currentUser
+            );
+        });
     }
 
     // --- 3. CẬP NHẬT REVIEW ---

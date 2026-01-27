@@ -54,9 +54,6 @@ public class Review {
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
-    @Column(name = "seller_reply", columnDefinition = "TEXT")
-    private String sellerReply;
-
     @Column(name = "is_verified_purchase", nullable = false)
     @Builder.Default
     private Boolean isVerifiedPurchase = false;

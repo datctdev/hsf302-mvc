@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div th:each="review : ${reviews}" class="review-card">
+
+    <!-- REVIEW GỐC -->
+    <div class="buyer-review">
+        <strong th:text="${review.userFullName}">N****a</strong>
+
+        <div>
+            <span th:each="i : ${#numbers.sequence(1,5)}">
+                <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+            </span>
+        </div>
+
+        <p th:text="${review.comment}"></p>
+
+        <small th:text="${#temporals.format(review.createdAt,'dd-MM-yyyy HH:mm')}"></small>
+    </div>
+
+    <!-- SELLER CHƯA REPLY -->
+    <div th:if="${review.sellerReply == null}">
+        <form th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}"
+              method="post">
+            <textarea name="reply"
+                      placeholder="Phản hồi cho đánh giá này..."
+                      maxlength="1000"
+                      required></textarea>
+            <button type="submit">Gửi phản hồi</button>
+        </form>
+    </div>
+
+    <!-- SELLER ĐÃ REPLY -->
+    <div th:if="${review.sellerReply != null}" class="seller-reply">
+        <strong>Phản hồi của shop</strong>
+        <p th:text="${review.sellerReply.reply}"></p>
+        <small th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></small>
+
+        <form th:if="${review.sellerReply.editable}"
+              th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}"
+              method="post">
+            <textarea name="reply"
+                      th:text="${review.sellerReply.reply}"
+                      maxlength="1000"></textarea>
+            <button type="submit">Cập nhật</button>
+        </form>
+    </div>
+
+</div>
+
+
+
+</body>
+</html>

@@ -14,7 +14,7 @@ public interface ReviewService {
     ReviewResponse createReview(User user, UUID productId, CreateReviewRequest request);
 
     // 2. Lấy danh sách đánh giá của sản phẩm (Phân trang, lọc theo sao)
-    Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy);
+    Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy, User currentUser);
 
     // 3. Cập nhật đánh giá (User sửa bài của mình)
     ReviewResponse updateReview(User user, UUID reviewId, UpdateReviewRequest request);

@@ -1,7 +1,9 @@
 package com.hsf.e_comerce.review.dto.response;
 
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
+import com.hsf.e_comerce.review.entity.SellerReviewReply;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,7 +21,8 @@ public class ReviewResponse {
     private String userAvatarUrl;
     private Integer rating;
     private String comment;
-    private String sellerReply;
+    private SellerReplyResponse sellerReply;
+    private Boolean sellerCanReply;
     private Boolean isVerifiedPurchase;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
@@ -44,7 +47,6 @@ public class ReviewResponse {
                 .userAvatarUrl(review.getUser().getAvatarUrl()) // Server trả về link ảnh gốc (hoặc null)
                 .rating(review.getRating())
                 .comment(review.getComment())
-                .sellerReply(review.getSellerReply())
                 .isVerifiedPurchase(review.getIsVerifiedPurchase())
                 .imageUrls(review.getImages().stream()
                         .map(ReviewImage::getImageUrl)
@@ -52,4 +54,48 @@ public class ReviewResponse {
                 .createdAt(review.getCreatedAt())
                 .build();
     }
+
+    public static ReviewResponse fromEntityWithSellerReply(
+            Review review,
+            SellerReviewReply replyEntity,
+            User currentUser
+    ) {
+        ReviewResponse res = fromEntity(review);
+
+        boolean canReply = false;
+
+        if (currentUser != null
+                && currentUser.getRole() != null
+                && "ROLE_SELLER".equals(currentUser.getRole().getName())
+                && review.getProduct()
+                .getShop()
+                .getUser()
+                .getId()
+                .equals(currentUser.getId())) {
+
+            if (replyEntity == null) {
+                canReply = true;
+            } else {
+                canReply = replyEntity.getRepliedAt()
+                        .isAfter(LocalDateTime.now().minusDays(7));
+            }
+        }
+
+        res.setSellerCanReply(canReply);
+
+        if (replyEntity != null) {
+            boolean editable = canReply;
+
+            res.setSellerReply(
+                    SellerReplyResponse.builder()
+                            .reply(replyEntity.getReply())
+                            .repliedAt(replyEntity.getRepliedAt())
+                            .editable(editable)
+                            .build()
+            );
+        }
+
+        return res;
+    }
+
 }
