@@ -11,6 +11,7 @@
     --info-color: #17a2b8;
     
     --bg-color: #f4f4f4;
+    --bg-light: #f8f9fa;
     --bg-white: #fff;
     --text-color: #333;
     --text-muted: #666;
@@ -124,9 +125,30 @@ a:hover {
     color: #fff;
 }
 
+.btn-outline-primary {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Focus visible - accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 /* Form Elements */
@@ -144,14 +166,20 @@ a:hover {
 
 .form-group input,
 .form-group textarea,
-.form-group select {
-    width: 100%;
+.form-group select,
+.form-control {
     padding: 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     font-size: 1rem;
     font-family: var(--font-family);
     transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
 }
 
 .form-group input:focus,
@@ -190,6 +218,14 @@ a:hover {
     padding: 0.75rem 1rem;
     border-radius: var(--border-radius);
     margin-bottom: 1rem;
+}
+
+.alert + .alert {
+    margin-top: -0.5rem;
+}
+
+.page-alerts {
+    margin-bottom: 1.5rem;
 }
 
 .alert-danger {

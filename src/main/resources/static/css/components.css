@@ -536,3 +536,41 @@
     gap: 1rem;
     margin-top: 1.5rem;
 }
+
+/* Order status badges - dùng chung cho seller/buyer order pages */
+.order-status {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.status-PENDING { background: #fff3cd; color: #856404; }
+.status-PENDING_PAYMENT { background: #ffeaa7; color: #6c5b0b; }
+.status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
+.status-PROCESSING { background: #d4edda; color: #155724; }
+.status-SHIPPED { background: #cce5ff; color: #004085; }
+.status-DELIVERED { background: #d4edda; color: #155724; }
+.status-CANCELLED { background: #f8d7da; color: #721c24; }
+.status-REFUNDED { background: #e2e3e5; color: #383d41; }
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .order-detail-two-cols,
+    .order-summary-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .cart-content-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .ghn-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ghn-actions form {
+        width: 100%;
+    }
+    .ghn-actions input[type="text"] {
+        width: 100% !important;
+    }
+}

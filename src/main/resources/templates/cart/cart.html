@@ -224,7 +224,7 @@
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
             <div th:if="${cart != null and cart.items != null and !cart.items.empty}">
-                <div class="cart-content">
+                <div class="cart-content cart-content-grid">
                     <!-- Cart Items -->
                     <div class="cart-items">
                         <div th:each="item : ${cart.items}" class="cart-item">

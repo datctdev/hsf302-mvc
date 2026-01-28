@@ -117,6 +117,11 @@
     <div th:replace="~{fragments/nav-home :: nav}"></div>
 
     <div class="order-detail-container">
+        <div class="page-alerts" th:if="${success or error}">
+            <div th:if="${success}" class="alert alert-success" th:text="${success}" role="status"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}" role="alert"></div>
+        </div>
+
         <div th:if="${order != null}" class="order-detail-card">
             <div class="order-detail-header">
                 <div>
@@ -129,7 +134,7 @@
                       th:text="${order.status}">Status</span>
             </div>
 
-            <div class="order-summary">
+            <div class="order-summary order-summary-grid">
                 <div class="summary-section">
                     <h3>Thông Tin Giao Hàng</h3>
                     <div class="summary-row">

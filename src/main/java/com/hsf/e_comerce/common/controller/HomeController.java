@@ -4,6 +4,8 @@ import com.hsf.e_comerce.auth.service.UserService;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.product.dto.response.ProductResponse;
+import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
 import com.hsf.e_comerce.shop.service.ShopService;
@@ -13,12 +15,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,11 +45,20 @@ public class HomeController {
     private final SellerRequestService sellerRequestService;
     private final ShopService shopService;
     private final OrderService orderService;
+    private final ProductService productService;
 
     @GetMapping("/")
     public String hello(Model model) {
-        model.addAttribute("message", "Chào mừng đến với E-commerce!");
-        // currentUser is automatically added by GlobalControllerAdvice
+        model.addAttribute("slogan", "Mua sắm thông minh – Giá tốt mỗi ngày");
+        model.addAttribute("sloganSubtext", "Khám phá hàng ngàn sản phẩm điện tử, công nghệ từ các shop uy tín. Giao hàng nhanh, bảo hành chính hãng.");
+        try {
+            Page<ProductResponse> featuredPage = productService.getPublishedProducts(
+                    0, 8, null, null, null, null, null, "createdAt", "desc");
+            List<ProductResponse> featuredProducts = featuredPage.getContent();
+            model.addAttribute("featuredProducts", featuredProducts);
+        } catch (Exception e) {
+            model.addAttribute("featuredProducts", List.<ProductResponse>of());
+        }
         return "home";
     }
 

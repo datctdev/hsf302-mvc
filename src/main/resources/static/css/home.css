@@ -1,0 +1,153 @@
+/* Trang chủ: Hero, Sản phẩm đề xuất */
+
+/* Hero */
+.home-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+    color: #fff;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    width: 100%;
+}
+
+.home-hero .container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.home-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.home-hero .hero-subtext {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.home-hero .btn-hero {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    color: var(--primary-color);
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-hero .btn-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    color: var(--primary-hover);
+}
+
+/* Section chung */
+.home-section {
+    padding: 2.5rem 0;
+}
+
+.home-section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.home-section-title .btn {
+    font-size: 0.9rem;
+}
+
+/* Grid sản phẩm đề xuất (dùng chung class với trang products) */
+.home-products .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.home-products .product-card {
+    display: block;
+    background: var(--bg-white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.home-products .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.home-products .product-card-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: var(--bg-light);
+}
+
+.home-products .product-card-body {
+    padding: 1rem;
+}
+
+.home-products .product-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.home-products .product-card-price {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.home-products .product-card-shop {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.home-products .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+    .home-hero {
+        padding: 2rem 1rem;
+    }
+
+    .home-section {
+        padding: 1.5rem 0;
+    }
+
+    .home-products .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .home-products .product-card-image {
+        height: 140px;
+    }
+}
