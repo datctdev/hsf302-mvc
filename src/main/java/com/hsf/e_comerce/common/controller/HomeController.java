@@ -6,6 +6,7 @@ import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
+import com.hsf.e_comerce.review.service.ReviewReportService;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
 import com.hsf.e_comerce.shop.service.ShopService;
@@ -46,6 +47,7 @@ public class HomeController {
     private final ShopService shopService;
     private final OrderService orderService;
     private final ProductService productService;
+    private final ReviewReportService reviewReportService;
 
     @GetMapping("/")
     public String hello(Model model) {
@@ -113,6 +115,11 @@ public class HomeController {
         model.addAttribute("urlLast30", "/admin/dashboard?fromDate=" + today.minusDays(30) + "&toDate=" + today);
         model.addAttribute("urlLast90", "/admin/dashboard?fromDate=" + today.minusDays(90) + "&toDate=" + today);
         model.addAttribute("urlAll", "/admin/dashboard");
+        model.addAttribute(
+                "reportedReviewCount",
+                reviewReportService.countPendingReportedReviews()
+        );
+
         try {
             List<OrderResponse> orders = orderService.getAllOrders();
             BigDecimal totalRevenueShops = BigDecimal.ZERO;

@@ -10,6 +10,6 @@ import java.util.UUID;
 public interface SellerReviewReplyService {
     UUID replyToReview(User seller, UUID reviewId, String reply);
 
-    void updateReply(User seller, UUID reviewId, String reply);
+    UUID updateReply(User seller, UUID reviewId, String reply);
 
 }

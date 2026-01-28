@@ -1,0 +1,76 @@
+package com.hsf.e_comerce.review.repository;
+
+import com.hsf.e_comerce.review.dto.response.ReportedReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
+import com.hsf.e_comerce.review.entity.ReviewReport;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface ReviewReportRepository
+        extends JpaRepository<ReviewReport, UUID> {
+
+    boolean existsByReviewIdAndReporterId(UUID reviewId, UUID reporterId);
+
+    boolean existsByReviewIdAndReporterIp(UUID reviewId, String reporterIp);
+
+    long countByReviewId(UUID reviewId);
+
+    long countByStatus(ReviewReportStatus status);
+
+    @Query("""
+        SELECT COUNT(DISTINCT rr.review.id)
+        FROM ReviewReport rr
+        WHERE rr.status = :status
+    """)
+    long countDistinctReviewByStatus(@Param("status") ReviewReportStatus status);
+
+    @Query("""
+        select r.id,
+               r.comment,
+               u.email,
+               count(rr),
+               max(rr.createdAt)
+        from ReviewReport rr
+        join rr.review r
+        join r.user u
+        where rr.status = :status
+        group by r.id, r.comment, u.email
+        order by max(rr.createdAt) desc
+    """)
+    List<Object[]> findReportedReviewsGrouped(
+            @Param("status") ReviewReportStatus status
+    );
+
+    @Query("""
+        select new com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse(
+            rr.id,
+            rr.reason,
+            rr.note,
+            ru.email,
+            rr.createdAt
+        )
+        from ReviewReport rr
+        left join rr.reporter ru
+        where rr.review.id = :reviewId
+        and rr.status = :status
+        order by rr.createdAt desc
+    """)
+    List<ReviewReportItemResponse> findReportsByReviewId(
+            @Param("reviewId") UUID reviewId,
+            @Param("status") ReviewReportStatus status
+    );
+
+    Optional<ReviewReport> findByReviewIdAndReporterId(
+            UUID reviewId,
+            UUID reporterId
+    );
+
+}

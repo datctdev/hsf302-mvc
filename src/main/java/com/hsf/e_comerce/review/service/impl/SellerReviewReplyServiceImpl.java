@@ -61,7 +61,7 @@ public class SellerReviewReplyServiceImpl
 
     @Override
     @Transactional
-    public void updateReply(User seller, UUID reviewId, String reply) {
+    public UUID updateReply(User seller, UUID reviewId, String reply) {
 
         SellerReviewReply entity = replyRepository.findByReviewId(reviewId)
                 .orElseThrow(() -> new CustomException("Chưa có phản hồi để sửa"));
@@ -81,6 +81,8 @@ public class SellerReviewReplyServiceImpl
 
         entity.setReply(reply.trim());
         replyRepository.save(entity);
+
+        return entity.getReview().getProduct().getId();
     }
 
 }

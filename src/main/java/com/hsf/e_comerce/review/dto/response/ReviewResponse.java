@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class ReviewResponse {
     private UUID id;
     private UUID userId;
+    private UUID productId;
     private String userFullName;
     private String userAvatarUrl;
     private Integer rating;
@@ -26,6 +27,8 @@ public class ReviewResponse {
     private Boolean isVerifiedPurchase;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+    private ReviewReportItemResponse userReport;
+
 
     public static ReviewResponse fromEntity(Review review) {
         // 1. Logic ẩn tên
@@ -43,6 +46,7 @@ public class ReviewResponse {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .userId(review.getUser().getId())
+                .productId(review.getProduct().getId())
                 .userFullName(maskedName) // Trả về tên đã ẩn
                 .userAvatarUrl(review.getUser().getAvatarUrl()) // Server trả về link ảnh gốc (hoặc null)
                 .rating(review.getRating())

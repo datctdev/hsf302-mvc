@@ -118,7 +118,7 @@ public class ReviewMvcController {
         try {
             ReviewResponse review = reviewService.updateReview(user, reviewId, request);
             redirectAttributes.addFlashAttribute("success", "Cập nhật đánh giá thành công");
-            return "redirect:/"; // Tạm thời về trang chủ
+            return "redirect:/products/" + review.getProductId(); // Tạm thời về trang chủ
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/reviews/" + reviewId + "/edit";

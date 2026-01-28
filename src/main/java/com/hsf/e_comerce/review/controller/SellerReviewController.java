@@ -47,12 +47,13 @@ public class SellerReviewController {
             RedirectAttributes redirectAttributes
     ) {
         try {
-            replyService.updateReply(seller, reviewId, reply);
+            UUID productId = replyService.updateReply(seller, reviewId, reply);
             redirectAttributes.addFlashAttribute("success",
                     "Cập nhật phản hồi thành công");
+            return "redirect:/products/" + productId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/";
         }
-        return "redirect:/seller/reviews";
     }
 }

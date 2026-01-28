@@ -11,14 +11,18 @@ import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.repository.ProductRepository;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
+import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
+import com.hsf.e_comerce.review.entity.ReviewReport;
 import com.hsf.e_comerce.review.entity.SellerReviewReply;
 import com.hsf.e_comerce.review.repository.ReviewImageRepository;
+import com.hsf.e_comerce.review.repository.ReviewReportRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
 import com.hsf.e_comerce.review.repository.SellerReviewReplyRepository;
 import com.hsf.e_comerce.review.service.ReviewService;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,7 +44,7 @@ import java.util.UUID;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final ReviewImageRepository reviewImageRepository;
+    private final ReviewReportRepository reviewReportRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final FileService fileService;
@@ -150,11 +154,37 @@ public class ReviewServiceImpl implements ReviewService {
                             .findByReviewId(review.getId())
                             .orElse(null);
 
-            return ReviewResponse.fromEntityWithSellerReply(
-                    review,
-                    reply,
-                    currentUser
-            );
+            // 2️⃣ User report (nếu đã đăng nhập)
+            ReviewReportItemResponse userReport = null;
+
+            if (currentUser != null) {
+                userReport = reviewReportRepository
+                        .findByReviewIdAndReporterId(
+                                review.getId(),
+                                currentUser.getId()
+                        )
+                        .filter(r -> r.getStatus() == ReviewReportStatus.PENDING)
+                        .map(r -> new ReviewReportItemResponse(
+                                r.getId(),
+                                r.getReason(),
+                                r.getNote(),
+                                r.getReporter().getEmail(),
+                                r.getCreatedAt()
+                        ))
+                        .orElse(null);
+            }
+
+            // 3️⃣ Build ReviewResponse
+            ReviewResponse response =
+                    ReviewResponse.fromEntityWithSellerReply(
+                            review,
+                            reply,
+                            currentUser
+                    );
+
+            response.setUserReport(userReport);
+
+            return response;
         });
     }
 
