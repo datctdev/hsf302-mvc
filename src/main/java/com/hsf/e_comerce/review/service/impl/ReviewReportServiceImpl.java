@@ -2,7 +2,9 @@ package com.hsf.e_comerce.review.service.impl;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.dto.request.ReportReviewRequest;
+import com.hsf.e_comerce.review.dto.request.UpdateReportReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReportedReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewReport;
 import com.hsf.e_comerce.review.repository.ReviewReportRepository;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -43,6 +46,10 @@ public class ReviewReportServiceImpl implements ReviewReportService {
             throw new RuntimeException("Vui lòng nhập lý do cụ thể");
         }
 
+        if (reportRepository.existsByReviewIdAndReporterId(reviewId, reporter.getId())) {
+            throw new RuntimeException("Bạn đã báo cáo đánh giá này");
+        }
+
         ReviewReport report = new ReviewReport();
         report.setReview(review);
         report.setReporter(reporter);
@@ -55,9 +62,7 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         long count = reportRepository.countByReviewId(reviewId);
         review.setReportCount((int) count);
 
-        if (count >= 3) {
-            review.setFlagged(true);
-        }
+        review.setFlagged(true);
 
         reviewRepository.save(review);
     }
@@ -92,6 +97,32 @@ public class ReviewReportServiceImpl implements ReviewReportService {
                     )
             );
         }).toList();
+    }
+
+    @Override
+    @Transactional
+    public void updateReport(
+            UUID reviewId,
+            User reporter,
+            UpdateReportReviewRequest request
+    ) {
+        ReviewReport report = reportRepository
+                .findByReviewIdAndReporterId(reviewId, reporter.getId())
+                .orElseThrow(() -> new RuntimeException("Bạn chưa báo cáo đánh giá này"));
+
+        if (report.getStatus() != ReviewReportStatus.PENDING) {
+            throw new RuntimeException("Báo cáo đã được xử lý, không thể chỉnh sửa");
+        }
+
+        if (request.getReason() == ReviewReportReason.OTHER &&
+                (request.getNote() == null || request.getNote().isBlank())) {
+            throw new RuntimeException("Vui lòng nhập lý do cụ thể");
+        }
+
+        report.setReason(request.getReason());
+        report.setNote(request.getNote());
+
+        reportRepository.save(report);
     }
 
 }

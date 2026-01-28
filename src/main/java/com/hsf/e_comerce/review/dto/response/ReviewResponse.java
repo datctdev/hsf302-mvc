@@ -27,6 +27,8 @@ public class ReviewResponse {
     private Boolean isVerifiedPurchase;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+    private ReviewReportItemResponse userReport;
+
 
     public static ReviewResponse fromEntity(Review review) {
         // 1. Logic ẩn tên

@@ -3,6 +3,7 @@ package com.hsf.e_comerce.review.controller;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.review.dto.request.ReportReviewRequest;
+import com.hsf.e_comerce.review.dto.request.UpdateReportReviewRequest;
 import com.hsf.e_comerce.review.service.ReviewReportService;
 import com.hsf.e_comerce.review.valueobject.ReviewReportReason;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +43,24 @@ public class ReviewReportController {
         }
 
         return "redirect:" + request.getHeader("Referer");
+    }
+
+    @PutMapping("/{reviewId}/report")
+    public String updateReport(
+            @PathVariable UUID reviewId,
+            @ModelAttribute UpdateReportReviewRequest request,
+            @CurrentUser User user,
+            HttpServletRequest httpRequest,
+            RedirectAttributes redirect
+    ) {
+        try {
+            System.out.println("🔥 PUT REPORT HIT 🔥");
+            reportService.updateReport(reviewId, user, request);
+            redirect.addFlashAttribute("success", "Đã cập nhật báo cáo");
+        } catch (RuntimeException ex) {
+            redirect.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:" + httpRequest.getHeader("Referer");
     }
 
 

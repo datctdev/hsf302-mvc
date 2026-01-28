@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewReportRepository
@@ -65,6 +66,11 @@ public interface ReviewReportRepository
     List<ReviewReportItemResponse> findReportsByReviewId(
             @Param("reviewId") UUID reviewId,
             @Param("status") ReviewReportStatus status
+    );
+
+    Optional<ReviewReport> findByReviewIdAndReporterId(
+            UUID reviewId,
+            UUID reporterId
     );
 
 }
