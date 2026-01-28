@@ -438,6 +438,46 @@
                                         <button type="submit" style="border: none; background: none; color: #888; font-size: 0.8rem; cursor: pointer;">Xóa</button>
                                     </form>
                                 </div>
+                                <div th:if="${currentUser != null and (currentUser.id != review.userId)}">
+                                    <form th:action="@{'/reviews/' + ${review.id} + '/report'}"
+                                          method="post"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('Bạn có chắc muốn báo cáo đánh giá này?');">
+
+                                        <input type="hidden"
+                                               th:name="${_csrf.parameterName}"
+                                               th:value="${_csrf.token}" />
+
+                                        <select name="reason"
+                                                required
+                                                th:data-review-id="${review.id}"
+                                                style="font-size:0.8rem;">
+
+                                            <option value="">-- Chọn lý do --</option>
+                                                <option value="SPAM">Spam</option>
+                                                <option value="OFFENSIVE_LANGUAGE">Ngôn từ xúc phạm</option>
+                                                <option value="PERSONAL_ATTACK">Công kích cá nhân</option>
+                                                <option value="IRRELEVANT_CONTENT">Không liên quan</option>
+                                                <option value="OTHER">Khác</option>
+                                        </select>
+
+                                        <div th:id="'note-box-' + ${review.id}"
+                                             class="note-box"
+                                             style="display:none; margin-top:4px;">
+                                            <input type="text"
+                                                   name="note"
+                                                   placeholder="Nhập lý do cụ thể..."
+                                                   maxlength="255"
+                                                   disabled
+                                                   style="font-size:0.8rem; width:200px;" />
+                                        </div>
+
+                                        <button type="submit"
+                                                style="border:none;background:none;color:#999;font-size:0.8rem;cursor:pointer;">
+                                            <i class="fa-regular fa-flag"></i> Báo cáo
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         <!-- SELLER REPLY -->
@@ -818,6 +858,36 @@
                 if (textarea) textarea.focus();
             }
         }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('select[name="reason"]').forEach(select => {
+                const reviewId = select.dataset.reviewId;
+                const box = document.getElementById('note-box-' + reviewId);
+                if (!box) return;
+
+                const input = box.querySelector('input[name="note"]');
+
+                // reset lúc load
+                box.style.display = 'none';
+                if (input) {
+                    input.value = '';
+                    input.disabled = true;
+                }
+
+                // GẮN EVENT CHANGE
+                select.addEventListener('change', function () {
+                    if (this.value === 'OTHER') {
+                        box.style.display = 'block';
+                        if (input) input.disabled = false;
+                    } else {
+                        box.style.display = 'none';
+                        if (input) {
+                            input.value = '';
+                            input.disabled = true;
+                        }
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

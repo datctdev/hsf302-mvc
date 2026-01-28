@@ -67,6 +67,12 @@ public class Review {
     @Builder.Default
     private List<ReviewImage> images = new ArrayList<>();
 
+    @Column(nullable = false)
+    private int reportCount = 0;
+
+    @Column(nullable = false)
+    private boolean flagged = false;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
