@@ -41,7 +41,7 @@
         .status-PENDING { background: #fff3cd; color: #856404; }
         .status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
         .status-PROCESSING { background: #d4edda; color: #155724; }
-        .status-SHIPPED { background: #cce5ff; color: #004085; }
+        .status-SHIPPING { background: #cce5ff; color: #004085; }
         .status-DELIVERED { background: #d4edda; color: #155724; }
         .status-CANCELLED { background: #f8d7da; color: #721c24; }
         .status-REFUNDED { background: #e2e3e5; color: #383d41; }
@@ -117,7 +117,7 @@
     <div th:replace="~{fragments/nav-home :: nav}"></div>
 
     <div class="order-detail-container">
-        <div class="page-alerts" th:if="${success or error}">
+        <div class="page-alerts" th:if="${success != null or error != null}">
             <div th:if="${success}" class="alert alert-success" th:text="${success}" role="status"></div>
             <div th:if="${error}" class="alert alert-danger" th:text="${error}" role="alert"></div>
         </div>

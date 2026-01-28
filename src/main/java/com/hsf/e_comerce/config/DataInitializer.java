@@ -425,7 +425,7 @@ public class DataInitializer implements CommandLineRunner {
             createOrder(buyer, shop, "SEED-ORD-002", OrderStatus.DELIVERED, new BigDecimal("5990000"), new BigDecimal("30000"), 10.0, products[5], variants[5], 1, new BigDecimal("5990000"));
             createOrder(buyer, shop, "SEED-ORD-003", OrderStatus.CONFIRMED, new BigDecimal("690000"), new BigDecimal("22000"), 10.0, products[7], variants[7], 1, new BigDecimal("690000"));
             createOrder(buyer, shop, "SEED-ORD-004", OrderStatus.PROCESSING, new BigDecimal("3290000"), new BigDecimal("28000"), 10.0, products[6], variants[6], 1, new BigDecimal("3290000"));
-            createOrder(buyer, shop, "SEED-ORD-005", OrderStatus.SHIPPED, new BigDecimal("199000"), new BigDecimal("15000"), 10.0, products[8], variants[8], 2, new BigDecimal("199000"));
+            createOrder(buyer, shop, "SEED-ORD-005", OrderStatus.SHIPPING, new BigDecimal("199000"), new BigDecimal("15000"), 10.0, products[8], variants[8], 2, new BigDecimal("199000"));
             createOrder(buyer, shop, "SEED-ORD-006", OrderStatus.PENDING_PAYMENT, new BigDecimal("2490000"), new BigDecimal("25000"), 10.0, products[11], variants[11], 1, new BigDecimal("2490000"));
             createOrder(buyer, shop, "SEED-ORD-007", OrderStatus.CANCELLED, new BigDecimal("35990000"), new BigDecimal("50000"), 10.0, products[2], variants[2], 1, new BigDecimal("35990000"));
 

@@ -8,6 +8,36 @@
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
+    <style>
+        .order-actions-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .order-actions-left {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .order-actions-right {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .receive-status.success {
+            color: #2e7d32;
+        }
+
+        .receive-status.pending {
+            color: #ff9800;
+        }
+
+    </style>
 </head>
 <body>
     <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
@@ -36,7 +66,8 @@
                     </div>
                     <span class="order-status" 
                           th:classappend="'status-' + ${order.status}"
-                          th:text="${order.status}">Status</span>
+                          th:text="${order.status}">Status
+                    </span>
                 </div>
 
                 <div class="order-items-list">
@@ -55,7 +86,7 @@
                         <div class="item-price-action">
                             <div class="price-text" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' ₫'">100.000 ₫</div>
 
-                            <th:block th:if="${order.status.name() == 'DELIVERED'}">
+                            <th:block th:if="${order.status.name() == 'DELIVERED' and order.receivedByBuyer}">
                                 <a th:if="${!item.isReviewed}"
                                    th:href="@{'/products/' + ${item.productId} + '/review?subOrderId=' + ${order.id}}"
                                    class="btn-rate-shopee">
@@ -88,24 +119,45 @@
                     </div>
                 </div>
 
-                <div class="order-actions">
-                    <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary">Xem Chi Tiết</a>
-                    <a th:if="${order.status.name() == 'PENDING_PAYMENT'}"
-                       th:href="@{'/payments/' + ${order.id}}"
-                       class="btn btn-warning">
-                        Tiếp tục thanh toán
-                    </a>
+                <div class="order-actions order-actions-flex">
+                    <div class="order-actions-left">
+                        <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary">Xem Chi Tiết</a>
 
-                    <form th:if="${order.status.name() == 'PENDING_PAYMENT' or order.status.name() == 'CONFIRMED'}"
-                          th:action="@{'/orders/' + ${order.id} + '/cancel'}" 
-                          method="post" style="display: inline;">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-outline-danger"
-                                onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
-                            Hủy Đơn
-                        </button>
-                    </form>
+                        <a th:if="${order.status.name() == 'PENDING_PAYMENT'}"
+                           th:href="@{'/payments/' + ${order.id}}"
+                           class="btn btn-warning">
+                            Tiếp tục thanh toán
+                        </a>
+
+                        <form th:if="${order.status.name() == 'PENDING_PAYMENT' or order.status.name() == 'CONFIRMED'}"
+                              th:action="@{'/orders/' + ${order.id} + '/cancel'}"
+                              method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-outline-danger">Hủy Đơn</button>
+                        </form>
+
+                        <form th:if="${order.status.name() == 'DELIVERED' and !order.receivedByBuyer}"
+                              th:action="@{'/orders/' + ${order.id} + '/received'}"
+                              method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-success">Đã nhận hàng</button>
+                        </form>
+                    </div>
+
+                    <!-- 👇 SÁT PHẢI -->
+                    <div class="order-actions-right"
+                         th:if="${order.status.name() == 'DELIVERED'}">
+                        <span th:if="${order.receivedByBuyer}"
+                              class="receive-status success">
+                            ✔ Đã nhận hàng
+                        </span>
+                        <span th:if="${!order.receivedByBuyer}"
+                              class="receive-status pending">
+                            ⏳ Chờ bạn xác nhận
+                        </span>
+                    </div>
                 </div>
+
             </div>
         </div>
             </div>

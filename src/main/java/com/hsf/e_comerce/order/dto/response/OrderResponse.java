@@ -40,6 +40,8 @@ public class OrderResponse {
     private BigDecimal platformCommission; // Hoa hồng nền tảng (VNĐ)
     private Double commissionRate;        // % hoa hồng áp dụng tại thời điểm tạo đơn
     private List<OrderItemResponse> items;
+    private boolean receivedByBuyer;
+    private LocalDateTime receivedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -25,7 +25,7 @@
     <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
 
     <div class="order-detail-container">
-        <div class="page-alerts" th:if="${success or error}">
+        <div class="page-alerts" th:if="${success != null or error != null}">
             <div th:if="${success}" class="alert alert-success" th:text="${success}" role="status"></div>
             <div th:if="${error}" class="alert alert-danger" th:text="${error}" role="alert"></div>
         </div>
@@ -69,7 +69,7 @@
             </div>
 
             <!-- Khi chưa có mã GHN: Tạo lại qua API hoặc nhập thủ công -->
-            <div th:if="${(order.ghnOrderCode == null or order.ghnOrderCode.isEmpty()) and (order.status.name() == 'CONFIRMED' or order.status.name() == 'PROCESSING' or order.status.name() == 'SHIPPED')}" 
+            <div th:if="${(order.ghnOrderCode == null or order.ghnOrderCode.isEmpty()) and (order.status.name() == 'CONFIRMED' or order.status.name() == 'PROCESSING' or order.status.name() == 'SHIPPING')}"
                  class="order-detail-card" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem;">
                 <h3>Vận đơn GHN</h3>
                 <p style="color: var(--text-muted); margin-bottom: 1rem;">Đơn chưa có mã vận đơn. Bạn có thể tạo qua hệ thống hoặc nhập mã nếu đã tạo trên GHN.</p>

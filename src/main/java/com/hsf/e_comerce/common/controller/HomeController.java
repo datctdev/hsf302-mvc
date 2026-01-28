@@ -37,7 +37,7 @@ public class HomeController {
     private static final Set<OrderStatus> REVENUE_STATUSES = Set.of(
             OrderStatus.CONFIRMED,
             OrderStatus.PROCESSING,
-            OrderStatus.SHIPPED,
+            OrderStatus.SHIPPING,
             OrderStatus.DELIVERED
     );
 

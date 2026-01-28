@@ -23,8 +23,8 @@ public final class OrderStatusTransition {
         m.put(OrderStatus.PENDING, Set.of(OrderStatus.PENDING_PAYMENT, OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
         m.put(OrderStatus.PENDING_PAYMENT, Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
         m.put(OrderStatus.CONFIRMED, Set.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED));
-        m.put(OrderStatus.PROCESSING, Set.of(OrderStatus.SHIPPED));
-        m.put(OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED));
+        m.put(OrderStatus.PROCESSING, Set.of(OrderStatus.SHIPPING));
+        m.put(OrderStatus.SHIPPING, Set.of(OrderStatus.DELIVERED));
         m.put(OrderStatus.DELIVERED, Set.of());
         m.put(OrderStatus.CANCELLED, Set.of());
         m.put(OrderStatus.REFUNDED, Set.of());

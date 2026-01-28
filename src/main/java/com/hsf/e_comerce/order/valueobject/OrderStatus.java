@@ -11,7 +11,7 @@ public enum OrderStatus {
     PENDING_PAYMENT, // Chờ thanh toán – buyer chưa COD/VNPay
     CONFIRMED,       // Đã thanh toán / đã xác nhận – seller chuẩn bị đóng gói
     PROCESSING,      // Đang xử lý (đóng gói, có thể đã tạo vận đơn GHN)
-    SHIPPED,         // Đã giao cho GHN / đang vận chuyển
+    SHIPPING,         // Đã giao cho GHN / đang vận chuyển
     DELIVERED,       // Đã nhận hàng – buyer có thể đánh giá
     CANCELLED,       // Đã hủy
     REFUNDED         // Đã hoàn tiền

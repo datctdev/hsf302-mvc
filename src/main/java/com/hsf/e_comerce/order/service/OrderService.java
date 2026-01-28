@@ -56,4 +56,6 @@ public interface OrderService {
      * Nhập mã vận đơn GHN thủ công (seller). Dùng khi đã tạo đơn trên GHN và muốn gắn mã vào đơn trong hệ thống.
      */
     OrderResponse setGhnOrderCodeManually(UUID orderId, String ghnOrderCode, User user);
+
+    void markReceivedByBuyer(UUID id, User user);
 }

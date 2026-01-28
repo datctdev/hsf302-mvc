@@ -115,6 +115,21 @@ public class OrderMvcController {
         }
     }
 
+    @PostMapping("/{id}/received")
+    public String markReceived(
+            @PathVariable UUID id,
+            @CurrentUser User user,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            orderService.markReceivedByBuyer(id, user);
+            redirectAttributes.addFlashAttribute("success", "Đã xác nhận nhận hàng.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
     @PostMapping("/{id}/cancel")
     public String cancelOrder(
             @CurrentUser User currentUser,

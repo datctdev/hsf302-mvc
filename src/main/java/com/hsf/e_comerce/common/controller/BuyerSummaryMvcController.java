@@ -28,7 +28,7 @@ public class BuyerSummaryMvcController {
     private static final Set<OrderStatus> PAID_STATUSES = Set.of(
             OrderStatus.CONFIRMED,
             OrderStatus.PROCESSING,
-            OrderStatus.SHIPPED,
+            OrderStatus.SHIPPING,
             OrderStatus.DELIVERED
     );
 

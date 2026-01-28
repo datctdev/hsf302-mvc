@@ -75,6 +75,10 @@ public class ReviewServiceImpl implements ReviewService {
             throw new CustomException("Đơn hàng chưa giao thành công.");
         }
 
+        if (!order.isReceivedByBuyer()) {
+            throw new CustomException("Vui lòng xác nhận đã nhận hàng trước khi đánh giá.");
+        }
+
         boolean hasProduct = order.getItems().stream()
                 .anyMatch(item -> item.getProduct().getId().equals(productId));
         if (!hasProduct) {

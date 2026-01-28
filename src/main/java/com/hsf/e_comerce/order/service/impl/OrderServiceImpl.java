@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -219,7 +220,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getOrdersByShop(UUID shopId) {
 //        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
         List<Order> orders = orderRepository
-                .findByShopIdAndStatusNot(shopId, OrderStatus.PENDING_PAYMENT);
+                .findByShopIdAndStatusNotOrderByCreatedAtDesc(shopId, OrderStatus.PENDING_PAYMENT);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -233,7 +234,7 @@ public class OrderServiceImpl implements OrderService {
             return List.of();
         }
 
-        List<Order> orders = orderRepository.findByShopIdAndStatus(shopId, status);
+        List<Order> orders = orderRepository.findByShopIdAndStatusOrderByCreatedAtDesc(shopId, status);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -307,7 +308,7 @@ public class OrderServiceImpl implements OrderService {
             tryCreateGHNOrder(order);
         }
         // Tạo đơn GHN khi seller bắt đầu xử lý/giao hàng (CONFIRMED -> PROCESSING/SHIPPED) – flow đã thanh toán (COD/VNPay)
-        if ((newStatus == OrderStatus.PROCESSING || newStatus == OrderStatus.SHIPPED)
+        if ((newStatus == OrderStatus.PROCESSING || newStatus == OrderStatus.SHIPPING)
                 && currentStatus == OrderStatus.CONFIRMED) {
             tryCreateGHNOrder(order);
         }
@@ -442,10 +443,11 @@ public class OrderServiceImpl implements OrderService {
         Optional<Order> byClient = clientOrderCode != null && !clientOrderCode.isBlank()
                 ? orderRepository.findByOrderNumber(clientOrderCode.trim()) : Optional.empty();
         Order order = byGhn.or(() -> byClient).orElse(null);
-        if (order == null || order.getStatus() != OrderStatus.SHIPPED) {
+        if (order == null || order.getStatus() != OrderStatus.SHIPPING) {
             return false;
         }
         order.setStatus(OrderStatus.DELIVERED);
+        order.setDeliveredAt(LocalDateTime.now());
         orderRepository.save(order);
         log.info("GHN webhook: đơn {} đã set DELIVERED (ghnOrderCode={}, clientOrderCode={})",
                 order.getOrderNumber(), ghnOrderCode, clientOrderCode);
@@ -467,7 +469,7 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException("Đơn đã có mã vận đơn GHN: " + order.getGhnOrderCode());
         }
         OrderStatus s = order.getStatus();
-        if (s != OrderStatus.CONFIRMED && s != OrderStatus.PROCESSING && s != OrderStatus.SHIPPED) {
+        if (s != OrderStatus.CONFIRMED && s != OrderStatus.PROCESSING && s != OrderStatus.SHIPPING) {
             throw new CustomException("Chỉ tạo vận đơn khi đơn ở trạng thái Đã xác nhận, Đang xử lý hoặc Đã giao cho GHN.");
         }
         tryCreateGHNOrder(order);
@@ -493,6 +495,26 @@ public class OrderServiceImpl implements OrderService {
         order = orderRepository.save(order);
         log.info("Seller đã nhập mã GHN thủ công: order {} -> ghnOrderCode={}", order.getOrderNumber(), ghnOrderCode.trim());
         return mapToResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public void markReceivedByBuyer(UUID orderId, User user) {
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new CustomException("Chỉ có thể xác nhận khi đơn đã giao.");
+        }
+
+        if (order.isReceivedByBuyer()) {
+            throw new CustomException("Đơn hàng đã được xác nhận trước đó.");
+        }
+
+        order.setReceivedByBuyer(true);
+        order.setReceivedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
     }
 
     private String generateOrderNumber() {
@@ -571,6 +593,8 @@ public class OrderServiceImpl implements OrderService {
                 .platformCommission(order.getPlatformCommission() != null ? order.getPlatformCommission() : BigDecimal.ZERO)
                 .commissionRate(order.getCommissionRate())
                 .items(itemResponses)
+                .receivedByBuyer(order.isReceivedByBuyer())
+                .receivedAt(order.getReceivedAt())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();

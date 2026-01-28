@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,7 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByShopId(@Param("shopId") UUID shopId);
     
     @Query("SELECT o FROM Order o WHERE o.shop.id = :shopId AND o.status = :status ORDER BY o.createdAt DESC")
-    List<Order> findByShopIdAndStatus(@Param("shopId") UUID shopId, @Param("status") OrderStatus status);
+    List<Order> findByShopIdAndStatusOrderByCreatedAtDesc(@Param("shopId") UUID shopId, @Param("status") OrderStatus status);
     
     @Query("SELECT o FROM Order o WHERE o.user.id = :userId AND o.status = :status ORDER BY o.createdAt DESC")
     List<Order> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") OrderStatus status);
@@ -63,7 +64,9 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("user") User user
     );
 
-    List<Order> findByShopIdAndStatusNot(UUID shopId, OrderStatus orderStatus);
+    List<Order> findByShopIdAndStatusNotOrderByCreatedAtDesc(UUID shopId, OrderStatus orderStatus);
 
     Optional<Order> findByGhnOrderCode(String ghnOrderCode);
+
+    List<Order> findByStatusAndReceivedByBuyerFalseAndDeliveredAtBefore(OrderStatus orderStatus, LocalDateTime threshold);
 }
