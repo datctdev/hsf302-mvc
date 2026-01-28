@@ -7,22 +7,18 @@
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
-    <style>
-        .about-container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
-        .about-container h1 { margin-bottom: 1.5rem; font-size: 1.75rem; }
-        .about-container h2 { margin: 2rem 0 0.75rem 0; font-size: 1.25rem; color: var(--text-muted, #555); }
-        .about-container p { line-height: 1.6; margin-bottom: 1rem; }
-        .about-container ul { margin: 0.5rem 0 1rem 1.5rem; line-height: 1.6; }
-        .about-container .contact-info { margin-top: 1rem; padding: 1rem; background: var(--bg-light, #f5f5f5); border-radius: var(--border-radius-lg, 8px); }
-    </style>
 </head>
 <body>
     <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
     <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
 
     <main class="main-content">
-        <div class="about-container">
-            <h1>Giới thiệu</h1>
+        <div class="container">
+            <div class="about-content">
+                <div class="page-title">
+                    <h1>Giới thiệu</h1>
+                    <p class="subtitle">Về nền tảng E-commerce HSF</p>
+                </div>
 
             <h2>Về nền tảng</h2>
             <p>E-commerce HSF là nền tảng mua sắm trực tuyến kết nối người mua và cửa hàng, hỗ trợ thanh toán VNPay, vận chuyển qua đối tác và quản lý đơn hàng thuận tiện.</p>
@@ -39,8 +35,9 @@
             <h2>Liên hệ</h2>
             <p>Mọi góp ý hoặc khiếu nại, vui lòng liên hệ:</p>
             <div class="contact-info">
-                <p style="margin: 0;"><strong>E-mail:</strong> support@hsf-ecommerce.example</p>
-                <p style="margin: 0.5rem 0 0 0;"><strong>Trang quản trị:</strong> dành cho Admin cấu hình hoa hồng, quản lý đơn và người dùng.</p>
+                <p><strong>E-mail:</strong> support@hsf-ecommerce.example</p>
+                <p><strong>Trang quản trị:</strong> dành cho Admin cấu hình hoa hồng, quản lý đơn và người dùng.</p>
+            </div>
             </div>
         </div>
     </main>
