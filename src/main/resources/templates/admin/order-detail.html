@@ -28,7 +28,7 @@
                           th:text="${order.status}">Status</span>
                 </div>
 
-                <div style="margin-bottom: 2rem;">
+                <div th:if="${orderStatuses != null and !orderStatuses.isEmpty()}" style="margin-bottom: 2rem;">
                     <h3>Cập Nhật Trạng Thái</h3>
                     <form th:action="@{'/admin/orders/' + ${order.id} + '/update-status'}" method="post" th:object="${updateOrderStatusRequest}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -36,12 +36,14 @@
                             <select th:field="*{status}" required>
                                 <option th:each="status : ${orderStatuses}" 
                                         th:value="${status}" 
-                                        th:text="${status}"
-                                        th:selected="${order.status == status}">Status</option>
+                                        th:text="${status}">Status</option>
                             </select>
                             <button type="submit" class="btn btn-primary">Cập Nhật</button>
                         </div>
                     </form>
+                </div>
+                <div th:if="${orderStatuses != null and orderStatuses.isEmpty()}" style="margin-bottom: 2rem; color: var(--text-muted);">
+                    <p>Đơn đã kết thúc, không thể đổi trạng thái.</p>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">

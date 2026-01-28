@@ -84,7 +84,7 @@ public class SellerOrderMvcController {
         try {
             OrderResponse order = orderService.getOrderByIdAndShop(id, shopId);
             model.addAttribute("order", order);
-            model.addAttribute("orderStatuses", OrderStatus.values());
+            model.addAttribute("orderStatuses", orderService.getAllowedNextStatuses(order.getStatus()));
             model.addAttribute("updateOrderStatusRequest", new UpdateOrderStatusRequest());
             return "seller/order-detail";
         } catch (Exception e) {
@@ -113,6 +113,35 @@ public class SellerOrderMvcController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
+        return "redirect:/seller/orders/" + id;
+    }
+
+    @PostMapping("/{id}/create-ghn")
+    public String retryCreateGhnOrder(
+            @CurrentUser User currentUser,
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            orderService.retryCreateGhnOrder(id, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Đã tạo vận đơn GHN thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/seller/orders/" + id;
+    }
+
+    @PostMapping("/{id}/set-ghn-code")
+    public String setGhnOrderCode(
+            @CurrentUser User currentUser,
+            @PathVariable UUID id,
+            @RequestParam String ghnOrderCode,
+            RedirectAttributes redirectAttributes) {
+        try {
+            orderService.setGhnOrderCodeManually(id, ghnOrderCode, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Đã lưu mã vận đơn GHN.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/seller/orders/" + id;
     }
 }

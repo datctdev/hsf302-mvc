@@ -35,7 +35,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**")) // Enable CSRF for MVC
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/webhooks/**")) // Webhook GHN gọi từ ngoài
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Static resources
@@ -58,6 +58,8 @@ public class SecurityConfig {
                         .requestMatchers("/orders", "/orders/**").authenticated()
                         // Shipping API (require authentication)
                         .requestMatchers("/api/shipping/**").authenticated()
+                        // GHN webhook – không cần auth (GHN gọi từ ngoài)
+                        .requestMatchers("/webhooks/**").permitAll()
                         // Seller pages - allow authenticated users to become seller
                         .requestMatchers("/seller/become-seller", "/seller/become-seller/**").authenticated()
                         // Other seller pages (require SELLER role)

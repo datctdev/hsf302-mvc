@@ -171,6 +171,17 @@
                 </div>
             </div>
 
+            <div th:if="${order.ghnOrderCode != null and !order.ghnOrderCode.isEmpty()}" class="summary-section" style="margin-top: 1rem;">
+                <h3>Vận đơn GHN</h3>
+                <div class="summary-row">
+                    <span>Mã vận đơn:</span>
+                    <span><code th:text="${order.ghnOrderCode}">OrderCode</code></span>
+                </div>
+                <a th:href="@{https://donhang.ghn.vn/}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary" style="margin-top: 0.5rem;">
+                    Tra cứu tại GHN
+                </a>
+            </div>
+
             <div style="margin-top: 2rem;">
                 <h3>Sản Phẩm</h3>
                 <div th:each="item : ${order.items}" class="order-item">

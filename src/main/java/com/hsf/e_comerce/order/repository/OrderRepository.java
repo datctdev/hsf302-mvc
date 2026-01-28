@@ -64,4 +64,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     );
 
     List<Order> findByShopIdAndStatusNot(UUID shopId, OrderStatus orderStatus);
+
+    Optional<Order> findByGhnOrderCode(String ghnOrderCode);
 }
