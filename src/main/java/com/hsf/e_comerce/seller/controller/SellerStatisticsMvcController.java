@@ -2,11 +2,12 @@ package com.hsf.e_comerce.seller.controller;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
+import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
-import com.hsf.e_comerce.shop.entity.Shop;
-import com.hsf.e_comerce.shop.repository.ShopRepository;
+import com.hsf.e_comerce.shop.dto.response.ShopResponse;
+import com.hsf.e_comerce.shop.service.ShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -37,7 +38,7 @@ public class SellerStatisticsMvcController {
     );
 
     private final OrderService orderService;
-    private final ShopRepository shopRepository;
+    private final ShopService shopService;
 
     @GetMapping("/statistics")
     public String statistics(@CurrentUser User currentUser, Model model) {
@@ -45,9 +46,10 @@ public class SellerStatisticsMvcController {
             return "redirect:/login";
         }
 
-        Shop shop = shopRepository.findByUserId(currentUser.getId())
-                .orElse(null);
-        if (shop == null) {
+        ShopResponse shop;
+        try {
+            shop = shopService.getShopByUserId(currentUser.getId());
+        } catch (CustomException e) {
             return "redirect:/seller/become-seller";
         }
         model.addAttribute("shopName", shop.getName());

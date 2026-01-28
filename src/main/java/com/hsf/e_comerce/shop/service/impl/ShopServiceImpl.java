@@ -11,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -81,6 +83,18 @@ public class ShopServiceImpl implements ShopService {
     @Override
     public Optional<Shop> getShop(UUID shopId) {
         return this.shopRepository.findById(shopId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long count() {
+        return shopRepository.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopResponse> findAllShops() {
+        return shopRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     private ShopResponse mapToResponse(Shop shop) {

@@ -46,6 +46,13 @@ public class ReviewServiceImpl implements ReviewService {
     private final FileService fileService;
     private final SellerReviewReplyRepository sellerReviewReplyRepository;
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UUID> getReviewIdByUserAndProductAndSubOrder(UUID userId, UUID productId, UUID subOrderId) {
+        return reviewRepository.findByUserIdAndProductIdAndSubOrderId(userId, productId, subOrderId)
+                .map(Review::getId);
+    }
+
     // --- 1. TẠO ĐÁNH GIÁ ---
     @Override
     @Transactional

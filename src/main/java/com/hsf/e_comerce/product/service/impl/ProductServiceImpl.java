@@ -1,10 +1,12 @@
 package com.hsf.e_comerce.product.service.impl;
 
 import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.product.controller.ProductMvcController;
 import com.hsf.e_comerce.product.dto.request.CreateProductRequest;
 import com.hsf.e_comerce.product.dto.request.ProductImageRequest;
 import com.hsf.e_comerce.product.dto.request.ProductVariantRequest;
 import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
+import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductCategory;
@@ -463,6 +465,41 @@ public class ProductServiceImpl implements ProductService {
                 variantRepository,
                 imageRepository
         ));
+    }
+
+    @Override
+    public List<CategoryResponse> findAllCategory() {
+        return categoryRepository.findAll().stream()
+                .map(category -> CategoryResponse.builder()
+                        .id(category.getId())
+                        .name(category.getName())
+                        .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Product> findAllForAdmin(UUID shopId, ProductStatus status, Pageable pageable) {
+        return productRepository.findAllForAdmin(shopId, status, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void setProductStatus(UUID productId, ProductStatus status) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new com.hsf.e_comerce.common.exception.CustomException("Không tìm thấy sản phẩm."));
+        product.setStatus(status);
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public void setProductDeleted(UUID productId, boolean deleted) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new com.hsf.e_comerce.common.exception.CustomException("Không tìm thấy sản phẩm."));
+        product.setDeleted(deleted);
+        productRepository.save(product);
     }
 
     private Sort createSort(String sortBy, String sortDir) {

@@ -4,6 +4,7 @@ import com.hsf.e_comerce.shop.dto.request.UpdateShopRequest;
 import com.hsf.e_comerce.shop.dto.response.ShopResponse;
 import com.hsf.e_comerce.shop.entity.Shop;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,8 @@ public interface ShopService {
     boolean hasShop(UUID userId);
 
     Optional<Shop> getShop(UUID shopId);
+
+    long count();
+
+    List<ShopResponse> findAllShops();
 }

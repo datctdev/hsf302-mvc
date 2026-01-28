@@ -2,14 +2,8 @@ package com.hsf.e_comerce.payment.controller;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
-import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
-import com.hsf.e_comerce.order.entity.Order;
-import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.service.OrderService;
-import com.hsf.e_comerce.payment.entity.Payment;
-import com.hsf.e_comerce.payment.enums.PaymentMethod;
-import com.hsf.e_comerce.payment.repository.PaymentRepository;
 import com.hsf.e_comerce.payment.service.PaymentService;
 import com.hsf.e_comerce.payment.service.VNPayService;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +25,6 @@ public class PaymentMvcController {
     private final PaymentService paymentService;
     private final OrderService orderService;
     private final VNPayService vnPayService;
-    private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
 
     /**
      * Trang chọn phương thức thanh toán
@@ -75,14 +67,7 @@ public class PaymentMvcController {
     public String redirectVNPay(
             @RequestParam UUID orderId,
             @CurrentUser User user) {
-
-        Order order = orderRepository
-                .findByIdAndUser(orderId, user)
-                .orElseThrow(() -> new CustomException("Order không hợp lệ"));
-
-        Payment payment = paymentRepository.findByOrder(order)
-                .orElseGet(() -> paymentService.createPayment(order, PaymentMethod.VNPAY));
-
+        var payment = paymentService.getOrCreatePaymentForVNPay(orderId, user);
         String url = vnPayService.buildPaymentUrl(payment);
         return "redirect:" + url;
     }
@@ -103,12 +88,9 @@ public class PaymentMvcController {
         }
 
         String txnRef = params.get("vnp_TxnRef");
-        Payment payment = paymentRepository.findByTransactionId(txnRef).orElse(null);
-
-        if (payment != null) {
-            return "redirect:/orders/" + payment.getOrder().getId();
-        }
-        return "redirect:/orders";
+        return paymentService.getOrderIdByTransactionId(txnRef)
+                .map(orderId -> "redirect:/orders/" + orderId)
+                .orElse("redirect:/orders");
     }
 
     @GetMapping("/{orderId}/select-method")

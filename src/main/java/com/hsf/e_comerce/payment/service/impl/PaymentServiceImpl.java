@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -116,6 +117,20 @@ public class PaymentServiceImpl implements PaymentService {
 
         paymentRepository.save(payment);
         orderRepository.save(order);
+    }
+
+    @Override
+    public Payment getOrCreatePaymentForVNPay(UUID orderId, User user) {
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Order không hợp lệ"));
+        return paymentRepository.findByOrder(order)
+                .orElseGet(() -> createPayment(order, PaymentMethod.VNPAY));
+    }
+
+    @Override
+    public Optional<UUID> getOrderIdByTransactionId(String transactionId) {
+        return paymentRepository.findByTransactionId(transactionId)
+                .map(p -> p.getOrder().getId());
     }
 
     @Transactional

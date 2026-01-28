@@ -39,6 +39,12 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Cart> getCartWithItemsAndProducts(User user) {
+        return cartRepository.findByUserIdWithItemsAndProducts(user.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CartResponse getCartByUser(User user) {
         Cart cart = getOrCreateCart(user);
         return mapToResponse(cart);

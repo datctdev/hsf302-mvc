@@ -1,9 +1,9 @@
 package com.hsf.e_comerce.product.controller;
 
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.dto.response.ProductVariantResponse;
-import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.service.ReviewService;
@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 public class ProductMvcController {
 
     private final ProductService productService;
-    private final ProductCategoryRepository categoryRepository;
     private final ReviewService reviewService;
 
     @GetMapping
@@ -61,13 +60,7 @@ public class ProductMvcController {
         model.addAttribute("sortDir", sortDir);
         
         // Load categories
-        List<CategoryResponse> categories = categoryRepository.findAll().stream()
-                .map(category -> CategoryResponse.builder()
-                        .id(category.getId())
-                        .name(category.getName())
-                        .parentId(category.getParent() != null ? category.getParent().getId() : null)
-                        .build())
-                .collect(Collectors.toList());
+        List<CategoryResponse> categories = productService.findAllCategory();
         model.addAttribute("categories", categories);
         
         return "products";
@@ -117,15 +110,5 @@ public class ProductMvcController {
             model.addAttribute("error", "Không tìm thấy sản phẩm");
             return "redirect:/products";
         }
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    public static class CategoryResponse {
-        private UUID id;
-        private String name;
-        private UUID parentId;
     }
 }

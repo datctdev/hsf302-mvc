@@ -7,8 +7,6 @@ import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
-import com.hsf.e_comerce.review.entity.Review;
-import com.hsf.e_comerce.review.repository.ReviewRepository;
 import com.hsf.e_comerce.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +25,6 @@ public class ReviewMvcController {
 
     private final ReviewService reviewService;
     private final ProductService productService;
-    private final ReviewRepository reviewRepository;
 
     // 1. Hiển thị form viết đánh giá (Nhận subOrderId từ URL)
     @GetMapping("/products/{productId}/review")
@@ -105,13 +102,9 @@ public class ReviewMvcController {
             @RequestParam UUID subOrderId,
             @CurrentUser User user) {
 
-        // Tìm review dựa trên thông tin đơn hàng
-        Review review = reviewRepository.findByUserIdAndProductIdAndSubOrderId(
-                user.getId(), productId, subOrderId
-        ).orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
-
-        // Chuyển hướng sang trang Edit
-        return "redirect:/reviews/" + review.getId() + "/edit";
+        UUID reviewId = reviewService.getReviewIdByUserAndProductAndSubOrder(user.getId(), productId, subOrderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá"));
+        return "redirect:/reviews/" + reviewId + "/edit";
     }
 
     // 4. Xử lý cập nhật đánh giá

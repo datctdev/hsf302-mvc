@@ -3,7 +3,7 @@ package com.hsf.e_comerce.shop.controller;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.shop.entity.Shop;
-import com.hsf.e_comerce.shop.repository.ShopRepository;
+import com.hsf.e_comerce.shop.service.ShopService;
 import com.hsf.e_comerce.shop.valueobject.ShopStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PublicShopMvcController {
 
-    private final ShopRepository shopRepository;
+    private final ShopService shopService;
     private final ProductService productService;
 
     @GetMapping("/{id}")
@@ -35,7 +35,7 @@ public class PublicShopMvcController {
             @RequestParam(defaultValue = "24") int size,
             Model model) {
 
-        Shop shop = shopRepository.findById(id).orElse(null);
+        Shop shop = shopService.getShop(id).orElse(null);
         if (shop == null || shop.getStatus() != ShopStatus.ACTIVE) {
             return "redirect:/products";
         }

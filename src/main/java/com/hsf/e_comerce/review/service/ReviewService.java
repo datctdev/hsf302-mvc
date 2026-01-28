@@ -6,9 +6,12 @@ import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import org.springframework.data.domain.Page;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewService {
+
+    Optional<UUID> getReviewIdByUserAndProductAndSubOrder(UUID userId, UUID productId, UUID subOrderId);
 
     // 1. Tạo đánh giá mới (Cần User, ProductId và DTO)
     ReviewResponse createReview(User user, UUID productId, CreateReviewRequest request);

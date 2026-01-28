@@ -1,9 +1,14 @@
 package com.hsf.e_comerce.product.service;
 
+import com.hsf.e_comerce.product.controller.ProductMvcController;
 import com.hsf.e_comerce.product.dto.request.CreateProductRequest;
 import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
+import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
+import com.hsf.e_comerce.product.entity.Product;
+import com.hsf.e_comerce.product.valueobject.ProductStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,4 +46,13 @@ public interface ProductService {
     Page<ProductResponse> searchProducts(String keyword, int page, int size);
     
     Page<ProductResponse> getPublishedProductsByShop(UUID shopId, int page, int size);
+
+    List<CategoryResponse> findAllCategory();
+
+    /** Admin: list all products with optional shop/status filter. */
+    Page<Product> findAllForAdmin(UUID shopId, ProductStatus status, Pageable pageable);
+
+    void setProductStatus(UUID productId, ProductStatus status);
+
+    void setProductDeleted(UUID productId, boolean deleted);
 }

@@ -3,14 +3,13 @@ package com.hsf.e_comerce.order.controller;
 import com.hsf.e_comerce.cart.dto.response.CartItemResponse;
 import com.hsf.e_comerce.cart.entity.Cart;
 import com.hsf.e_comerce.cart.entity.CartItem;
-import com.hsf.e_comerce.cart.repository.CartRepository;
+import com.hsf.e_comerce.cart.service.CartService;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.order.dto.request.CreateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
-import com.hsf.e_comerce.order.repository.OrderItemRepository;
 import com.hsf.e_comerce.order.service.OrderItemService;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.auth.entity.User;
@@ -36,15 +35,13 @@ import java.util.stream.Collectors;
 public class OrderMvcController {
 
     private final OrderService orderService;
-    private final CartRepository cartRepository;
+    private final CartService cartService;
     private final OrderItemService orderItemService;
     private final ShopService shopService;
 
     @GetMapping("/checkout")
     public String checkout(@CurrentUser User currentUser, Model model) {
-        // Load cart with items, products and shops to group by shop
-        Cart cart = cartRepository.findByUserIdWithItemsAndProducts(currentUser.getId())
-                .orElse(null);
+        Cart cart = cartService.getCartWithItemsAndProducts(currentUser).orElse(null);
         
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
             model.addAttribute("error", "Giỏ hàng trống.");

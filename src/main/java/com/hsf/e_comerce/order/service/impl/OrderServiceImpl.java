@@ -50,7 +50,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
     private final ShopRepository shopRepository;
     private final ProductImageRepository productImageRepository;
     private final GHNService ghnService;
@@ -429,6 +428,12 @@ public class OrderServiceImpl implements OrderService {
         order.setTotal(subtotal.add(shippingFee));
 
         orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long count() {
+        return orderRepository.count();
     }
 
     private String generateOrderNumber() {

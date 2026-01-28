@@ -40,4 +40,6 @@ public interface OrderService {
     OrderResponse getOrderForEditCheckout(UUID orderId, User currentUser);
 
     void updateCheckoutInfo(UUID orderId, @Valid UpdateOrderRequest request, User user);
+
+    long count();
 }

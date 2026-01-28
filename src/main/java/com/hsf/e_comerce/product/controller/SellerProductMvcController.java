@@ -6,10 +6,9 @@ import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.product.dto.request.CreateProductRequest;
 import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
-import com.hsf.e_comerce.product.entity.ProductCategory;
-import com.hsf.e_comerce.product.repository.ProductCategoryRepository;
 import com.hsf.e_comerce.product.service.ProductService;
-import com.hsf.e_comerce.shop.repository.ShopRepository;
+import com.hsf.e_comerce.shop.entity.Shop;
+import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,8 +28,7 @@ import java.util.UUID;
 public class SellerProductMvcController {
 
     private final ProductService productService;
-    private final ShopRepository shopRepository;
-    private final ProductCategoryRepository categoryRepository;
+    private final ShopService shopService;
 
     @GetMapping
     public String getAllProducts(
@@ -60,23 +58,18 @@ public class SellerProductMvcController {
         
         // Kiểm tra shop có địa chỉ đầy đủ chưa
         UUID shopId = getShopIdByUser(user);
-        var shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new CustomException("Shop không tồn tại"));
-        
+        Shop shop = shopService.getShop(shopId).orElseThrow(() -> new CustomException("Shop không tồn tại"));
         if (shop.getDistrictId() == null || shop.getWardCode() == null || shop.getWardCode().isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", 
+            redirectAttributes.addFlashAttribute("error",
                 "Vui lòng cập nhật địa chỉ shop đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã) trước khi thêm sản phẩm. " +
                 "Địa chỉ này cần thiết để tính phí vận chuyển GHN.");
             return "redirect:/seller/shop";
         }
-        
+
         if (!model.containsAttribute("createProductRequest")) {
             model.addAttribute("createProductRequest", new CreateProductRequest());
         }
-        
-        // Load categories for selection
-        List<ProductCategory> allCategories = categoryRepository.findAll();
-        model.addAttribute("categories", allCategories);
+        model.addAttribute("categories", productService.findAllCategory());
         
         return "seller/products-add";
     }
@@ -97,11 +90,7 @@ public class SellerProductMvcController {
 
         try {
             UUID shopId = getShopIdByUser(user);
-            
-            // Kiểm tra shop có địa chỉ đầy đủ chưa
-            var shop = shopRepository.findById(shopId)
-                    .orElseThrow(() -> new CustomException("Shop không tồn tại"));
-            
+            Shop shop = shopService.getShop(shopId).orElseThrow(() -> new CustomException("Shop không tồn tại"));
             if (shop.getDistrictId() == null || shop.getWardCode() == null || shop.getWardCode().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", 
                     "Vui lòng cập nhật địa chỉ shop đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã) trước khi thêm sản phẩm. " +
@@ -144,11 +133,7 @@ public class SellerProductMvcController {
                 updateRequest.setCategoryId(product.getCategoryId());
                 model.addAttribute("updateProductRequest", updateRequest);
             }
-            
-        // Load categories for selection
-        List<ProductCategory> allCategories = categoryRepository.findAll();
-        model.addAttribute("categories", allCategories);
-            
+            model.addAttribute("categories", productService.findAllCategory());
             model.addAttribute("product", product);
             return "seller/products-edit";
         } catch (Exception e) {
@@ -202,8 +187,6 @@ public class SellerProductMvcController {
     }
 
     private UUID getShopIdByUser(User user) {
-        return shopRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new CustomException("Bạn chưa có shop. Vui lòng đăng ký làm seller trước."))
-                .getId();
+        return shopService.getShopByUserId(user.getId()).getId();
     }
 }

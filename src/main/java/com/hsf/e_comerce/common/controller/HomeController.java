@@ -2,12 +2,11 @@ package com.hsf.e_comerce.common.controller;
 
 import com.hsf.e_comerce.auth.service.UserService;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
-import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
-import com.hsf.e_comerce.shop.repository.ShopRepository;
+import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -40,8 +39,7 @@ public class HomeController {
 
     private final UserService userService;
     private final SellerRequestService sellerRequestService;
-    private final ShopRepository shopRepository;
-    private final OrderRepository orderRepository;
+    private final ShopService shopService;
     private final OrderService orderService;
 
     @GetMapping("/")
@@ -80,8 +78,8 @@ public class HomeController {
         try {
             long totalUsers = userService.getAllUsers().size();
             long pendingRequests = sellerRequestService.getRequestsByStatus("PENDING").size();
-            long totalShops = shopRepository.count();
-            long totalOrders = orderRepository.count();
+            long totalShops = shopService.count();
+            long totalOrders = orderService.count();
 
             model.addAttribute("totalUsers", totalUsers);
             model.addAttribute("pendingRequests", pendingRequests);
