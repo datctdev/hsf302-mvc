@@ -24,6 +24,18 @@
 <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
 
 <div class="main-content">
+    <div id="review-warning" th:if="${reviewWarning != null and reviewWarning.warning}"
+         style="
+        background:#fff8e1;
+        border:1px solid #ffb300;
+        padding:12px;
+        border-radius:6px;
+        margin-bottom:16px;
+        font-size:14px;
+        color:#e65100;">
+        ⚠️ <strong>Cảnh báo:</strong>
+        <span th:text="${reviewWarning.message}"></span>
+    </div>
     <div class="review-form-container">
         <h2 style="text-align: center; margin-bottom: 1.5rem;">Đánh Giá Sản Phẩm</h2>
 
@@ -35,7 +47,12 @@
             </div>
         </div>
 
-        <form th:action="@{'/products/' + ${product.id} + '/review'}" method="post" enctype="multipart/form-data" th:object="${createReviewRequest}">
+        <form
+                id="review-form"
+                th:action="@{'/products/' + ${product.id} + '/review'}"
+                method="post"
+                enctype="multipart/form-data"
+                th:object="${createReviewRequest}">
 
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
@@ -73,5 +90,23 @@
 </div>
 
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("review-form");
+        const warning = document.getElementById("review-warning");
+
+        if (!form || !warning) return;
+
+        form.addEventListener("submit", function (e) {
+            const ok = confirm(
+                "⚠️ Tài khoản của bạn đã nhiều lần vi phạm nội dung đánh giá.\n" +
+                "Nếu tiếp tục vi phạm, bạn có thể bị cấm đánh giá.\n\n" +
+                "Bạn vẫn muốn gửi đánh giá?"
+            );
+            if (!ok) e.preventDefault();
+        });
+    });
+</script>
+
 </body>
 </html>

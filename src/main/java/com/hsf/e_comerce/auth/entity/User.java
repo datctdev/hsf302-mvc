@@ -50,6 +50,12 @@ public class User {
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 
+    @Column(name = "review_violation_count", nullable = false)
+    private int reviewViolationCount = 0;
+
+    @Column(name = "review_banned_until")
+    private LocalDateTime reviewBannedUntil;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

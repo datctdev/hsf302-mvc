@@ -87,13 +87,22 @@
                             <div class="price-text" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' ₫'">100.000 ₫</div>
 
                             <th:block th:if="${order.status.name() == 'DELIVERED' and order.receivedByBuyer and item.canShowReview}">
-                                <a th:if="${!item.isReviewed}"
+                                <!-- ĐƯỢC ĐÁNH GIÁ -->
+                                <a th:if="${!item.isReviewed and reviewPermission.allowed}"
                                    th:href="@{'/products/' + ${item.productId} + '/review?subOrderId=' + ${order.id}}"
-                                   class="btn-rate-shopee">
+                                   class="btn-rate-shopee"
+                                   th:title="${reviewPermission.warning ? reviewPermission.message : ''}">
                                     Đánh Giá
                                 </a>
 
-                                <a th:if="${item.isReviewed}"
+                                <!-- BỊ CẤM -->
+                                <span th:if="${!item.isReviewed and !reviewPermission.allowed}"
+                                      style="font-size:13px;color:#f44336;"
+                                      th:title="${reviewPermission.message}">
+                                    🚫 Bị cấm đánh giá
+                                </span>
+
+                                <a th:if="${item.isReviewed }"
                                    th:href="@{'/reviews/my-review?productId=' + ${item.productId} + '&subOrderId=' + ${order.id}}"
                                    class="btn btn-sm btn-outline-secondary"
                                    style="border: 1px solid #ddd; color: #555; background: #fff;">
@@ -166,5 +175,22 @@
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
     <script th:src="@{/js/common.js}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("review-form");
+        const warning = document.getElementById("review-warning");
+
+        if (!form || !warning) return;
+
+        form.addEventListener("submit", function (e) {
+            const ok = confirm(
+                "⚠️ Tài khoản của bạn đã nhiều lần vi phạm nội dung đánh giá.\n" +
+                "Nếu tiếp tục vi phạm, bạn có thể bị cấm đánh giá.\n\n" +
+                "Bạn vẫn muốn gửi đánh giá?"
+            );
+            if (!ok) e.preventDefault();
+        });
+    });
+</script>
 </body>
 </html>

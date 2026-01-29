@@ -13,6 +13,7 @@ import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.service.OrderItemService;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.review.service.ReviewService;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
@@ -38,6 +39,7 @@ public class OrderMvcController {
     private final CartService cartService;
     private final OrderItemService orderItemService;
     private final ShopService shopService;
+    private final ReviewService reviewService;
 
     @GetMapping("/checkout")
     public String checkout(@CurrentUser User currentUser, Model model) {
@@ -97,6 +99,10 @@ public class OrderMvcController {
     public String orderHistory(@CurrentUser User currentUser, Model model) {
         List<OrderResponse> orders = orderService.getOrdersByUser(currentUser);
         model.addAttribute("orders", orders);
+        model.addAttribute(
+                "reviewPermission",
+                reviewService.checkReviewPermission(currentUser)
+        );
         return "orders/history";
     }
 

@@ -33,17 +33,17 @@
 
             <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
                 <div class="rating-input">
-                    <input type="radio" id="star5" name="rating" value="5" th:checked="${review.rating == 5}" /><label for="star5"><i class="fas fa-star"></i></label>
-                    <input type="radio" id="star4" name="rating" value="4" th:checked="${review.rating == 4}" /><label for="star4"><i class="fas fa-star"></i></label>
-                    <input type="radio" id="star3" name="rating" value="3" th:checked="${review.rating == 3}" /><label for="star3"><i class="fas fa-star"></i></label>
-                    <input type="radio" id="star2" name="rating" value="2" th:checked="${review.rating == 2}" /><label for="star2"><i class="fas fa-star"></i></label>
-                    <input type="radio" id="star1" name="rating" value="1" th:checked="${review.rating == 1}" /><label for="star1"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star5" name="rating" value="5" th:checked="${review.rating == 5}" th:disabled="${!reviewPermission.allowed}"/><label for="star5"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star4" name="rating" value="4" th:checked="${review.rating == 4}" th:disabled="${!reviewPermission.allowed}"/><label for="star4"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star3" name="rating" value="3" th:checked="${review.rating == 3}" th:disabled="${!reviewPermission.allowed}"/><label for="star3"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star2" name="rating" value="2" th:checked="${review.rating == 2}" th:disabled="${!reviewPermission.allowed}"/><label for="star2"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star1" name="rating" value="1" th:checked="${review.rating == 1}" th:disabled="${!reviewPermission.allowed}"/><label for="star1"><i class="fas fa-star"></i></label>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>Nội dung đánh giá:</label>
-                <textarea name="comment" rows="4" class="form-control" th:text="${review.comment}"></textarea>
+                <textarea name="comment" rows="4" class="form-control" th:text="${review.comment}" th:readonly="${!reviewPermission.allowed}"></textarea>
             </div>
 
             <div class="form-group" th:if="${not #lists.isEmpty(review.imageUrls)}">
@@ -55,12 +55,16 @@
 
             <div class="form-group">
                 <label>Thêm ảnh mới (Tùy chọn):</label>
-                <input type="file" name="newImages" multiple accept="image/*" class="form-control">
+                <input type="file" name="newImages" multiple accept="image/*" class="form-control" th:disabled="${!reviewPermission.allowed}">
             </div>
 
             <div style="margin-top: 2rem; display: flex; gap: 1rem;">
                 <a href="javascript:history.back()" class="btn btn-secondary" style="flex: 1; text-align: center;">Hủy</a>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">Cập Nhật</button>
+                <button type="submit" th:if="${reviewPermission.allowed}" class="btn btn-primary" style="flex: 1;">Cập Nhật</button>
+                <span th:if="${!reviewPermission.allowed}"
+                      style="color:#f44336;font-size:14px;">
+                    🚫 Bạn đang bị cấm đánh giá nên không thể chỉnh sửa
+                </span>
             </div>
         </form>
     </div>
