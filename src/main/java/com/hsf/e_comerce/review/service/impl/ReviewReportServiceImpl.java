@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.dto.request.ReportReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReportReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReportedReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewReport;
@@ -133,37 +134,33 @@ public class ReviewReportServiceImpl implements ReviewReportService {
     @Override
     @Transactional
     public void hideReview(UUID reviewId) {
-
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
 
-        // 1. Đánh dấu report đã xử lý
+        // 1. Mark report reviewed
         reportRepository.updateStatusByReviewId(
                 reviewId,
                 ReviewReportStatus.REVIEWED
         );
 
-        review.setFlagged(true);
-
-        // 3. Tính số lần bị flag trong 6 tháng
-        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
-
-        UUID reviewOwnerId = review.getUser().getId();
-
-        long flagsIn6Months =
-                reportRepository.countReviewedReportsByUserInPeriod(
-                        reviewOwnerId,
-                        sixMonthsAgo
-                );
-
-        // 4. Áp rule
-        if (flagsIn6Months >= 5) {
-            review.setStatus(ReviewStatus.DISABLED);
-        } else {
-            review.setStatus(ReviewStatus.HIDDEN);
-        }
+        review.setStatus(ReviewStatus.HIDDEN);
         reviewRepository.save(review);
+
+        // 2. Update user violation
+        User reviewOwner = review.getUser();
+        reviewOwner.setReviewViolationCount(
+                reviewOwner.getReviewViolationCount() + 1
+        );
+
+        // 3. Nếu > 5 → ban 3 tháng
+        if (reviewOwner.getReviewViolationCount() > 5) {
+            reviewOwner.setReviewBannedUntil(
+                    LocalDateTime.now().plusMonths(3)
+            );
+            reviewOwner.setReviewViolationCount(0); // reset
+        }
     }
+
 
     @Override
     @Transactional
@@ -180,5 +177,6 @@ public class ReviewReportServiceImpl implements ReviewReportService {
 
         // Không động gì tới review
     }
+
 }
 

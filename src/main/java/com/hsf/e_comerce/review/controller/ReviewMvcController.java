@@ -6,6 +6,7 @@ import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
+import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.service.ReviewService;
 import jakarta.validation.Valid;
@@ -32,7 +33,21 @@ public class ReviewMvcController {
     public String showCreateForm(
             @PathVariable UUID productId,
             @RequestParam(required = false) UUID subOrderId, // Nhận ID đơn hàng từ nút bấm
-            Model model) {
+            @CurrentUser User user,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        ReviewPermissionResponse permission =
+                reviewService.checkReviewPermission(user);
+
+        // ❌ Bị cấm → quay về orders
+        if (!permission.isAllowed()) {
+            redirectAttributes.addFlashAttribute("error", permission.getMessage());
+            return "redirect:/orders";
+        }
+
+        // ⚠️ Có cảnh báo → gửi sang view
+        model.addAttribute("reviewWarning", permission);
 
         // Lấy thông tin sản phẩm để hiển thị tên, ảnh
         ProductResponse product = productService.getPublishedProductById(productId);
@@ -79,6 +94,10 @@ public class ReviewMvcController {
     @PreAuthorize("hasRole('BUYER')")
     public String showEditForm(@PathVariable UUID reviewId, @CurrentUser User user, Model model) {
         try {
+            model.addAttribute(
+                    "reviewPermission",
+                    reviewService.checkReviewPermission(user)
+            );
             ReviewResponse review = reviewService.getReviewById(reviewId);
 
             // Map dữ liệu cũ vào form edit
@@ -137,4 +156,14 @@ public class ReviewMvcController {
         }
         return "redirect:/orders"; // Xóa xong quay về lịch sử đơn hàng
     }
+
+    @GetMapping("/reviews/permission")
+    @ResponseBody
+    @PreAuthorize("hasRole('BUYER')")
+    public ReviewPermissionResponse checkReviewPermission(
+            @CurrentUser User user
+    ) {
+        return reviewService.checkReviewPermission(user);
+    }
+
 }

@@ -3,6 +3,7 @@ package com.hsf.e_comerce.review.service;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
+import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import org.springframework.data.domain.Page;
 
@@ -33,4 +34,6 @@ public interface ReviewService {
 
     // 7. Đếm tổng số review (VD: 100 đánh giá)
     long getTotalReviews(UUID productId);
+
+    ReviewPermissionResponse checkReviewPermission(User user);
 }

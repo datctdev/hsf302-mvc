@@ -11,6 +11,7 @@ import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.repository.ProductRepository;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
+import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.entity.Review;
@@ -89,6 +90,13 @@ public class ReviewServiceImpl implements ReviewService {
             throw new CustomException("Sản phẩm này không có trong đơn hàng.");
         }
 
+        ReviewPermissionResponse permission = checkReviewPermission(user);
+
+        if (!permission.isAllowed()) {
+            throw new CustomException(permission.getMessage());
+        }
+
+
         // --- LOGIC: XỬ LÝ REVIEW CŨ HOẶC ĐÃ XÓA ---
         Optional<Review> existingReviewOpt = reviewRepository.findByUserIdAndProductIdAndSubOrderId(
                 user.getId(), productId, request.getSubOrderId());
@@ -128,6 +136,37 @@ public class ReviewServiceImpl implements ReviewService {
         processImages(review, request.getImages());
 
         return ReviewResponse.fromEntity(review);
+    }
+
+    @Override
+    public ReviewPermissionResponse checkReviewPermission(User user) {
+
+        // 1. Đang bị ban?
+        if (user.getReviewBannedUntil() != null) {
+            if (user.getReviewBannedUntil().isAfter(LocalDateTime.now())) {
+                return new ReviewPermissionResponse(
+                        false,
+                        false,
+                        "Bạn bị cấm đánh giá đến " +
+                                user.getReviewBannedUntil()
+                );
+            } else {
+                // Hết hạn ban → reset
+                user.setReviewBannedUntil(null);
+                user.setReviewViolationCount(0);
+            }
+        }
+
+        // 2. Cảnh báo từ lần thứ 3
+        if (user.getReviewViolationCount() >= 3) {
+            return new ReviewPermissionResponse(
+                    true,
+                    true,
+                    "Tài khoản của bạn đã nhiều lần vi phạm nội dung đánh giá. Vui lòng chú ý ngôn từ."
+            );
+        }
+
+        return new ReviewPermissionResponse(true, false, null);
     }
 
     // --- 2. LẤY DANH SÁCH REVIEW ---
@@ -197,6 +236,13 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (!review.getUser().getId().equals(user.getId())) {
             throw new CustomException("Bạn không có quyền sửa đánh giá này");
+        }
+
+        ReviewPermissionResponse permission = checkReviewPermission(user);
+        if (!permission.isAllowed()) {
+            throw new CustomException(
+                    "Bạn đang bị cấm đánh giá nên không thể chỉnh sửa đánh giá cũ."
+            );
         }
 
         if (review.getCreatedAt().plusDays(7).isBefore(LocalDateTime.now())) {
