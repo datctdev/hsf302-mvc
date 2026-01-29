@@ -548,11 +548,10 @@ public class OrderServiceImpl implements OrderService {
                         }
                     }
 
-                    boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderIdAndStatus(
+                    boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderId(
                             order.getUser().getId(),
                             item.getProduct().getId(),
-                            order.getId(),
-                            com.hsf.e_comerce.review.valueobject.ReviewStatus.ACTIVE
+                            order.getId()
                     );
 
                     return OrderItemResponse.builder()

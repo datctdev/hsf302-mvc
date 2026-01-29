@@ -123,7 +123,7 @@
                     <div class="order-actions-left">
                         <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary">Xem Chi Tiết</a>
 
-                        <a th:if="${order.status.name() == 'PENDING_PAYMENT'}"
+                        <a th:if="${order.status.name() == 'PENDING_PAYMENT' and cartItemCount > 0}"
                            th:href="@{'/payments/' + ${order.id}}"
                            class="btn btn-warning">
                             Tiếp tục thanh toán

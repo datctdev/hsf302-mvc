@@ -88,18 +88,26 @@
         </div>
 
         <div class="actions">
+
             <button class="btn outline"
                     onclick="toggleReports(this)">
                 Xem chi tiết
             </button>
 
-            <button class="btn danger">
-                Ẩn review
-            </button>
+            <form th:action="@{'/admin/reviews/' + ${r.reviewId} + '/hide'}"
+                  method="post">
+                <button class="btn danger"
+                        onclick="return confirm('Ẩn review này?')">
+                    Ẩn review
+                </button>
+            </form>
 
-            <button class="btn secondary">
-                Bỏ qua
-            </button>
+            <form th:action="@{'/admin/reviews/' + ${r.reviewId} + '/ignore'}"
+                  method="post">
+                <button class="btn secondary">
+                    Bỏ qua
+                </button>
+            </form>
         </div>
 
         <div class="report-detail" style="display:none">

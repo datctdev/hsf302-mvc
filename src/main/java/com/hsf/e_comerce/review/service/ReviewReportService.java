@@ -29,4 +29,7 @@ public interface ReviewReportService {
             UpdateReportReviewRequest request
     );
 
+    void hideReview(UUID reviewId);
+    void ignoreReview(UUID reviewId);
+
 }

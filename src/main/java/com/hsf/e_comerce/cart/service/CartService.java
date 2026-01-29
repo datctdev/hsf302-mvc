@@ -24,4 +24,5 @@ public interface CartService {
     CartResponse clearCart(User user);
     
     Integer getCartItemCount(User user);
+
 }

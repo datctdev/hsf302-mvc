@@ -1,14 +1,13 @@
 package com.hsf.e_comerce.review.controller;
 
-import com.hsf.e_comerce.review.dto.response.ReportedReviewResponse;
 import com.hsf.e_comerce.review.service.ReviewReportService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -28,4 +27,17 @@ public class AdminReviewReportController {
 
         return "admin/review-reports";
     }
+
+    @PostMapping("/{reviewId}/hide")
+    public String hideReview(@PathVariable UUID reviewId) {
+        reportService.hideReview(reviewId);
+        return "redirect:/admin/reviews/reports";
+    }
+
+    @PostMapping("/{reviewId}/ignore")
+    public String ignoreReview(@PathVariable UUID reviewId) {
+        reportService.ignoreReview(reviewId);
+        return "redirect:/admin/reviews/reports";
+    }
+
 }

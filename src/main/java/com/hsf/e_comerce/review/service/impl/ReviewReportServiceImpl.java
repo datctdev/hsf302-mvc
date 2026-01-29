@@ -12,6 +12,7 @@ import com.hsf.e_comerce.review.repository.ReviewRepository;
 import com.hsf.e_comerce.review.service.ReviewReportService;
 import com.hsf.e_comerce.review.valueobject.ReviewReportReason;
 import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
+import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +49,10 @@ public class ReviewReportServiceImpl implements ReviewReportService {
 
         if (reportRepository.existsByReviewIdAndReporterId(reviewId, reporter.getId())) {
             throw new RuntimeException("Bạn đã báo cáo đánh giá này");
+        }
+
+        if (review.getStatus() == ReviewStatus.DISABLED) {
+            throw new RuntimeException("Đánh giá này đã bị vô hiệu hóa và không thể báo cáo");
         }
 
         ReviewReport report = new ReviewReport();
@@ -125,5 +130,55 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         reportRepository.save(report);
     }
 
+    @Override
+    @Transactional
+    public void hideReview(UUID reviewId) {
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
+
+        // 1. Đánh dấu report đã xử lý
+        reportRepository.updateStatusByReviewId(
+                reviewId,
+                ReviewReportStatus.REVIEWED
+        );
+
+        review.setFlagged(true);
+
+        // 3. Tính số lần bị flag trong 6 tháng
+        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+
+        UUID reviewOwnerId = review.getUser().getId();
+
+        long flagsIn6Months =
+                reportRepository.countReviewedReportsByUserInPeriod(
+                        reviewOwnerId,
+                        sixMonthsAgo
+                );
+
+        // 4. Áp rule
+        if (flagsIn6Months >= 5) {
+            review.setStatus(ReviewStatus.DISABLED);
+        } else {
+            review.setStatus(ReviewStatus.HIDDEN);
+        }
+        reviewRepository.save(review);
+    }
+
+    @Override
+    @Transactional
+    public void ignoreReview(UUID reviewId) {
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
+
+        // Từ chối tất cả report pending
+        reportRepository.updateStatusByReviewId(
+                reviewId,
+                ReviewReportStatus.REJECTED
+        );
+
+        // Không động gì tới review
+    }
 }
 
