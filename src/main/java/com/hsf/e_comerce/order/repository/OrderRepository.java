@@ -69,4 +69,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Optional<Order> findByGhnOrderCode(String ghnOrderCode);
 
     List<Order> findByStatusAndReceivedByBuyerFalseAndDeliveredAtBefore(OrderStatus orderStatus, LocalDateTime threshold);
+
+    List<Order> findByUserAndStatus(User user, OrderStatus orderStatus);
 }

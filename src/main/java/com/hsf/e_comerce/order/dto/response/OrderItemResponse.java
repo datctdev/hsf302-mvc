@@ -23,6 +23,7 @@ public class OrderItemResponse {
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
+    private boolean canShowReview;
     private String productImageUrl; // Thumbnail hoặc first image
     private boolean isReviewed;
 }

@@ -54,7 +54,6 @@ public class ReviewReportController {
             RedirectAttributes redirect
     ) {
         try {
-            System.out.println("🔥 PUT REPORT HIT 🔥");
             reportService.updateReport(reviewId, user, request);
             redirect.addFlashAttribute("success", "Đã cập nhật báo cáo");
         } catch (RuntimeException ex) {

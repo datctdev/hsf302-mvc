@@ -22,8 +22,10 @@ import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
+import com.hsf.e_comerce.review.repository.ReviewReportRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
 import com.hsf.e_comerce.platform.service.PlatformSettingService;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shipping.service.GHNService;
@@ -57,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
     private final GHNService ghnService;
     private final ReviewRepository reviewRepository;
     private final PlatformSettingService platformSettingService;
+    private final ReviewReportRepository reviewReportRepository;
 
     @Override
     @Transactional
@@ -136,7 +139,7 @@ public class OrderServiceImpl implements OrderService {
 
             // Reduce stock
             int newStock = variant.getStockQuantity() - cartItem.getQuantity();
-            variant.setStockQuantity(newStock);
+//            variant.setStockQuantity(newStock);
 
             // Create order item
             OrderItem orderItem = new OrderItem();
@@ -281,8 +284,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // If cancelling, restore stock and cancel GHN order
-        if (newStatus == OrderStatus.CANCELLED && 
-            (currentStatus == OrderStatus.PENDING_PAYMENT || currentStatus == OrderStatus.CONFIRMED)) {
+        if (newStatus == OrderStatus.CANCELLED &&  currentStatus == OrderStatus.CONFIRMED && order.isStockDeducted()) {
             for (OrderItem item : order.getItems()) {
                 if (item.getVariant() != null) {
                     item.getVariant().setStockQuantity(
@@ -336,11 +338,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Restore stock
-        for (OrderItem item : order.getItems()) {
-            if (item.getVariant() != null) {
-                item.getVariant().setStockQuantity(
-                        item.getVariant().getStockQuantity() + item.getQuantity()
-                );
+        if (order.getStatus() == OrderStatus.CONFIRMED && order.isStockDeducted()) {
+            for (OrderItem item : order.getItems()) {
+                if (item.getVariant() != null) {
+                    item.getVariant().setStockQuantity(
+                            item.getVariant().getStockQuantity() + item.getQuantity()
+                    );
+                }
             }
         }
 
@@ -548,6 +552,18 @@ public class OrderServiceImpl implements OrderService {
                         }
                     }
 
+                    boolean hasReviewedReport =
+                            reviewReportRepository.existsReviewedReport(
+                                    order.getUser().getId(),
+                                    item.getProduct().getId(),
+                                    order.getId()
+                            );
+
+                    boolean canShowReview =
+                            order.getStatus() == OrderStatus.DELIVERED
+                                    && order.isReceivedByBuyer()
+                                    && !hasReviewedReport;
+
                     boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderId(
                             order.getUser().getId(),
                             item.getProduct().getId(),
@@ -566,6 +582,7 @@ public class OrderServiceImpl implements OrderService {
                             .totalPrice(item.getTotalPrice())
                             .productImageUrl(productImageUrl)
                             .isReviewed(isReviewed)
+                            .canShowReview(canShowReview)
                             .build();
                 })
                 .collect(Collectors.toList());
