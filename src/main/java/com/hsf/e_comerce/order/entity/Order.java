@@ -98,6 +98,9 @@ public class Order {
     @Column(name = "received_by_buyer", nullable = false)
     private boolean receivedByBuyer = false;
 
+    @Column(name = "stock_deducted")
+    boolean stockDeducted;
+
     @Column(name = "received_at")
     private LocalDateTime receivedAt;
 

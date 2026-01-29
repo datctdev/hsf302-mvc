@@ -100,4 +100,19 @@ public interface ReviewReportRepository
             @Param("status") ReviewReportStatus status
     );
 
+    @Query("""
+    SELECT COUNT(rr) > 0
+    FROM ReviewReport rr
+    WHERE rr.review.user.id = :userId
+      AND rr.review.product.id = :productId
+      AND rr.review.subOrderId = :subOrderId
+      AND rr.status = 'REVIEWED'
+    """)
+    boolean existsReviewedReport(
+            @Param("userId") UUID userId,
+            @Param("productId") UUID productId,
+            @Param("subOrderId") UUID subOrderId
+    );
+
+
 }

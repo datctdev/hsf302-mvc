@@ -86,7 +86,7 @@
                         <div class="item-price-action">
                             <div class="price-text" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' ₫'">100.000 ₫</div>
 
-                            <th:block th:if="${order.status.name() == 'DELIVERED' and order.receivedByBuyer}">
+                            <th:block th:if="${order.status.name() == 'DELIVERED' and order.receivedByBuyer and item.canShowReview}">
                                 <a th:if="${!item.isReviewed}"
                                    th:href="@{'/products/' + ${item.productId} + '/review?subOrderId=' + ${order.id}}"
                                    class="btn-rate-shopee">
@@ -123,7 +123,7 @@
                     <div class="order-actions-left">
                         <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary">Xem Chi Tiết</a>
 
-                        <a th:if="${order.status.name() == 'PENDING_PAYMENT' and cartItemCount > 0}"
+                        <a th:if="${order.status.name() == 'PENDING_PAYMENT'}"
                            th:href="@{'/payments/' + ${order.id}}"
                            class="btn btn-warning">
                             Tiếp tục thanh toán
