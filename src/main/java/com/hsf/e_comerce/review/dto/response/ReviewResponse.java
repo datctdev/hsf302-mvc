@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
 import com.hsf.e_comerce.review.entity.SellerReviewReply;
+import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -27,6 +28,9 @@ public class ReviewResponse {
     private Boolean isVerifiedPurchase;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+    private boolean warning;
+    private int flagCount;
+    private ReviewStatus status;
     private ReviewReportItemResponse userReport;
 
 
@@ -56,6 +60,7 @@ public class ReviewResponse {
                         .map(ReviewImage::getImageUrl)
                         .collect(Collectors.toList()))
                 .createdAt(review.getCreatedAt())
+                .status(review.getStatus())
                 .build();
     }
 

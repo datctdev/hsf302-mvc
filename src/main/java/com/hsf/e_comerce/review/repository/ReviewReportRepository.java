@@ -7,9 +7,11 @@ import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,6 +73,31 @@ public interface ReviewReportRepository
     Optional<ReviewReport> findByReviewIdAndReporterId(
             UUID reviewId,
             UUID reporterId
+    );
+
+    @Query("""
+    SELECT COUNT(DISTINCT rr.review.id)
+    FROM ReviewReport rr
+    WHERE rr.review.user.id = :userId
+      AND rr.status = 'REVIEWED'
+      AND rr.createdAt >= :fromDate
+    """)
+    long countReviewedReportsByUserInPeriod(
+            @Param("userId") UUID userId,
+            @Param("fromDate") LocalDateTime fromDate
+    );
+
+
+    @Modifying
+    @Query("""
+    UPDATE ReviewReport rr
+    SET rr.status = :status
+    WHERE rr.review.id = :reviewId
+      AND rr.status = 'PENDING'
+    """)
+    int updateStatusByReviewId(
+            @Param("reviewId") UUID reviewId,
+            @Param("status") ReviewReportStatus status
     );
 
 }
