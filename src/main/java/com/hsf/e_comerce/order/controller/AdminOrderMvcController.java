@@ -56,7 +56,7 @@ public class AdminOrderMvcController {
         try {
             OrderResponse order = orderService.getOrderById(id);
             model.addAttribute("order", order);
-            model.addAttribute("orderStatuses", OrderStatus.values());
+            model.addAttribute("orderStatuses", orderService.getAllowedNextStatuses(order.getStatus()));
             model.addAttribute("updateOrderStatusRequest", new UpdateOrderStatusRequest());
             return "admin/order-detail";
         } catch (Exception e) {

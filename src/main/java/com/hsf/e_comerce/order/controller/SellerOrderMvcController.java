@@ -6,7 +6,9 @@ import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.auth.entity.User;
-import com.hsf.e_comerce.shop.repository.ShopRepository;
+import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.shop.dto.response.ShopResponse;
+import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,18 +28,21 @@ import java.util.UUID;
 public class SellerOrderMvcController {
 
     private final OrderService orderService;
-    private final ShopRepository shopRepository;
+    private final ShopService shopService;
 
     @GetMapping
     public String sellerOrders(
             @CurrentUser User currentUser,
             @RequestParam(required = false) String status,
             Model model) {
-        
-        // Get shop by user
-        UUID shopId = shopRepository.findByUserId(currentUser.getId())
-                .map(shop -> shop.getId())
-                .orElseThrow(() -> new RuntimeException("Bạn chưa có shop."));
+
+        ShopResponse shop;
+        try {
+            shop = shopService.getShopByUserId(currentUser.getId());
+        } catch (CustomException e) {
+            return "redirect:/seller/become-seller";
+        }
+        UUID shopId = shop.getId();
 
         List<OrderResponse> orders;
         if (status != null && !status.isEmpty()) {
@@ -67,16 +72,19 @@ public class SellerOrderMvcController {
             @CurrentUser User currentUser,
             @PathVariable UUID id,
             Model model) {
-        
-        // Get shop by user
-        UUID shopId = shopRepository.findByUserId(currentUser.getId())
-                .map(shop -> shop.getId())
-                .orElseThrow(() -> new RuntimeException("Bạn chưa có shop."));
+
+        ShopResponse shop;
+        try {
+            shop = shopService.getShopByUserId(currentUser.getId());
+        } catch (CustomException e) {
+            return "redirect:/seller/become-seller";
+        }
+        UUID shopId = shop.getId();
 
         try {
             OrderResponse order = orderService.getOrderByIdAndShop(id, shopId);
             model.addAttribute("order", order);
-            model.addAttribute("orderStatuses", OrderStatus.values());
+            model.addAttribute("orderStatuses", orderService.getAllowedNextStatuses(order.getStatus()));
             model.addAttribute("updateOrderStatusRequest", new UpdateOrderStatusRequest());
             return "seller/order-detail";
         } catch (Exception e) {
@@ -105,6 +113,35 @@ public class SellerOrderMvcController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
+        return "redirect:/seller/orders/" + id;
+    }
+
+    @PostMapping("/{id}/create-ghn")
+    public String retryCreateGhnOrder(
+            @CurrentUser User currentUser,
+            @PathVariable UUID id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            orderService.retryCreateGhnOrder(id, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Đã tạo vận đơn GHN thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/seller/orders/" + id;
+    }
+
+    @PostMapping("/{id}/set-ghn-code")
+    public String setGhnOrderCode(
+            @CurrentUser User currentUser,
+            @PathVariable UUID id,
+            @RequestParam String ghnOrderCode,
+            RedirectAttributes redirectAttributes) {
+        try {
+            orderService.setGhnOrderCodeManually(id, ghnOrderCode, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Đã lưu mã vận đơn GHN.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/seller/orders/" + id;
     }
 }

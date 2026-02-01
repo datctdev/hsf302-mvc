@@ -18,8 +18,10 @@ public class GHNCreateOrderRequest {
     private String to_name;               // Tên người nhận
     private String to_phone;              // SĐT người nhận
     private String to_address;            // Địa chỉ chi tiết
-    private String to_ward_code;          // Mã phường/xã
-    private String to_district_id;        // Mã quận/huyện
+    private String to_ward_code;          // Mã phường/xã (GHN: String)
+    private Integer to_district_id;       // Mã quận/huyện (GHN: Int, bắt buộc từ API Get District)
+    private Integer from_district_id;     // Quận/huyện điểm lấy hàng (nếu không gửi, GHN dùng địa chỉ ShopId)
+    private String from_ward_code;        // Phường/xã điểm lấy hàng
     private Integer cod_amount;           // Số tiền thu hộ (VNĐ) - nếu có COD
     private Integer weight;               // Cân nặng (gram)
     private Integer length;                // Chiều dài (cm)

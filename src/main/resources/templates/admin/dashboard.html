@@ -21,6 +21,32 @@
     <!-- Main Content -->
     <main class="main-content admin-content">
         <div class="container">
+            <!-- Thống kê theo thời gian -->
+            <div class="section" style="margin-bottom: 1.5rem;">
+                <h2 style="margin-bottom: 0.75rem;">Thống kê theo thời gian</h2>
+                <form th:action="@{/admin/dashboard}" method="get" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
+                    <div>
+                        <label for="fromDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Từ ngày</label>
+                        <input type="date" id="fromDate" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label for="toDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Đến ngày</label>
+                        <input type="date" id="toDate" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Xem</button>
+                </form>
+                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a th:href="${urlLast7}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">7 ngày qua</a>
+                    <a th:href="${urlLast30}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">30 ngày qua</a>
+                    <a th:href="${urlLast90}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">90 ngày qua</a>
+                    <a th:href="${urlAll}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">Tất cả</a>
+                </div>
+                <p th:if="${fromDate != null or toDate != null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">
+                    Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
+                </p>
+                <p th:if="${fromDate == null and toDate == null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">Đang xem: Tất cả thời gian</p>
+            </div>
+
             <!-- Statistics Cards -->
             <div class="dashboard-grid">
                 <div class="stat-card">
@@ -42,6 +68,16 @@
                     <h3>Tổng Đơn Hàng</h3>
                     <div class="value" th:text="${totalOrders ?: 0}">0</div>
                     <div class="description">Tất cả đơn hàng</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #0d9488;">
+                    <h3>Tổng Doanh Thu Các Shop</h3>
+                    <div class="value" th:text="${totalRevenueShops != null ? (#numbers.formatDecimal(totalRevenueShops, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                    <div class="description">Doanh thu hàng (tiền đơn − phí ship), đơn đã xác nhận → đã giao</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #6f42c1;">
+                    <h3>Tổng Hoa Hồng Nền Tảng</h3>
+                    <div class="value" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                    <div class="description">Hoa hồng thu từ đơn đã xác nhận → đã giao</div>
                 </div>
             </div>
 
@@ -65,13 +101,25 @@
                         <h3>🛒 Quản Lý Đơn Hàng</h3>
                         <p>Xem và xử lý đơn hàng</p>
                     </a>
+                    <a href="/admin/commission" class="action-card">
+                        <h3>💰 Cấu hình hoa hồng</h3>
+                        <p>Thay đổi tỷ lệ hoa hồng nền tảng theo từng sản phẩm</p>
+                    </a>
                 </div>
             </div>
 
             <!-- Recent Activity -->
             <div class="section">
                 <h2>Hoạt Động Gần Đây</h2>
-                <p style="color: #666;">Tính năng đang phát triển...</p>
+                <p th:if="${recentActivities == null or recentActivities.empty}" style="color: #666;">Chưa có hoạt động nào.</p>
+                <ul th:if="${recentActivities != null and !recentActivities.empty}" style="list-style: none; padding: 0; margin: 0.5rem 0 0 0;">
+                    <li th:each="act : ${recentActivities}" style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color, #eee); display: flex; align-items: center; gap: 0.75rem;">
+                        <span th:if="${act.type == 'ORDER'}" style="background: var(--primary-color, #007bff); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Đơn</span>
+                        <span th:if="${act.type == 'SELLER_REQUEST'}" style="background: #6f42c1; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Yêu cầu</span>
+                        <a th:href="${act.linkUrl}" th:text="${act.title}" style="flex: 1; text-decoration: none; color: inherit;"></a>
+                        <span th:if="${act.at != null}" th:text="${#temporals.format(act.at, 'dd/MM/yyyy HH:mm')}" style="font-size: 0.85rem; color: var(--text-muted, #666);"></span>
+                    </li>
+                </ul>
             </div>
         </div>
     </main>

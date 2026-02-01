@@ -35,7 +35,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**")) // Enable CSRF for MVC
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/webhooks/**")) // Webhook GHN gọi từ ngoài
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Static resources
@@ -43,20 +43,23 @@ public class SecurityConfig {
                         // Chrome DevTools và các well-known paths
                         .requestMatchers("/.well-known/**").permitAll()
                         // Public pages
-                        .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/about").permitAll()
                         .requestMatchers("/verify-email", "/resend-verification").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // Public product pages
+                        .requestMatchers("/shops", "/shops/**").permitAll() // Public shop view (buyer)
                         // File upload/download (require authentication)
                         .requestMatchers("/files/upload").authenticated()
                         .requestMatchers("/files/view/**", "/files/download/**").permitAll() // Public file access
                         // User pages (require authentication)
-                        .requestMatchers("/profile", "/change-password").authenticated()
+                        .requestMatchers("/profile", "/change-password", "/my-summary").authenticated()
                         // Cart pages (require authentication)
                         .requestMatchers("/cart", "/cart/**").authenticated()
                         // Order pages (require authentication)
                         .requestMatchers("/orders", "/orders/**").authenticated()
                         // Shipping API (require authentication)
                         .requestMatchers("/api/shipping/**").authenticated()
+                        // GHN webhook – không cần auth (GHN gọi từ ngoài)
+                        .requestMatchers("/webhooks/**").permitAll()
                         // Seller pages - allow authenticated users to become seller
                         .requestMatchers("/seller/become-seller", "/seller/become-seller/**").authenticated()
                         // Other seller pages (require SELLER role)

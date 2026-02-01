@@ -54,9 +54,6 @@ public class Review {
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
-    @Column(name = "seller_reply", columnDefinition = "TEXT")
-    private String sellerReply;
-
     @Column(name = "is_verified_purchase", nullable = false)
     @Builder.Default
     private Boolean isVerifiedPurchase = false;
@@ -69,6 +66,12 @@ public class Review {
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ReviewImage> images = new ArrayList<>();
+
+    @Column(nullable = false)
+    private int reportCount = 0;
+
+    @Column(nullable = false)
+    private boolean flagged = false;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

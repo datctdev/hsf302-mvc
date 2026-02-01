@@ -1,7 +1,10 @@
 package com.hsf.e_comerce.review.dto.response;
 
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
+import com.hsf.e_comerce.review.entity.SellerReviewReply;
+import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,14 +18,21 @@ import java.util.stream.Collectors;
 public class ReviewResponse {
     private UUID id;
     private UUID userId;
+    private UUID productId;
     private String userFullName;
     private String userAvatarUrl;
     private Integer rating;
     private String comment;
-    private String sellerReply;
+    private SellerReplyResponse sellerReply;
+    private Boolean sellerCanReply;
     private Boolean isVerifiedPurchase;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+    private boolean warning;
+    private int flagCount;
+    private ReviewStatus status;
+    private ReviewReportItemResponse userReport;
+
 
     public static ReviewResponse fromEntity(Review review) {
         // 1. Logic ẩn tên
@@ -40,16 +50,61 @@ public class ReviewResponse {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .userId(review.getUser().getId())
+                .productId(review.getProduct().getId())
                 .userFullName(maskedName) // Trả về tên đã ẩn
                 .userAvatarUrl(review.getUser().getAvatarUrl()) // Server trả về link ảnh gốc (hoặc null)
                 .rating(review.getRating())
                 .comment(review.getComment())
-                .sellerReply(review.getSellerReply())
                 .isVerifiedPurchase(review.getIsVerifiedPurchase())
                 .imageUrls(review.getImages().stream()
                         .map(ReviewImage::getImageUrl)
                         .collect(Collectors.toList()))
                 .createdAt(review.getCreatedAt())
+                .status(review.getStatus())
                 .build();
     }
+
+    public static ReviewResponse fromEntityWithSellerReply(
+            Review review,
+            SellerReviewReply replyEntity,
+            User currentUser
+    ) {
+        ReviewResponse res = fromEntity(review);
+
+        boolean canReply = false;
+
+        if (currentUser != null
+                && currentUser.getRole() != null
+                && "ROLE_SELLER".equals(currentUser.getRole().getName())
+                && review.getProduct()
+                .getShop()
+                .getUser()
+                .getId()
+                .equals(currentUser.getId())) {
+
+            if (replyEntity == null) {
+                canReply = true;
+            } else {
+                canReply = replyEntity.getRepliedAt()
+                        .isAfter(LocalDateTime.now().minusDays(7));
+            }
+        }
+
+        res.setSellerCanReply(canReply);
+
+        if (replyEntity != null) {
+            boolean editable = canReply;
+
+            res.setSellerReply(
+                    SellerReplyResponse.builder()
+                            .reply(replyEntity.getReply())
+                            .repliedAt(replyEntity.getRepliedAt())
+                            .editable(editable)
+                            .build()
+            );
+        }
+
+        return res;
+    }
+
 }

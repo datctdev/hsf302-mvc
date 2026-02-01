@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .report-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.05);
+        }
+
+        .report-header h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .badge.danger {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn.outline {
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+
+        .btn.danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn.secondary {
+            background: #e5e7eb;
+        }
+
+        .report-detail {
+            margin-top: 14px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="review-report-list"
+     th:each="r : ${reportedReviews}">
+
+    <div class="report-card">
+
+        <div class="report-header">
+            <h3 th:text="${r.reviewContent}"></h3>
+
+            <div class="meta">
+                <span>
+                    Người viết:
+                    <strong th:text="${r.reviewOwnerEmail}"></strong>
+                </span>
+
+                <span class="badge danger"
+                      th:text="${r.reportCount}">
+                </span>
+            </div>
+        </div>
+
+        <div class="actions">
+
+            <button class="btn outline"
+                    onclick="toggleReports(this)">
+                Xem chi tiết
+            </button>
+
+            <form th:action="@{'/admin/reviews/' + ${r.reviewId} + '/hide'}"
+                  method="post">
+                <button class="btn danger"
+                        onclick="return confirm('Ẩn review này?')">
+                    Ẩn review
+                </button>
+            </form>
+
+            <form th:action="@{'/admin/reviews/' + ${r.reviewId} + '/ignore'}"
+                  method="post">
+                <button class="btn secondary">
+                    Bỏ qua
+                </button>
+            </form>
+        </div>
+
+        <div class="report-detail" style="display:none">
+            <table>
+                <thead>
+                <tr>
+                    <th>Lý do</th>
+                    <th>Ghi chú</th>
+                    <th>Người báo cáo</th>
+                    <th>Thời gian</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rep : ${r.reports}">
+                    <td th:text="${rep.reason}"></td>
+                    <td th:text="${rep.note ?: '-'}"></td>
+                    <td th:text="${rep.reporterEmail ?: 'Ẩn danh'}"></td>
+                    <td th:text="${#temporals.format(rep.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function toggleReports(btn) {
+        const card = btn.closest('.report-card');
+        const detail = card.querySelector('.report-detail');
+        detail.style.display =
+            detail.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+</body>
+</html>

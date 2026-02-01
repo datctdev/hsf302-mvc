@@ -262,9 +262,7 @@
                         <div class="shop-section">
                             <h3 th:text="'Shop: ' + ${firstShop.name}">Shop Name</h3>
                             <input type="hidden" th:name="shopId" th:value="${firstShop.id}">
-                            <input type="hidden" id="shippingDistrictId" name="shippingDistrictId">
-                            <input type="hidden" id="shippingWardCode" name="shippingWardCode">
-                            
+                            <!-- shippingDistrictId, shippingWardCode đã đặt ở block địa chỉ (toDistrictId, toWardCode) -->
                             <div th:each="item : ${itemsByShop[firstShop]}">
                                 <div class="checkout-item">
                                     <img src="/images/placeholder.png" alt="Product" class="checkout-item-image">
@@ -499,20 +497,15 @@
             });
         }
 
-        // Form submit validation
+        // Form submit validation (toDistrictId/toWardCode có name=shippingDistrictId/shippingWardCode)
         document.querySelector('form').addEventListener('submit', function(e) {
             const toDistrictId = document.getElementById('toDistrictId').value;
             const toWardCode = document.getElementById('toWardCode').value;
-            
             if (!toDistrictId || !toWardCode) {
                 e.preventDefault();
                 alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã.');
                 return false;
             }
-            
-            // Set hidden inputs (already set, but ensure)
-            document.getElementById('shippingDistrictId').value = toDistrictId;
-            document.getElementById('shippingWardCode').value = toWardCode;
         });
 
         // Initialize

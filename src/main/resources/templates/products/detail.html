@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,6 +120,10 @@
             background: var(--bg-white);
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         .variant-option:hover {
             border-color: var(--primary-color);
         }
@@ -184,6 +189,57 @@
             color: var(--danger-color);
         }
 
+        .seller-reply-box {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #fff7f4;
+            border-left: 4px solid #ee4d2d;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .seller-reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .shop-badge {
+            background: #ee4d2d;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .reply-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .seller-reply-content {
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .seller-reply-edit {
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .seller-reply-edit a {
+            font-size: 0.75rem;
+            color: #ee4d2d;
+            text-decoration: none;
+        }
+
+        .seller-reply-edit a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .product-detail {
                 grid-template-columns: 1fr;
@@ -237,7 +293,7 @@
                     <div class="product-price" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
                     <div class="product-shop">
                         <span>Shop: </span>
-                        <a th:href="@{'/products?shopId=' + ${product.shopId}}" th:text="${product.shopName}">Shop Name</a>
+                        <a th:href="@{'/shops/' + ${product.shopId}}" th:text="${product.shopName}">Shop Name</a>
                     </div>
                     <div class="product-description" th:utext="${product.description}">Description</div>
                     
@@ -354,16 +410,17 @@
                                 <div style="font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 4px;" th:text="${review.userFullName}">User</div>
 
                                 <div style="color: #ee4d2d; font-size: 0.7rem; margin-bottom: 5px;">
-                        <span th:each="i : ${#numbers.sequence(1, 5)}">
-                            <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
-                        </span>
+                                    <span th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                                    </span>
                                 </div>
 
                                 <div style="color: #rgba(0,0,0,.54); font-size: 0.75rem; margin-bottom: 10px;">
                                     <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
-                                    <span>Phân loại: Mặc định</span> <span th:if="${review.isVerifiedPurchase}" style="color: #28a745; margin-left: 10px;">
-                            <i class="fas fa-check-circle"></i> Đã mua hàng
-                        </span>
+                                    <span>Phân loại: Mặc định</span>
+                                    <span th:if="${review.isVerifiedPurchase}" style="color: #28a745; margin-left: 10px;">
+                                        <i class="fas fa-check-circle"></i> Đã mua hàng
+                                    </span>
                                 </div>
 
                                 <div style="color: #333; font-size: 0.95rem; line-height: 1.5; white-space: pre-line; margin-bottom: 10px;"
@@ -381,11 +438,184 @@
                                         <button type="submit" style="border: none; background: none; color: #888; font-size: 0.8rem; cursor: pointer;">Xóa</button>
                                     </form>
                                 </div>
+                                <div th:if="${currentUser != null
+                                            and currentUser.id != review.userId
+                                            and review.userReport == null}">
+                                    <form th:action="@{'/reviews/' + ${review.id} + '/report'}"
+                                          method="post"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('Bạn có chắc muốn báo cáo đánh giá này?');">
+
+                                        <input type="hidden"
+                                               th:name="${_csrf.parameterName}"
+                                               th:value="${_csrf.token}" />
+
+                                        <select name="reason"
+                                                required
+                                                th:data-review-id="${review.id}"
+                                                style="font-size:0.8rem;">
+
+                                            <option value="">-- Chọn lý do --</option>
+                                                <option value="SPAM">Spam</option>
+                                                <option value="OFFENSIVE_LANGUAGE">Ngôn từ xúc phạm</option>
+                                                <option value="PERSONAL_ATTACK">Công kích cá nhân</option>
+                                                <option value="IRRELEVANT_CONTENT">Không liên quan</option>
+                                                <option value="OTHER">Khác</option>
+                                        </select>
+
+                                        <div th:id="'note-box-' + ${review.id}"
+                                             class="note-box"
+                                             style="display:none; margin-top:4px;">
+                                            <input type="text"
+                                                   name="note"
+                                                   placeholder="Nhập lý do cụ thể..."
+                                                   maxlength="255"
+                                                   disabled
+                                                   style="font-size:0.8rem; width:200px;" />
+                                        </div>
+
+                                        <button type="submit"
+                                                style="border:none;background:none;color:#999;font-size:0.8rem;cursor:pointer;">
+                                            <i class="fa-regular fa-flag"></i> Báo cáo
+                                        </button>
+                                    </form>
+                                </div>
+                                <div th:if="${review.userReport != null}"
+                                     style="margin-top:8px;
+                                            border:1px solid #f44336;
+                                            background:#fff5f5;
+                                            padding:8px;
+                                            border-radius:6px;
+                                            font-size:0.8rem;">
+                                    <div style="color:#d32f2f;font-weight:600;">
+                                        <i class="fa-solid fa-flag"></i>
+                                        Bạn đã báo cáo đánh giá này
+                                    </div>
+
+                                    <div style="margin-top:4px;color:#555;">
+                                        Lý do:
+                                        <strong th:text="${review.userReport.reason}"></strong>
+                                    </div>
+
+                                    <div th:if="${review.userReport.note != null}"
+                                         style="color:#666;">
+                                        Ghi chú:
+                                        <em th:text="${review.userReport.note}"></em>
+                                    </div>
+
+                                    <div style="margin-top:4px;color:#999;font-size:0.75rem;">
+                                        Báo cáo lúc
+                                        <span th:text="${#temporals.format(review.userReport.createdAt,'dd-MM-yyyy HH:mm')}"></span>
+                                    </div>
+
+                                    <!-- UPDATE -->
+                                    <form th:action="@{'/reviews/' + ${review.id} + '/report'}"
+                                          method="post"
+                                          style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+
+                                        <input type="hidden"
+                                               th:name="${_csrf.parameterName}"
+                                               th:value="${_csrf.token}" />
+
+                                        <input type="hidden" name="_method" value="PUT"/>
+
+                                        <select name="reason" required>
+                                            <option th:selected="${review.userReport.reason.name() == 'SPAM'}" value="SPAM">Spam</option>
+                                            <option th:selected="${review.userReport.reason.name() == 'OFFENSIVE_LANGUAGE'}" value="OFFENSIVE_LANGUAGE">Ngôn từ xúc phạm</option>
+                                            <option th:selected="${review.userReport.reason.name() == 'PERSONAL_ATTACK'}" value="PERSONAL_ATTACK">Công kích cá nhân</option>
+                                            <option th:selected="${review.userReport.reason.name() == 'IRRELEVANT_CONTENT'}" value="IRRELEVANT_CONTENT">Không liên quan</option>
+                                            <option th:selected="${review.userReport.reason.name() == 'OTHER'}" value="OTHER">Khác</option>
+                                        </select>
+
+                                        <input type="text"
+                                               name="note"
+                                               th:value="${review.userReport.note}"
+                                               placeholder="Lý do cụ thể..."
+                                               style="width:180px;font-size:0.8rem;" />
+
+                                        <button type="submit" style="font-size:0.8rem;">
+                                            Cập nhật
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
+                        </div>
+                        <!-- SELLER REPLY -->
+                        <div class="seller-reply-box" th:if="${review.sellerReply != null or review.sellerCanReply}">
+                            <!-- ĐÃ CÓ REPLY -->
+                            <div th:if="${review.sellerReply != null}">
+                                <div class="seller-reply-header">
+                                    <span class="shop-badge">Phản hồi từ Shop</span>
+                                    <span class="reply-time"
+                                          th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}">
+                                    </span>
+                                </div>
+
+                                <div th:id="'reply-content-' + ${review.id}"
+                                     class="seller-reply-content"
+                                     th:text="${review.sellerReply.reply}">
+                                </div>
+
+                                <div th:if="${review.sellerCanReply}">
+                                    <a href="javascript:void(0)"
+                                       class="edit-reply-btn"
+                                       th:attr="data-review-id=${review.id}">
+                                        Chỉnh sửa
+                                    </a>
+
+                                </div>
+                            </div>
+
+                            <!-- CHƯA REPLY -->
+                            <form th:if="${review.sellerReply == null and review.sellerCanReply}"
+                                  th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}"
+                                  method="post"
+                                  style="margin-top:8px;">
+
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+
+                                <textarea name="reply" rows="3"
+                                          placeholder="Nhập phản hồi cho khách hàng..."></textarea>
+
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Gửi phản hồi
+                                </button>
+                            </form>
+
+
+                            <!-- FORM EDIT -->
+                            <form th:if="${review.sellerReply != null and review.sellerCanReply}"
+                                  th:id="'reply-form-' + ${review.id}"
+                                  th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}"
+                                  method="post"
+                                  class="hidden"
+                                  style="margin-top:8px;">
+
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+
+                                <textarea name="reply"
+                                          rows="3"
+                                          th:text="${review.sellerReply.reply}">
+                                </textarea>
+
+                                <div style="margin-top:6px;">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Lưu phản hồi
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-secondary edit-reply-btn"
+                                            th:attr="data-review-id=${review.id}">
+                                        Hủy
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-
                 <div class="pagination" th:if="${reviews != null and reviews.totalPages > 1}" style="margin-top: 2rem; justify-content: center; display: flex; gap: 0.5rem;">
                     <a th:if="${reviews.hasPrevious()}"
                        th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}"
@@ -649,8 +879,9 @@
         }
 
         function viewShop(shopId) {
-            // TODO: Implement shop view page
-            alert('Trang shop sẽ được triển khai sau.');
+            if (shopId) {
+                window.location.href = '/shops/' + shopId;
+            }
         }
 
         function formatPrice(price) {
@@ -663,6 +894,60 @@
             div.textContent = text;
             return div.innerHTML;
         }
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('edit-reply-btn')) {
+                const reviewId = e.target.dataset.reviewId;
+                toggleEditReply(reviewId);
+            }
+        });
+
+        function toggleEditReply(reviewId) {
+            const form = document.getElementById('reply-form-' + reviewId);
+            const content = document.getElementById('reply-content-' + reviewId);
+            if (!form) return;
+
+            const isHidden = form.classList.contains('hidden');
+
+            form.classList.toggle('hidden');
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+
+            if (isHidden) {
+                const textarea = form.querySelector('textarea');
+                if (textarea) textarea.focus();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('select[name="reason"]').forEach(select => {
+                const reviewId = select.dataset.reviewId;
+                const box = document.getElementById('note-box-' + reviewId);
+                if (!box) return;
+
+                const input = box.querySelector('input[name="note"]');
+
+                // reset lúc load
+                box.style.display = 'none';
+                if (input) {
+                    input.value = '';
+                    input.disabled = true;
+                }
+
+                // GẮN EVENT CHANGE
+                select.addEventListener('change', function () {
+                    if (this.value === 'OTHER') {
+                        box.style.display = 'block';
+                        if (input) input.disabled = false;
+                    } else {
+                        box.style.display = 'none';
+                        if (input) {
+                            input.value = '';
+                            input.disabled = true;
+                        }
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

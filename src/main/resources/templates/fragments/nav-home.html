@@ -8,9 +8,7 @@
                 Giỏ hàng
                 <span th:if="${cartItemCount != null and cartItemCount > 0}" 
                       class="cart-badge" 
-                      th:text="${cartItemCount}"
-                      style="background: var(--primary-color); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: 4px;">
-                </span>
+                      th:text="${cartItemCount}"></span>
             </a>
             <a href="/about">Giới thiệu</a>
         </div>
@@ -21,6 +19,7 @@
         </div>
         <!-- Show user info if authenticated -->
         <div th:if="${currentUser != null}" class="user-info">
+            <a href="/my-summary" class="profile-link">Tổng quan</a>
             <a href="/orders" class="profile-link">Đơn hàng</a>
             <a href="/profile" class="profile-link">Hồ sơ</a>
             <span class="user-name" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>

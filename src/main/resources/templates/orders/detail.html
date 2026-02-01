@@ -41,7 +41,7 @@
         .status-PENDING { background: #fff3cd; color: #856404; }
         .status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
         .status-PROCESSING { background: #d4edda; color: #155724; }
-        .status-SHIPPED { background: #cce5ff; color: #004085; }
+        .status-SHIPPING { background: #cce5ff; color: #004085; }
         .status-DELIVERED { background: #d4edda; color: #155724; }
         .status-CANCELLED { background: #f8d7da; color: #721c24; }
         .status-REFUNDED { background: #e2e3e5; color: #383d41; }
@@ -117,6 +117,11 @@
     <div th:replace="~{fragments/nav-home :: nav}"></div>
 
     <div class="order-detail-container">
+        <div class="page-alerts" th:if="${success != null or error != null}">
+            <div th:if="${success}" class="alert alert-success" th:text="${success}" role="status"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}" role="alert"></div>
+        </div>
+
         <div th:if="${order != null}" class="order-detail-card">
             <div class="order-detail-header">
                 <div>
@@ -129,7 +134,7 @@
                       th:text="${order.status}">Status</span>
             </div>
 
-            <div class="order-summary">
+            <div class="order-summary order-summary-grid">
                 <div class="summary-section">
                     <h3>Thông Tin Giao Hàng</h3>
                     <div class="summary-row">
@@ -169,6 +174,17 @@
                         <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
                     </div>
                 </div>
+            </div>
+
+            <div th:if="${order.ghnOrderCode != null and !order.ghnOrderCode.isEmpty()}" class="summary-section" style="margin-top: 1rem;">
+                <h3>Vận đơn GHN</h3>
+                <div class="summary-row">
+                    <span>Mã vận đơn:</span>
+                    <span><code th:text="${order.ghnOrderCode}">OrderCode</code></span>
+                </div>
+                <a th:href="@{https://donhang.ghn.vn/}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary" style="margin-top: 0.5rem;">
+                    Tra cứu tại GHN
+                </a>
             </div>
 
             <div style="margin-top: 2rem;">

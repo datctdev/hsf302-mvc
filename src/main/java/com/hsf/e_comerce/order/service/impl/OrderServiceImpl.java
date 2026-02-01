@@ -16,12 +16,16 @@ import com.hsf.e_comerce.order.repository.OrderItemRepository;
 import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.order.valueobject.OrderStatusTransition;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
 import com.hsf.e_comerce.product.repository.ProductImageRepository;
+import com.hsf.e_comerce.review.repository.ReviewReportRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
+import com.hsf.e_comerce.platform.service.PlatformSettingService;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shipping.service.GHNService;
@@ -33,7 +37,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -48,11 +54,12 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
     private final ShopRepository shopRepository;
     private final ProductImageRepository productImageRepository;
     private final GHNService ghnService;
     private final ReviewRepository reviewRepository;
+    private final PlatformSettingService platformSettingService;
+    private final ReviewReportRepository reviewReportRepository;
 
     @Override
     @Transactional
@@ -116,6 +123,11 @@ public class OrderServiceImpl implements OrderService {
         order.setNotes(request.getNotes());
         order.setSubtotal(subtotal);
         order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
+        // Hoa hồng nền tảng: platform_commission = subtotal * (commission_rate / 100)
+        BigDecimal commissionRate = platformSettingService.getCommissionRate();
+        BigDecimal platformCommission = subtotal.multiply(commissionRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        order.setPlatformCommission(platformCommission != null ? platformCommission : BigDecimal.ZERO);
+        order.setCommissionRate(commissionRate != null ? commissionRate.doubleValue() : null);
         order.calculateTotal();
 
         order = orderRepository.save(order);
@@ -127,7 +139,7 @@ public class OrderServiceImpl implements OrderService {
 
             // Reduce stock
             int newStock = variant.getStockQuantity() - cartItem.getQuantity();
-            variant.setStockQuantity(newStock);
+//            variant.setStockQuantity(newStock);
 
             // Create order item
             OrderItem orderItem = new OrderItem();
@@ -211,7 +223,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getOrdersByShop(UUID shopId) {
 //        List<Order> orders = orderRepository.findByShopIdWithItems(shopId);
         List<Order> orders = orderRepository
-                .findByShopIdAndStatusNot(shopId, OrderStatus.PENDING_PAYMENT);
+                .findByShopIdAndStatusNotOrderByCreatedAtDesc(shopId, OrderStatus.PENDING_PAYMENT);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -225,7 +237,7 @@ public class OrderServiceImpl implements OrderService {
             return List.of();
         }
 
-        List<Order> orders = orderRepository.findByShopIdAndStatus(shopId, status);
+        List<Order> orders = orderRepository.findByShopIdAndStatusOrderByCreatedAtDesc(shopId, status);
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -263,19 +275,16 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException("Bạn không có quyền cập nhật đơn hàng này.");
         }
 
-        // Validate status transition
+        // Ràng buộc chuyển trạng thái theo ma trận (không cho nhảy cóc, ví dụ CONFIRMED → DELIVERED)
         OrderStatus currentStatus = order.getStatus();
         OrderStatus newStatus = request.getStatus();
-
-        // Only allow cancellation if order is PENDING or CONFIRMED
-        if (newStatus == OrderStatus.CANCELLED && 
-            currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CONFIRMED) {
-            throw new CustomException("Không thể hủy đơn hàng ở trạng thái " + currentStatus);
+        if (!OrderStatusTransition.isAllowed(currentStatus, newStatus)) {
+            throw new CustomException("Không thể chuyển từ " + currentStatus + " sang " + newStatus + ". Chỉ chấp nhận các bước: " +
+                    OrderStatusTransition.getAllowedNextStatuses(currentStatus));
         }
 
         // If cancelling, restore stock and cancel GHN order
-        if (newStatus == OrderStatus.CANCELLED && 
-            (currentStatus == OrderStatus.PENDING_PAYMENT || currentStatus == OrderStatus.CONFIRMED)) {
+        if (newStatus == OrderStatus.CANCELLED &&  currentStatus == OrderStatus.CONFIRMED && order.isStockDeducted()) {
             for (OrderItem item : order.getItems()) {
                 if (item.getVariant() != null) {
                     item.getVariant().setStockQuantity(
@@ -296,20 +305,14 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // Create GHN order when seller confirms (PENDING -> CONFIRMED)
+        // Tạo đơn GHN khi seller xác nhận đơn (PENDING_PAYMENT -> CONFIRMED) – flow “seller confirm trước, buyer thanh toán sau”
         if (currentStatus == OrderStatus.PENDING_PAYMENT && newStatus == OrderStatus.CONFIRMED) {
-            if (order.getGhnOrderCode() == null || order.getGhnOrderCode().isEmpty()) {
-                try {
-                    GHNCreateOrderRequest ghnRequest = buildGHNCreateOrderRequest(order);
-                    GHNCreateOrderResponse ghnResponse = ghnService.createOrder(ghnRequest);
-                    order.setGhnOrderCode(ghnResponse.getOrder_code());
-                    log.info("Đã tạo đơn GHN: {} cho order: {}", ghnResponse.getOrder_code(), order.getOrderNumber());
-                } catch (Exception e) {
-                    log.error("Lỗi khi tạo đơn GHN cho order {}: {}", order.getOrderNumber(), e.getMessage());
-                    // Không throw exception để không block việc confirm đơn
-                    // Seller có thể tạo đơn GHN thủ công sau
-                }
-            }
+            tryCreateGHNOrder(order);
+        }
+        // Tạo đơn GHN khi seller bắt đầu xử lý/giao hàng (CONFIRMED -> PROCESSING/SHIPPED) – flow đã thanh toán (COD/VNPay)
+        if ((newStatus == OrderStatus.PROCESSING || newStatus == OrderStatus.SHIPPING)
+                && currentStatus == OrderStatus.CONFIRMED) {
+            tryCreateGHNOrder(order);
         }
 
         order.setStatus(newStatus);
@@ -335,11 +338,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Restore stock
-        for (OrderItem item : order.getItems()) {
-            if (item.getVariant() != null) {
-                item.getVariant().setStockQuantity(
-                        item.getVariant().getStockQuantity() + item.getQuantity()
-                );
+        if (order.getStatus() == OrderStatus.CONFIRMED && order.isStockDeducted()) {
+            for (OrderItem item : order.getItems()) {
+                if (item.getVariant() != null) {
+                    item.getVariant().setStockQuantity(
+                            item.getVariant().getStockQuantity() + item.getQuantity()
+                    );
+                }
             }
         }
 
@@ -423,6 +428,99 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public long count() {
+        return orderRepository.count();
+    }
+
+    @Override
+    public List<OrderStatus> getAllowedNextStatuses(OrderStatus current) {
+        return OrderStatusTransition.getAllowedNextStatuses(current);
+    }
+
+    @Override
+    @Transactional
+    public boolean markDeliveredByGhnRef(String ghnOrderCode, String clientOrderCode) {
+        Optional<Order> byGhn = ghnOrderCode != null && !ghnOrderCode.isBlank()
+                ? orderRepository.findByGhnOrderCode(ghnOrderCode.trim()) : Optional.empty();
+        Optional<Order> byClient = clientOrderCode != null && !clientOrderCode.isBlank()
+                ? orderRepository.findByOrderNumber(clientOrderCode.trim()) : Optional.empty();
+        Order order = byGhn.or(() -> byClient).orElse(null);
+        if (order == null || order.getStatus() != OrderStatus.SHIPPING) {
+            return false;
+        }
+        order.setStatus(OrderStatus.DELIVERED);
+        order.setDeliveredAt(LocalDateTime.now());
+        orderRepository.save(order);
+        log.info("GHN webhook: đơn {} đã set DELIVERED (ghnOrderCode={}, clientOrderCode={})",
+                order.getOrderNumber(), ghnOrderCode, clientOrderCode);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse retryCreateGhnOrder(UUID orderId, User user) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
+        if (user.getRole() == null || !"ROLE_SELLER".equals(user.getRole().getName())) {
+            throw new CustomException("Chỉ seller mới được tạo vận đơn GHN.");
+        }
+        if (!order.getShop().getUser().getId().equals(user.getId())) {
+            throw new CustomException("Bạn không có quyền với đơn hàng này.");
+        }
+        if (order.getGhnOrderCode() != null && !order.getGhnOrderCode().isEmpty()) {
+            throw new CustomException("Đơn đã có mã vận đơn GHN: " + order.getGhnOrderCode());
+        }
+        OrderStatus s = order.getStatus();
+        if (s != OrderStatus.CONFIRMED && s != OrderStatus.PROCESSING && s != OrderStatus.SHIPPING) {
+            throw new CustomException("Chỉ tạo vận đơn khi đơn ở trạng thái Đã xác nhận, Đang xử lý hoặc Đã giao cho GHN.");
+        }
+        tryCreateGHNOrder(order);
+        order = orderRepository.save(order);
+        return mapToResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse setGhnOrderCodeManually(UUID orderId, String ghnOrderCode, User user) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
+        if (user.getRole() == null || !"ROLE_SELLER".equals(user.getRole().getName())) {
+            throw new CustomException("Chỉ seller mới được nhập mã vận đơn GHN.");
+        }
+        if (!order.getShop().getUser().getId().equals(user.getId())) {
+            throw new CustomException("Bạn không có quyền với đơn hàng này.");
+        }
+        if (ghnOrderCode == null || ghnOrderCode.isBlank()) {
+            throw new CustomException("Mã vận đơn GHN không được để trống.");
+        }
+        order.setGhnOrderCode(ghnOrderCode.trim());
+        order = orderRepository.save(order);
+        log.info("Seller đã nhập mã GHN thủ công: order {} -> ghnOrderCode={}", order.getOrderNumber(), ghnOrderCode.trim());
+        return mapToResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public void markReceivedByBuyer(UUID orderId, User user) {
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new CustomException("Chỉ có thể xác nhận khi đơn đã giao.");
+        }
+
+        if (order.isReceivedByBuyer()) {
+            throw new CustomException("Đơn hàng đã được xác nhận trước đó.");
+        }
+
+        order.setReceivedByBuyer(true);
+        order.setReceivedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
+    }
+
     private String generateOrderNumber() {
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String baseNumber = "ORD-" + datePrefix + "-";
@@ -454,11 +552,22 @@ public class OrderServiceImpl implements OrderService {
                         }
                     }
 
-                    boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderIdAndStatus(
+                    boolean hasReviewedReport =
+                            reviewReportRepository.existsReviewedReport(
+                                    order.getUser().getId(),
+                                    item.getProduct().getId(),
+                                    order.getId()
+                            );
+
+                    boolean canShowReview =
+                            order.getStatus() == OrderStatus.DELIVERED
+                                    && order.isReceivedByBuyer()
+                                    && !hasReviewedReport;
+
+                    boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndSubOrderId(
                             order.getUser().getId(),
                             item.getProduct().getId(),
-                            order.getId(),
-                            com.hsf.e_comerce.review.valueobject.ReviewStatus.ACTIVE
+                            order.getId()
                     );
 
                     return OrderItemResponse.builder()
@@ -473,6 +582,7 @@ public class OrderServiceImpl implements OrderService {
                             .totalPrice(item.getTotalPrice())
                             .productImageUrl(productImageUrl)
                             .isReviewed(isReviewed)
+                            .canShowReview(canShowReview)
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -496,10 +606,33 @@ public class OrderServiceImpl implements OrderService {
                 .shippingFee(order.getShippingFee())
                 .total(order.getTotal())
                 .ghnOrderCode(order.getGhnOrderCode())
+                .platformCommission(order.getPlatformCommission() != null ? order.getPlatformCommission() : BigDecimal.ZERO)
+                .commissionRate(order.getCommissionRate())
                 .items(itemResponses)
+                .receivedByBuyer(order.isReceivedByBuyer())
+                .receivedAt(order.getReceivedAt())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Tạo đơn GHN nếu chưa có ghnOrderCode; không throw, chỉ log lỗi để không block cập nhật trạng thái.
+     */
+    private void tryCreateGHNOrder(Order order) {
+        if (order.getGhnOrderCode() == null || order.getGhnOrderCode().isEmpty()) {
+            try {
+                GHNCreateOrderRequest ghnRequest = buildGHNCreateOrderRequest(order);
+                GHNCreateOrderResponse ghnResponse = ghnService.createOrder(ghnRequest);
+                order.setGhnOrderCode(ghnResponse.getOrder_code());
+                log.info("Đã tạo đơn GHN: {} cho order: {}", ghnResponse.getOrder_code(), order.getOrderNumber());
+            } catch (Exception e) {
+                log.error("Lỗi khi tạo đơn GHN cho order {}: {} (district_id={}, ward_code={})",
+                        order.getOrderNumber(), e.getMessage(),
+                        order.getShippingDistrictId(), order.getShippingWardCode());
+                // Không throw – seller có thể tạo vận đơn GHN thủ công sau
+            }
+        }
     }
 
     /**
@@ -520,10 +653,10 @@ public class OrderServiceImpl implements OrderService {
         Integer fromDistrictId = getShopDistrictId(shop);
         String fromWardCode = getShopWardCode(shop);
         
-        if (fromDistrictId == null || fromWardCode == null) {
-            fromDistrictId = 1442; // Quận 1, HCM
-            fromWardCode = "21012"; // Phường Bến Nghé
-            log.warn("Shop {} chưa có địa chỉ đầy đủ, sử dụng giá trị mặc định", shop.getName());
+        if (fromDistrictId == null || fromWardCode == null || fromWardCode.isBlank()) {
+            fromDistrictId = 1442;   // Quận 1, HCM (GHN district_id)
+            fromWardCode = "21012";  // Phường Bến Nghé (GHN ward_code)
+            log.warn("Shop {} chưa có địa chỉ GHN đầy đủ (district_id/ward_code), dùng mặc định Quận 1 – Bến Nghé", shop.getName());
         }
 
         // Validate shipping address codes
@@ -531,22 +664,44 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException("Đơn hàng chưa có đầy đủ thông tin địa chỉ giao hàng (district_id, ward_code).");
         }
 
+        // GHN bắt buộc "Tên hàng hoá" – gửi items với name, quantity, weight từng dòng
+        List<GHNCreateOrderRequest.GHNItem> ghnItems = order.getItems().stream()
+                .map(item -> {
+                    int productWeight = item.getProduct().getWeight() != null
+                            ? item.getProduct().getWeight() : 500;
+                    int itemWeight = productWeight * item.getQuantity();
+                    String productName = item.getProductName() != null && !item.getProductName().isBlank()
+                            ? item.getProductName() : "Sản phẩm";
+                    return GHNCreateOrderRequest.GHNItem.builder()
+                            .name(productName)
+                            .quantity(item.getQuantity())
+                            .weight(itemWeight)
+                            .length(20)
+                            .width(20)
+                            .height(10)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
         return GHNCreateOrderRequest.builder()
                 .payment_type_id(1) // 1 = người gửi trả (shop trả phí ship)
                 .note(order.getNotes() != null ? order.getNotes() : "")
                 .required_note("CHOTHUHANG") // Cho thử hàng
+                .from_district_id(fromDistrictId)   // Địa chỉ lấy hàng (tránh FROM_ADDRESS_CONVERT_FAIL)
+                .from_ward_code(fromWardCode)
                 .to_name(order.getShippingName())
                 .to_phone(order.getShippingPhone())
                 .to_address(order.getShippingAddress())
                 .to_ward_code(order.getShippingWardCode())
-                .to_district_id(String.valueOf(order.getShippingDistrictId())) // GHN API expects String
+                .to_district_id(order.getShippingDistrictId())
                 .weight(totalWeight)
-                .length(20) // Default dimensions (cm)
+                .length(20)
                 .width(20)
                 .height(10)
                 .service_type_id(2) // Hàng nhẹ
-                .insurance_value(order.getSubtotal().intValue()) // Khai giá = tổng tiền sản phẩm
-                .client_order_code(order.getOrderNumber()) // Mã đơn hàng của hệ thống
+                .insurance_value(order.getSubtotal() != null ? order.getSubtotal().intValue() : 0)
+                .client_order_code(order.getOrderNumber())
+                .items(ghnItems)
                 .build();
     }
 

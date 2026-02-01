@@ -10,6 +10,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -20,11 +22,15 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
+    @Value("${spring.mail.username}")
+    private String emailFrom;
+
     @Override
     public void sendVerificationEmail(String toEmail, String fullName, String verificationLink) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(emailFrom, "E-commerce");
             helper.setTo(toEmail);
             helper.setSubject("Xác minh email - E-commerce");
 
@@ -50,6 +56,8 @@ public class EmailServiceImpl implements EmailService {
         } catch (MessagingException e) {
             log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
             throw new RuntimeException("Không thể gửi email xác minh. Vui lòng thử lại sau.");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 }

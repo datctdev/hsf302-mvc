@@ -2,6 +2,7 @@ package com.hsf.e_comerce.review.service.impl;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.exception.CustomException;
+import com.hsf.e_comerce.config.SecurityConfig;
 import com.hsf.e_comerce.file.service.FileService;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.repository.OrderRepository;
@@ -10,12 +11,19 @@ import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.repository.ProductRepository;
 import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
+import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
+import com.hsf.e_comerce.review.entity.ReviewReport;
+import com.hsf.e_comerce.review.entity.SellerReviewReply;
 import com.hsf.e_comerce.review.repository.ReviewImageRepository;
+import com.hsf.e_comerce.review.repository.ReviewReportRepository;
 import com.hsf.e_comerce.review.repository.ReviewRepository;
+import com.hsf.e_comerce.review.repository.SellerReviewReplyRepository;
 import com.hsf.e_comerce.review.service.ReviewService;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,10 +45,18 @@ import java.util.UUID;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final ReviewImageRepository reviewImageRepository;
+    private final ReviewReportRepository reviewReportRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final FileService fileService;
+    private final SellerReviewReplyRepository sellerReviewReplyRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UUID> getReviewIdByUserAndProductAndSubOrder(UUID userId, UUID productId, UUID subOrderId) {
+        return reviewRepository.findByUserIdAndProductIdAndSubOrderId(userId, productId, subOrderId)
+                .map(Review::getId);
+    }
 
     // --- 1. TẠO ĐÁNH GIÁ ---
     @Override
@@ -64,11 +80,22 @@ public class ReviewServiceImpl implements ReviewService {
             throw new CustomException("Đơn hàng chưa giao thành công.");
         }
 
+        if (!order.isReceivedByBuyer()) {
+            throw new CustomException("Vui lòng xác nhận đã nhận hàng trước khi đánh giá.");
+        }
+
         boolean hasProduct = order.getItems().stream()
                 .anyMatch(item -> item.getProduct().getId().equals(productId));
         if (!hasProduct) {
             throw new CustomException("Sản phẩm này không có trong đơn hàng.");
         }
+
+        ReviewPermissionResponse permission = checkReviewPermission(user);
+
+        if (!permission.isAllowed()) {
+            throw new CustomException(permission.getMessage());
+        }
+
 
         // --- LOGIC: XỬ LÝ REVIEW CŨ HOẶC ĐÃ XÓA ---
         Optional<Review> existingReviewOpt = reviewRepository.findByUserIdAndProductIdAndSubOrderId(
@@ -111,10 +138,41 @@ public class ReviewServiceImpl implements ReviewService {
         return ReviewResponse.fromEntity(review);
     }
 
+    @Override
+    public ReviewPermissionResponse checkReviewPermission(User user) {
+
+        // 1. Đang bị ban?
+        if (user.getReviewBannedUntil() != null) {
+            if (user.getReviewBannedUntil().isAfter(LocalDateTime.now())) {
+                return new ReviewPermissionResponse(
+                        false,
+                        false,
+                        "Bạn bị cấm đánh giá đến " +
+                                user.getReviewBannedUntil()
+                );
+            } else {
+                // Hết hạn ban → reset
+                user.setReviewBannedUntil(null);
+                user.setReviewViolationCount(0);
+            }
+        }
+
+        // 2. Cảnh báo từ lần thứ 3
+        if (user.getReviewViolationCount() >= 3) {
+            return new ReviewPermissionResponse(
+                    true,
+                    true,
+                    "Tài khoản của bạn đã nhiều lần vi phạm nội dung đánh giá. Vui lòng chú ý ngôn từ."
+            );
+        }
+
+        return new ReviewPermissionResponse(true, false, null);
+    }
+
     // --- 2. LẤY DANH SÁCH REVIEW ---
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy) {
+    public Page<ReviewResponse> getProductReviews(UUID productId, int page, int size, Integer rating, Boolean hasImages, String sortBy, User currentUser) {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         if ("oldest".equals(sortBy)) {
             sort = Sort.by(Sort.Direction.ASC, "createdAt");
@@ -129,7 +187,44 @@ public class ReviewServiceImpl implements ReviewService {
                 pageable
         );
 
-        return reviewPage.map(ReviewResponse::fromEntity);
+        return reviewPage.map(review -> {
+            SellerReviewReply reply =
+                    sellerReviewReplyRepository
+                            .findByReviewId(review.getId())
+                            .orElse(null);
+
+            // 2️⃣ User report (nếu đã đăng nhập)
+            ReviewReportItemResponse userReport = null;
+
+            if (currentUser != null) {
+                userReport = reviewReportRepository
+                        .findByReviewIdAndReporterId(
+                                review.getId(),
+                                currentUser.getId()
+                        )
+                        .filter(r -> r.getStatus() == ReviewReportStatus.PENDING)
+                        .map(r -> new ReviewReportItemResponse(
+                                r.getId(),
+                                r.getReason(),
+                                r.getNote(),
+                                r.getReporter().getEmail(),
+                                r.getCreatedAt()
+                        ))
+                        .orElse(null);
+            }
+
+            // 3️⃣ Build ReviewResponse
+            ReviewResponse response =
+                    ReviewResponse.fromEntityWithSellerReply(
+                            review,
+                            reply,
+                            currentUser
+                    );
+
+            response.setUserReport(userReport);
+
+            return response;
+        });
     }
 
     // --- 3. CẬP NHẬT REVIEW ---
@@ -141,6 +236,13 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (!review.getUser().getId().equals(user.getId())) {
             throw new CustomException("Bạn không có quyền sửa đánh giá này");
+        }
+
+        ReviewPermissionResponse permission = checkReviewPermission(user);
+        if (!permission.isAllowed()) {
+            throw new CustomException(
+                    "Bạn đang bị cấm đánh giá nên không thể chỉnh sửa đánh giá cũ."
+            );
         }
 
         if (review.getCreatedAt().plusDays(7).isBefore(LocalDateTime.now())) {

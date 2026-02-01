@@ -86,8 +86,26 @@ public class Order {
     @Column(name = "ghn_order_code", length = 100)
     private String ghnOrderCode; // Mã vận đơn GHN (nếu có)
 
+    @Column(name = "platform_commission", precision = 12, scale = 2)
+    private BigDecimal platformCommission = BigDecimal.ZERO; // Hoa hồng nền tảng (tính trên subtotal)
+
+    @Column(name = "commission_rate") // Double: không dùng precision/scale (chỉ DECIMAL/BigDecimal mới dùng)
+    private Double commissionRate; // % hoa hồng áp dụng tại thời điểm tạo đơn
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<OrderItem> items = new HashSet<>();
+
+    @Column(name = "received_by_buyer", nullable = false)
+    private boolean receivedByBuyer = false;
+
+    @Column(name = "stock_deducted")
+    boolean stockDeducted;
+
+    @Column(name = "received_at")
+    private LocalDateTime receivedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

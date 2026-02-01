@@ -7,6 +7,7 @@ import com.hsf.e_comerce.cart.repository.CartItemRepository;
 import com.hsf.e_comerce.cart.repository.CartRepository;
 import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.entity.Order;
+import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.payment.entity.Payment;
@@ -15,12 +16,14 @@ import com.hsf.e_comerce.payment.enums.PaymentStatus;
 import com.hsf.e_comerce.payment.repository.PaymentRepository;
 import com.hsf.e_comerce.payment.service.PaymentService;
 import com.hsf.e_comerce.payment.service.VNPayService;
+import com.hsf.e_comerce.product.entity.ProductVariant;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -111,17 +114,55 @@ public class PaymentServiceImpl implements PaymentService {
             this.handlePaymentSuccess(order.getId());
         } else {
             payment.setStatus(PaymentStatus.FAILED);
+
+            if (order.isStockDeducted()) {
+                for (OrderItem item : order.getItems()) {
+                    item.getVariant().setStockQuantity(
+                            item.getVariant().getStockQuantity() + item.getQuantity()
+                    );
+                }
+                order.setStockDeducted(false);
+            }
+
             order.setStatus(OrderStatus.CANCELLED);
         }
 
+
         paymentRepository.save(payment);
         orderRepository.save(order);
+    }
+
+    @Override
+    public Payment getOrCreatePaymentForVNPay(UUID orderId, User user) {
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new CustomException("Order không hợp lệ"));
+        return paymentRepository.findByOrder(order)
+                .orElseGet(() -> createPayment(order, PaymentMethod.VNPAY));
+    }
+
+    @Override
+    public Optional<UUID> getOrderIdByTransactionId(String transactionId) {
+        return paymentRepository.findByTransactionId(transactionId)
+                .map(p -> p.getOrder().getId());
     }
 
     @Transactional
     public void handlePaymentSuccess(UUID orderId) {
 
         Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (order.isStockDeducted()) return; // chống double call
+
+        for (OrderItem item : order.getItems()) {
+            ProductVariant v = item.getVariant();
+            if (v.getStockQuantity() < item.getQuantity()) {
+                throw new CustomException("Không đủ tồn kho");
+            }
+            v.setStockQuantity(v.getStockQuantity() - item.getQuantity());
+        }
+
+        order.setStockDeducted(true);
+        orderRepository.save(order);
 
         Cart cart = cartRepository.findByUserIdWithItems(order.getUser().getId())
                 .orElseThrow();

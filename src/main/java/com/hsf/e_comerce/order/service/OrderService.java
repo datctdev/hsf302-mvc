@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
+
+    List<OrderStatus> getAllowedNextStatuses(OrderStatus current);
     
     OrderResponse createOrder(User user, CreateOrderRequest request);
     
@@ -40,4 +42,20 @@ public interface OrderService {
     OrderResponse getOrderForEditCheckout(UUID orderId, User currentUser);
 
     void updateCheckoutInfo(UUID orderId, @Valid UpdateOrderRequest request, User user);
+
+    long count();
+
+    boolean markDeliveredByGhnRef(String ghnOrderCode, String clientOrderCode);
+
+    /**
+     * Tạo lại vận đơn GHN cho đơn (seller). Chỉ khi đơn chưa có ghnOrderCode và trạng thái CONFIRMED/PROCESSING/SHIPPED.
+     */
+    OrderResponse retryCreateGhnOrder(UUID orderId, User user);
+
+    /**
+     * Nhập mã vận đơn GHN thủ công (seller). Dùng khi đã tạo đơn trên GHN và muốn gắn mã vào đơn trong hệ thống.
+     */
+    OrderResponse setGhnOrderCodeManually(UUID orderId, String ghnOrderCode, User user);
+
+    void markReceivedByBuyer(UUID id, User user);
 }
