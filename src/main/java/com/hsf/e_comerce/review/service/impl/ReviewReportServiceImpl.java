@@ -45,11 +45,14 @@ public class ReviewReportServiceImpl implements ReviewReportService {
 
         if (request.getReason() == ReviewReportReason.OTHER &&
                 (request.getNote() == null || request.getNote().isBlank())) {
-            throw new RuntimeException("Vui lòng nhập lý do cụ thể");
+            throw new IllegalArgumentException("Vui lòng nhập lý do cụ thể");
         }
 
+        // --- KIỂM TRA TRÙNG LẶP ---
+        // Bất kể trạng thái báo cáo cũ là gì (PENDING, REVIEWED, REJECTED)
+        // Nếu đã tồn tại trong DB thì chặn luôn.
         if (reportRepository.existsByReviewIdAndReporterId(reviewId, reporter.getId())) {
-            throw new RuntimeException("Bạn đã báo cáo đánh giá này");
+            throw new IllegalStateException("Bạn đã báo cáo đánh giá này rồi. Vui lòng chờ Admin xử lý.");
         }
 
         if (review.getStatus() == ReviewStatus.DISABLED) {
@@ -63,11 +66,13 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         report.setReason(request.getReason());
         report.setNote(request.getNote());
 
+        // Mặc định khi tạo mới là PENDING
+        report.setStatus(ReviewReportStatus.PENDING);
+
         reportRepository.save(report);
 
         long count = reportRepository.countByReviewId(reviewId);
         review.setReportCount((int) count);
-
         review.setFlagged(true);
 
         reviewRepository.save(review);

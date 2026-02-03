@@ -9,28 +9,28 @@
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #17a2b8;
-    
+
     --bg-color: #f4f4f4;
     --bg-light: #f8f9fa;
     --bg-white: #fff;
     --text-color: #333;
     --text-muted: #666;
     --text-light: #999;
-    
+
     --border-color: #ddd;
     --border-radius: 6px;
     --border-radius-lg: 10px;
-    
+
     --header-bg: #333;
     --nav-bg: #444;
     --nav-hover: #555;
-    
+
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    
+
     --font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    
+
     /* Spacing scale */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -38,7 +38,7 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-2xl: 2.5rem;
-    
+
     /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-base: 0.2s ease;
