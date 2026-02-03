@@ -1,4 +1,3 @@
-<!-- Navigation Fragment - Admin Pages -->
 <nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-admin" class="nav-admin">
     <div class="nav-content">
         <a href="/admin/dashboard" class="nav-link" data-path="/admin/dashboard">Dashboard</a>
@@ -6,17 +5,7 @@
         <a href="/admin/users" class="nav-link" data-path="/admin/users">Quản Lý Users</a>
         <a href="/admin/products" class="nav-link" data-path="/admin/products">Quản Lý Sản Phẩm</a>
         <a href="/admin/orders" class="nav-link" data-path="/admin/orders">Quản Lý Đơn Hàng</a>
+        <a href="/admin/reviews" class="nav-link" data-path="/admin/reviews">Quản Lý Đánh Giá</a>
         <a href="/admin/commission" class="nav-link" data-path="/admin/commission">Cấu hình hoa hồng</a>
-        <!-- Review bị báo cáo -->
-        <a th:href="@{/admin/reviews/reports}"
-           class="nav-link nav-alert"
-           data-path="/admin/reviews/reports">
-            Review Report
-            <span style="font-size: 0.65em; vertical-align: super; margin-left: 2px; color: #ef4444;font-weight: 700;" class="sup-badge"
-                  th:if="${reportedReviewCount != null and reportedReviewCount > 0}"
-                  th:text="${reportedReviewCount}">
-                    0
-            </span>
-        </a>
     </div>
 </nav>

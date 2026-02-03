@@ -5,6 +5,7 @@ import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ReviewRepository extends JpaRepository<Review, UUID> {
+public interface ReviewRepository extends JpaRepository<Review, UUID>, JpaSpecificationExecutor<Review> {
 
     // Lấy list review cho trang chi tiết (Chỉ lấy ACTIVE)
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId AND r.status = :status")
@@ -66,5 +67,16 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     // Đếm số lượng review
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.status = 'ACTIVE'")
     long countByProductId(@Param("productId") UUID productId);
+
+    // Đếm theo số sao
+    long countByProductIdAndStatusAndRating(UUID productId, ReviewStatus status, Integer rating);
+
+    // Đếm có hình ảnh
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.status = 'ACTIVE' AND SIZE(r.images) > 0")
+    long countWithImages(@Param("productId") UUID productId);
+
+    // Đếm có bình luận (không tính rỗng)
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.status = 'ACTIVE' AND r.comment IS NOT NULL AND r.comment != ''")
+    long countWithComments(@Param("productId") UUID productId);
 
 }
