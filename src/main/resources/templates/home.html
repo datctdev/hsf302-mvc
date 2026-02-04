@@ -4,67 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang chủ - E-commerce</title>
-    
-    <!-- CSS -->
+
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/home.css}">
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
-    
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Hero -->
-        <section class="home-hero">
-            <div class="container">
-                <h1 th:text="${slogan}">Mua sắm thông minh – Giá tốt mỗi ngày</h1>
-                <p class="hero-subtext" th:text="${sloganSubtext}">Khám phá hàng ngàn sản phẩm điện tử, công nghệ từ các shop uy tín. Giao hàng nhanh, bảo hành chính hãng.</p>
-                <a th:href="@{/products}" class="btn-hero">Xem sản phẩm</a>
-            </div>
-        </section>
+<th:block th:replace="~{fragments/header :: header-simple}"></th:block>
 
-        <!-- Sản phẩm đề xuất -->
+<th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+<main class="main-content">
+    <section class="home-hero">
         <div class="container">
-            <section class="home-section home-products">
-                <h2 class="home-section-title">
-                    <span>Sản phẩm đề xuất</span>
-                    <a th:href="@{/products}" class="btn btn-outline-primary">Xem tất cả</a>
-                </h2>
-                <div class="products-grid">
-                    <th:block th:if="${featuredProducts != null and !featuredProducts.empty}" th:each="product : ${featuredProducts}">
-                        <a th:href="@{/products/{id}(id=${product.id})}" class="product-card">
-                            <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, 
+            <h1 th:text="${slogan}">Mua sắm thông minh – Giá tốt mỗi ngày</h1>
+            <p class="hero-subtext" th:text="${sloganSubtext}">Khám phá hàng ngàn sản phẩm điện tử, công nghệ từ các shop uy tín. Giao hàng nhanh, bảo hành chính hãng.</p>
+            <a th:href="@{/products}" class="btn-hero">Xem sản phẩm</a>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="home-section home-products">
+            <h2 class="home-section-title">
+                <span>Sản phẩm đề xuất</span>
+                <a th:href="@{/products}" class="btn btn-outline-primary">Xem tất cả</a>
+            </h2>
+            <div class="products-grid">
+                <th:block th:if="${featuredProducts != null and !featuredProducts.empty}" th:each="product : ${featuredProducts}">
+                    <a th:href="@{/products/{id}(id=${product.id})}" class="product-card">
+                        <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null},
                                           firstImage=${product.images != null and !product.images.empty ? product.images[0] : null},
                                           displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
-                                 th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" 
-                                 th:alt="${product.name}" 
-                                 class="product-card-image" 
-                                 onerror="this.src='/images/placeholder.png'">
-                            <div class="product-card-body">
-                                <h3 class="product-card-title" th:text="${product.name}">Tên sản phẩm</h3>
-                                <div class="product-card-price" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                                <div class="product-card-shop" th:text="${product.shopName ?: 'N/A'}">Shop</div>
-                            </div>
-                        </a>
-                    </th:block>
-                    <div th:if="${featuredProducts == null or featuredProducts.empty}" class="empty-state">
-                        Chưa có sản phẩm nào. <a th:href="@{/products}">Xem danh sách sản phẩm</a>
-                    </div>
+                             th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}"
+                             th:alt="${product.name}"
+                             class="product-card-image"
+                             onerror="this.src='/images/placeholder.png'">
+                        <div class="product-card-body">
+                            <h3 class="product-card-title" th:text="${product.name}">Tên sản phẩm</h3>
+                            <div class="product-card-price" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
+                            <div class="product-card-shop" th:text="${product.shopName ?: 'N/A'}">Shop</div>
+                        </div>
+                    </a>
+                </th:block>
+                <div th:if="${featuredProducts == null or featuredProducts.empty}" class="empty-state">
+                    Chưa có sản phẩm nào. <a th:href="@{/products}">Xem danh sách sản phẩm</a>
                 </div>
-            </section>
-        </div>
-    </main>
-    
-    <!-- Footer -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+            </div>
+        </section>
+    </div>
+</main>
 
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+<script th:src="@{/js/common.js}"></script>
 </body>
 </html>

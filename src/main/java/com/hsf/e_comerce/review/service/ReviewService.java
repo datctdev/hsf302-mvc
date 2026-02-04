@@ -5,6 +5,9 @@ import com.hsf.e_comerce.review.dto.request.CreateReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewSummaryDTO;
+import com.hsf.e_comerce.review.entity.Review;
+import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import org.springframework.data.domain.Page;
 
 import java.util.Optional;
@@ -35,5 +38,15 @@ public interface ReviewService {
     // 7. Đếm tổng số review (VD: 100 đánh giá)
     long getTotalReviews(UUID productId);
 
+    // 8. Hàm mới cho Admin
+    Page<Review> getAllReviewsForAdmin(String keyword, Integer rating, ReviewStatus status, UUID shopId, int page, int size);
+
+    // 9. Hàm ẩn/hiện review
+    void toggleReviewVisibility(UUID reviewId);
+
+    // 10. Kiểm tra quyền đánh giá (Có thể đánh giá hay không)
     ReviewPermissionResponse checkReviewPermission(User user);
+
+    // 11. Lấy tổng quan đánh giá (số lượng từng sao, có ảnh, có bình luận)
+    ReviewSummaryDTO getReviewSummary(UUID productId);
 }

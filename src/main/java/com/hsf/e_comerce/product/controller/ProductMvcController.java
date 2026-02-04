@@ -1,11 +1,13 @@
 package com.hsf.e_comerce.product.controller;
 
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.dto.response.ProductVariantResponse;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewSummaryDTO;
 import com.hsf.e_comerce.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -70,32 +72,38 @@ public class ProductMvcController {
     public String getProductById(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "0") int reviewPage,
-            @RequestParam(required = false) Integer rating,     // Lọc theo sao
-            @RequestParam(required = false) Boolean hasImages,  // Lọc có ảnh
-            @RequestParam(defaultValue = "newest") String sortBy, // Sắp xếp
+            @RequestParam(required = false) Integer rating,
+            @RequestParam(required = false) Boolean hasImages,
+            @RequestParam(required = false) Boolean hasComments,
+            @RequestParam(defaultValue = "newest") String sortBy,
+            @CurrentUser User currentUser,
             Model model) {
         try {
-            User currentUser = (User) model.getAttribute("currentUser");
             // 1. Load Product
             ProductResponse product = productService.getPublishedProductById(id);
             model.addAttribute("product", product);
 
-            // 2. Load Reviews (Truyền đủ tham số lọc vào Service)
+            // 2. Load Reviews (Danh sách review bên dưới)
             Page<ReviewResponse> reviews = reviewService.getProductReviews(
                     id, reviewPage, 5, rating, hasImages, sortBy, currentUser
             );
             model.addAttribute("reviews", reviews);
 
-            // 3. Tính toán thống kê
-            Double avgRating = reviewService.getAverageRating(id);
-            long totalReviews = reviewService.getTotalReviews(id);
-            model.addAttribute("avgRating", avgRating != null ? avgRating : 0.0);
-            model.addAttribute("totalReviews", totalReviews);
+            // 3. Load Thống Kê (Review Summary)
+            ReviewSummaryDTO reviewSummary = reviewService.getReviewSummary(id);
+            model.addAttribute("reviewSummary", reviewSummary);
 
-            // 4. TRUYỀN LẠI THAM SỐ LỌC CHO VIEW (Để highlight nút đang chọn)
+            // Map thêm avgRating riêng lẻ để tránh lỗi nếu view cũ còn dùng
+            model.addAttribute("avgRating", reviewSummary.getAverageRating());
+
+            // 4. Truyền lại tham số lọc để highlight nút bấm
             model.addAttribute("currentRating", rating);
             model.addAttribute("currentHasImages", hasImages);
+            model.addAttribute("currentHasComments", hasComments);
             model.addAttribute("currentSort", sortBy);
+
+            // Biến currentUser để check quyền báo cáo
+            model.addAttribute("currentUser", currentUser);
 
             // 5. Variants
             if (product.getVariants() != null && !product.getVariants().isEmpty()) {
@@ -107,6 +115,7 @@ public class ProductMvcController {
 
             return "products/detail";
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("error", "Không tìm thấy sản phẩm");
             return "redirect:/products";
         }

@@ -16,11 +16,11 @@
 ## 1. Clone và vào thư mục dự án
 
 ```bash
-git clone <URL_REPO_CỦA_BẠN> hsf302-mvc
+git clone https://github.com/datctdev/hsf302-mvc.git
 cd hsf302-mvc
 ```
 
-Thay `<URL_REPO_CỦA_BẠN>` bằng URL thực tế (ví dụ `https://github.com/username/hsf302-mvc.git`).
+Thay `https://github.com/datctdev/hsf302-mvc.git` bằng URL thực tế.
 
 ---
 
@@ -196,9 +196,108 @@ Mở http://localhost:8080, đăng nhập bằng `buyer@gmail.com` / `buyer123@`
 
 ---
 
-## Tài liệu thêm
+## 10. Main flows chính
 
-- **docs/Payment.readme** — Đặc tả Payment (COD, VNPay, refund, trạng thái).
-- **docs/VIEC_CAN_LAM.md** — Việc cần làm (Refund, Multi-payment, Wallet, Payout) và phân công.
+### 10.1. Đăng ký làm người bán (Seller)
+
+```
+User đăng nhập
+    → /seller/become-seller
+    → Kiểm tra KYC đã xác minh (VNPT eKYC)
+        ├─ Chưa KYC → Chuyển /kyc, hoàn thành xác minh danh tính
+        └─ Đã KYC
+            → Điền form (tên shop, mô tả, logo, ảnh bìa, SĐT, địa chỉ)
+            → POST /seller/become-seller
+            → Tạo SellerRequest (PENDING)
+            → Admin duyệt: /admin/seller-requests
+                ├─ Approve → User nhận role SELLER, tạo Shop
+                └─ Reject → Request bị từ chối
+```
+
+**Các bước:** KYC (upload CCCD, selfie, verify) → Form đăng ký seller → Admin approve → Có shop, vào `/seller/shop` quản lý.
+
+---
+
+### 10.2. Mua hàng & thanh toán
+
+```
+Xem sản phẩm (/products, /products/{id})
+    → Thêm vào giỏ /cart/add
+    → Xem giỏ /cart
+    → Checkout /orders/checkout (nhập địa chỉ, SĐT)
+    → POST /orders/create
+    → Redirect /payments/{orderId}
+    → Chọn phương thức: COD hoặc VNPay
+        ├─ COD: POST /payments/cod/confirm → Order CONFIRMED, redirect chi tiết đơn
+        └─ VNPay: GET /payments/vnpay/redirect → Thanh toán trên VNPay
+            → Callback /payments/vnpay/callback → Verify checksum
+            → Order CONFIRMED hoặc CANCELLED
+    → Seller xác nhận, tạo vận đơn GHN (/seller/orders/{id})
+    → GHN giao hàng → Webhook /webhooks/ghn → Order DELIVERED
+    → Buyer bấm "Đã nhận" /orders/{id}/received (hoặc auto sau 3 ngày)
+```
+
+**Các bước:** Giỏ hàng → Checkout → Tạo đơn → Chọn thanh toán (COD/VNPay) → Seller xử lý → GHN giao → Đã nhận.
+
+---
+
+### 10.3. Đánh giá (Rating)
+
+```
+Buyer đã nhận hàng (Order DELIVERED, receivedByBuyer = true)
+    → /products/{productId}/review (form tạo đánh giá)
+    → POST /products/{productId}/review (rating, nội dung, ảnh)
+    → Review được lưu, hiển thị trên trang sản phẩm
+    → Seller có thể trả lời: POST /seller/reviews/{reviewId}/reply
+    → Buyer có thể sửa/xóa: /reviews/{reviewId}/edit, POST /reviews/{reviewId}/delete
+```
+
+**Các bước:** Đơn đã nhận → Vào trang sản phẩm → Tạo đánh giá (sao, nội dung, ảnh) → Seller trả lời (tuỳ chọn) → Buyer sửa/xóa (tuỳ chọn).
+
+---
+
+### 10.4. Báo cáo review
+
+```
+User (buyer hoặc người xem) thấy review vi phạm
+    → POST /reviews/{reviewId}/report (lý do: SPAM, OFFENSIVE, FAKE, OTHER)
+    → Tạo ReviewReport (PENDING)
+    → Admin xem: /admin/reviews (danh sách review có báo cáo)
+    → Admin xử lý:
+        ├─ Ẩn review: POST /admin/reviews/{reviewId}/hide-report
+        ├─ Bỏ qua báo cáo: POST /admin/reviews/{reviewId}/ignore-report
+        └─ Bật/tắt trạng thái review: POST /admin/reviews/{reviewId}/toggle-status
+    → Người báo cáo có thể cập nhật: PUT /reviews/{reviewId}/report
+```
+
+**Các bước:** Báo cáo review (chọn lý do) → Admin xem danh sách báo cáo → Ẩn review / Bỏ qua / Bật tắt review.
+
+---
+
+## 11. Danh sách tính năng CRUD
+
+| Module | Create | Read | Update | Delete | Ghi chú |
+|--------|--------|------|--------|--------|--------|
+| **User (Auth)** | Đăng ký `/register` | Profile `/profile`, Login | Sửa profile, Đổi mật khẩu | — | Admin: activate/deactivate user |
+| **Cart** | Add item `/cart/add` | Xem giỏ `/cart` | Update qty `/cart/update` | Remove item, Clear `/cart/remove`, `/cart/clear` | Theo session/user |
+| **Order** | Create `/orders/create` | Lịch sử `/orders`, Chi tiết `/orders/{id}` | Update checkout `/orders/{id}/update-checkout` | — | Cancel `/orders/{id}/cancel`, Received `/orders/{id}/received` |
+| **Order (Seller)** | — | Danh sách `/seller/orders`, Chi tiết | Update status, Tạo GHN, Nhập mã GHN | — | |
+| **Order (Admin)** | — | Danh sách `/admin/orders`, Chi tiết | Update status | — | |
+| **Payment** | COD confirm, VNPay redirect | Trang chọn payment `/payments/{orderId}` | — | — | Callback VNPay tự động |
+| **Product** | — | Danh sách `/products`, Chi tiết `/products/{id}` | — | — | Public |
+| **Product (Seller)** | Add `/seller/products/add` | Danh sách `/seller/products` | Edit `/seller/products/edit/{id}` | Delete `/seller/products/delete/{id}` | |
+| **Product (Admin)** | — | Danh sách `/admin/products` | Unpublish, Publish, Hide, Restore | — | Quản lý trạng thái |
+| **Shop** | Tạo khi Admin approve seller | Xem public `/shops/{id}` | Seller: `/seller/shop` | — | |
+| **Review** | Create `/products/{id}/review` | My review `/reviews/my-review`, Permission check | Edit `/reviews/{id}/edit` | Delete `/reviews/{id}/delete` | |
+| **Review Reply (Seller)** | Reply `/seller/reviews/{id}/reply` | — | Edit reply | — | |
+| **Review Report** | Report `/reviews/{id}/report` | — | Update report `/reviews/{id}/report` (PUT) | — | Admin xử lý: hide, ignore |
+| **Seller Request** | Become seller `/seller/become-seller` | Admin xem `/admin/seller-requests` | Update, Cancel (seller) | — | Admin: approve, reject |
+| **Platform Setting** | — | — | Commission rate `/admin/commission` | — | Admin only |
+| **File** | Upload `/files/upload` | View, Download `/files/view`, `/files/download` | — | — | |
+| **KYC** | Start session, Upload CCCD/selfie | Session, Review, History | — | — | VNPT eKYC |
+
+**Lưu ý:** Một số thao tác không phải CRUD thuần (ví dụ: cancel order, approve seller, toggle review) được liệt kê trong cột tương ứng hoặc ghi chú.
+
+---
 
 Nếu bạn gặp lỗi khi clone và chạy (DB connection, MinIO, port), kiểm tra lại `.env` và `docker compose ps` để đảm bảo postgres và minio đang chạy đúng port.

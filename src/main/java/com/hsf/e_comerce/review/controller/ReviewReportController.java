@@ -8,6 +8,7 @@ import com.hsf.e_comerce.review.service.ReviewReportService;
 import com.hsf.e_comerce.review.valueobject.ReviewReportReason;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -22,13 +23,13 @@ public class ReviewReportController {
     private final ReviewReportService reportService;
 
     @PostMapping("/{reviewId}/report")
-    public String reportReview(
+    @ResponseBody
+    public ResponseEntity<?> reportReview(
             @PathVariable UUID reviewId,
             @RequestParam("reason") ReviewReportReason reason,
             @RequestParam(value = "note", required = false) String note,
             @CurrentUser User user,
-            HttpServletRequest request,
-            RedirectAttributes redirectAttributes
+            HttpServletRequest request
     ) {
         try {
             reportService.reportReview(
@@ -37,12 +38,19 @@ public class ReviewReportController {
                     request.getRemoteAddr(),
                     new ReportReviewRequest(reason, note)
             );
-            redirectAttributes.addFlashAttribute("success", "Đã gửi báo cáo đánh giá");
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
-        }
 
-        return "redirect:" + request.getHeader("Referer");
+            // Trả về 200 OK nếu thành công
+            return ResponseEntity.ok("Gửi báo cáo thành công!");
+
+        } catch (IllegalStateException | IllegalArgumentException ex) {
+            // Trả về 400 Bad Request nếu trùng lặp hoặc thiếu dữ liệu
+            // Frontend sẽ nhảy vào block 'else' và hiện alert lỗi
+            return ResponseEntity.badRequest().body(ex.getMessage());
+
+        } catch (Exception ex) {
+            // Trả về 500 cho các lỗi khác
+            return ResponseEntity.internalServerError().body("Đã xảy ra lỗi hệ thống.");
+        }
     }
 
     @PutMapping("/{reviewId}/report")
@@ -62,6 +70,4 @@ public class ReviewReportController {
         return "redirect:" + httpRequest.getHeader("Referer");
     }
 
-
 }
-

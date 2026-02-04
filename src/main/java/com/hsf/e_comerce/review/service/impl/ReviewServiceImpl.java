@@ -14,14 +14,12 @@ import com.hsf.e_comerce.review.dto.request.UpdateReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
+import com.hsf.e_comerce.review.dto.response.ReviewSummaryDTO;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewImage;
 import com.hsf.e_comerce.review.entity.ReviewReport;
 import com.hsf.e_comerce.review.entity.SellerReviewReply;
-import com.hsf.e_comerce.review.repository.ReviewImageRepository;
-import com.hsf.e_comerce.review.repository.ReviewReportRepository;
-import com.hsf.e_comerce.review.repository.ReviewRepository;
-import com.hsf.e_comerce.review.repository.SellerReviewReplyRepository;
+import com.hsf.e_comerce.review.repository.*;
 import com.hsf.e_comerce.review.service.ReviewService;
 import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.review.valueobject.ReviewStatus;
@@ -202,7 +200,6 @@ public class ReviewServiceImpl implements ReviewService {
                                 review.getId(),
                                 currentUser.getId()
                         )
-                        .filter(r -> r.getStatus() == ReviewReportStatus.PENDING)
                         .map(r -> new ReviewReportItemResponse(
                                 r.getId(),
                                 r.getReason(),
@@ -310,4 +307,59 @@ public class ReviewServiceImpl implements ReviewService {
         }
         review.setImages(images);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Review> getAllReviewsForAdmin(String keyword, Integer rating, ReviewStatus status, UUID shopId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        return reviewRepository.findAll(
+                ReviewSpecification.filterForAdmin(keyword, rating, status, shopId),
+                pageable
+        );
+    }
+
+    @Override
+    @Transactional
+    public void toggleReviewVisibility(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException("Đánh giá không tồn tại"));
+
+        // Logic toggle: Nếu đang ACTIVE -> HIDDEN, ngược lại thì ACTIVE
+        if (review.getStatus() == ReviewStatus.ACTIVE) {
+            review.setStatus(ReviewStatus.HIDDEN);
+        } else if (review.getStatus() == ReviewStatus.HIDDEN) {
+            review.setStatus(ReviewStatus.ACTIVE);
+        } else {
+            // Nếu đang là DELETED hoặc DISABLED (do vi phạm nặng), có thể cho phép khôi phục về HIDDEN trước
+            review.setStatus(ReviewStatus.ACTIVE);
+        }
+        reviewRepository.save(review);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewSummaryDTO getReviewSummary(UUID productId) {
+        long total = reviewRepository.countByProductId(productId);
+        if (total == 0) {
+            return new ReviewSummaryDTO(0.0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        double avg = reviewRepository.getAverageRating(productId);
+
+        avg = Math.round(avg * 10.0) / 10.0;
+
+        return new ReviewSummaryDTO(
+                avg,
+                total,
+                reviewRepository.countByProductIdAndStatusAndRating(productId, ReviewStatus.ACTIVE, 5),
+                reviewRepository.countByProductIdAndStatusAndRating(productId, ReviewStatus.ACTIVE, 4),
+                reviewRepository.countByProductIdAndStatusAndRating(productId, ReviewStatus.ACTIVE, 3),
+                reviewRepository.countByProductIdAndStatusAndRating(productId, ReviewStatus.ACTIVE, 2),
+                reviewRepository.countByProductIdAndStatusAndRating(productId, ReviewStatus.ACTIVE, 1),
+                reviewRepository.countWithImages(productId),
+                reviewRepository.countWithComments(productId)
+        );
+    }
+
 }
