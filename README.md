@@ -304,12 +304,12 @@ Buyer đã nhận hàng (Order DELIVERED, receivedByBuyer = true)
 ### 10.4. Báo cáo review
 
 ```
-User (buyer hoặc người xem) thấy review vi phạm
+User (buyer hoặc người xem) thấy review vi phạm 
     → POST /reviews/{reviewId}/report (lý do: SPAM, OFFENSIVE, FAKE, OTHER)
     → Tạo ReviewReport (PENDING)
     → Admin xem: /admin/reviews (danh sách review có báo cáo)
     → Admin xử lý:
-        ├─ Ẩn review: POST /admin/reviews/{reviewId}/hide-report
+        ├─ Ẩn review: POST /admin/reviews/{reviewId}/hide-report (người dùng bị report từ lần thứ 3 sẽ có cảnh báo, từ 6 lần trở đi sẽ bị cấm review 3 tháng)
         ├─ Bỏ qua báo cáo: POST /admin/reviews/{reviewId}/ignore-report
         └─ Bật/tắt trạng thái review: POST /admin/reviews/{reviewId}/toggle-status
     → Người báo cáo có thể cập nhật: PUT /reviews/{reviewId}/report
