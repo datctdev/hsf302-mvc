@@ -155,8 +155,8 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // 2. Cảnh báo từ lần thứ 3
-        if (user.getReviewViolationCount() >= 3) {
+        // 2. Cảnh báo từ lần thứ 2
+        if (user.getReviewViolationCount() >= 1) {
             return new ReviewPermissionResponse(
                     true,
                     true,
