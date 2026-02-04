@@ -286,7 +286,7 @@ Xem sản phẩm (/products, /products/{id})
 
 ---
 
-### 10.3. Đánh giá (Rating)
+### 10.3. Đánh giá & Báo cáo Review (Rating & Report)
 
 ```
 Buyer đã nhận hàng (Order DELIVERED, receivedByBuyer = true)
@@ -295,27 +295,18 @@ Buyer đã nhận hàng (Order DELIVERED, receivedByBuyer = true)
     → Review được lưu, hiển thị trên trang sản phẩm
     → Seller có thể trả lời: POST /seller/reviews/{reviewId}/reply
     → Buyer có thể sửa/xóa: /reviews/{reviewId}/edit, POST /reviews/{reviewId}/delete
-```
-
-**Các bước:** Đơn đã nhận → Vào trang sản phẩm → Tạo đánh giá (sao, nội dung, ảnh) → Seller trả lời (tuỳ chọn) → Buyer sửa/xóa (tuỳ chọn).
-
----
-
-### 10.4. Báo cáo review
-
-```
 User (buyer hoặc người xem) thấy review vi phạm
     → POST /reviews/{reviewId}/report (lý do: SPAM, OFFENSIVE, FAKE, OTHER)
     → Tạo ReviewReport (PENDING)
     → Admin xem: /admin/reviews (danh sách review có báo cáo)
     → Admin xử lý:
         ├─ Ẩn review: POST /admin/reviews/{reviewId}/hide-report
-        ├─ Bỏ qua báo cáo: POST /admin/reviews/{reviewId}/ignore-report
-        └─ Bật/tắt trạng thái review: POST /admin/reviews/{reviewId}/toggle-status
+        ├─ Bỏ qua báo cáo: PUT /admin/reviews/{reviewId}/ignore-report
     → Người báo cáo có thể cập nhật: PUT /reviews/{reviewId}/report
 ```
 
-**Các bước:** Báo cáo review (chọn lý do) → Admin xem danh sách báo cáo → Ẩn review / Bỏ qua / Bật tắt review.
+**Các bước:** Đơn đã nhận → Vào trang sản phẩm → Tạo đánh giá (sao, nội dung, ảnh) → Seller trả lời (tuỳ chọn) → Buyer sửa/xóa (tuỳ chọn).
+              Báo cáo review (chọn lý do) → Admin xem danh sách báo cáo → Ẩn review / Bỏ qua / Bật tắt review.
 
 ---
 
