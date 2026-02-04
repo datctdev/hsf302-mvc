@@ -59,6 +59,51 @@ Các biến **tùy chọn** (có thể để trống khi chỉ chạy dev cơ b�
 - **VNPay:** `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_URL`, `VNPAY_RETURN_URL` — thanh toán VNPay.
 - **VNPT eKYC:** `VNPT_EKYC_*` — xác thực KYC.
 
+### 2.1. Hướng dẫn lấy thông tin từ bên thứ 3
+
+Dự án tích hợp **3 dịch vụ bên thứ 3**. Để dùng đầy đủ tính năng (vận chuyển, thanh toán, KYC), bạn cần đăng ký và lấy thông tin cấu hình:
+
+---
+
+#### GHN (Giao Hàng Nhanh) — tính phí ship, tạo vận đơn (Sandbox)
+
+| Biến | Cách lấy |
+|------|----------|
+| `GHN_URL` | `https://dev-online-gateway.ghn.vn` (sandbox GHN) |
+| `GHN_TOKEN` | Đăng ký tại [https://5sao.ghn.dev](https://5sao.ghn.dev/) → Lấy token API |
+| `GHN_SHOP_ID` | Trong trang quản lý [https://5sao.ghn.dev](https://5sao.ghn.dev/) — mục **Thông tin cửa hàng** / **Danh sách cửa hàng** — lấy ID cửa hàng (số nguyên). Có thể gọi API `shop/detail` với token để lấy danh sách shop. |
+
+---
+
+#### VNPay — thanh toán online
+
+| Biến | Cách lấy |
+|------|----------|
+| `VNPAY_TMN_CODE` | Đăng ký tại [https://sandbox.vnpayment.vn/merchantv2](https://sandbox.vnpayment.vn/merchantv2) → Đăng nhập → **Thông tin merchant** / **Cấu hình** → Copy **Mã website (TMN Code)** |
+| `VNPAY_HASH_SECRET` | Cùng trang cấu hình → Copy **Chuỗi bí mật (Hash Secret)** |
+| `VNPAY_URL` | **Sandbox:** `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` — **Production:** URL do VNPay cung cấp khi ký hợp đồng |
+| `VNPAY_RETURN_URL` | URL callback sau khi thanh toán, ví dụ: `http://localhost:8080/payments/vnpay/callback` (dev) hoặc `https://yourdomain.com/payments/vnpay/callback` (prod) |
+
+**Lưu ý:** Sandbox dùng thẻ test; production cần ký hợp đồng với VNPay.
+
+---
+
+#### VNPT eKYC — xác minh danh tính (CCCD, selfie)
+
+| Biến | Cách lấy |
+|------|----------|
+| `VNPT_EKYC_BASE_URL` | URL API do VNPT cung cấp khi đăng ký (ví dụ: `https://ekyc-api.vnpt.vn` hoặc tương tự) |
+| `VNPT_EKYC_ACCESS_TOKEN` | Token truy cập API |
+| `VNPT_EKYC_TOKEN_ID` | ID token |
+| `VNPT_EKYC_TOKEN_KEY` | Key bí mật |
+
+**Lưu ý:** VNPT eKYC là dịch vụ B2B, thường cần **liên hệ VNPT** để đăng ký và nhận thông tin tích hợp:
+
+- Trang chính thức: [https://ekyc.vnpt.vn](https://ekyc.vnpt.vn)
+- Liên hệ / đăng ký: [https://ekyc.vnpt.vn/vi/contact](https://ekyc.vnpt.vn/vi/contact)
+
+Nếu **chưa có** thông tin VNPT eKYC, bạn có thể **bỏ qua** — chức năng đăng ký làm seller (yêu cầu KYC) sẽ báo lỗi; các tính năng khác (mua hàng, thanh toán COD/VNPay, đánh giá) vẫn chạy bình thường. Tài khoản mẫu `seller@gmail.com` đã có sẵn và đã qua KYC (trong DataInitializer).
+
 ---
 
 ## 3. Chạy Docker (PostgreSQL + MinIO)
