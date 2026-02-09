@@ -88,7 +88,7 @@ public class AdminReviewMvcController {
     }
 
     // 2. Bỏ qua: Review hợp lệ
-    @PostMapping("/{reviewId}/ignore-report")
+    @PutMapping("/{reviewId}/ignore-report")
     public String ignoreReport(@PathVariable UUID reviewId, RedirectAttributes redirectAttributes) {
         try {
             reportService.ignoreReview(reviewId);

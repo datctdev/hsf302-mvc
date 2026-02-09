@@ -4,8 +4,6 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.review.dto.request.ReportReviewRequest;
 import com.hsf.e_comerce.review.dto.request.UpdateReportReviewRequest;
 import com.hsf.e_comerce.review.dto.response.ReportedReviewResponse;
-import com.hsf.e_comerce.review.dto.response.ReviewPermissionResponse;
-import com.hsf.e_comerce.review.dto.response.ReviewReportItemResponse;
 import com.hsf.e_comerce.review.entity.Review;
 import com.hsf.e_comerce.review.entity.ReviewReport;
 import com.hsf.e_comerce.review.repository.ReviewReportRepository;
@@ -15,14 +13,11 @@ import com.hsf.e_comerce.review.valueobject.ReviewReportReason;
 import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.review.valueobject.ReviewStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -157,8 +152,8 @@ public class ReviewReportServiceImpl implements ReviewReportService {
                 reviewOwner.getReviewViolationCount() + 1
         );
 
-        // 3. Nếu > 5 → ban 3 tháng
-        if (reviewOwner.getReviewViolationCount() > 5) {
+        // 3. Nếu > 2 → ban 3 tháng
+        if (reviewOwner.getReviewViolationCount() >= 2) {
             reviewOwner.setReviewBannedUntil(
                     LocalDateTime.now().plusMonths(3)
             );
@@ -171,16 +166,11 @@ public class ReviewReportServiceImpl implements ReviewReportService {
     @Transactional
     public void ignoreReview(UUID reviewId) {
 
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
-
-        // Từ chối tất cả report pending
         reportRepository.updateStatusByReviewId(
                 reviewId,
                 ReviewReportStatus.REJECTED
         );
 
-        // Không động gì tới review
     }
 
 }
