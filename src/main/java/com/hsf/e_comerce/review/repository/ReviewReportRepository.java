@@ -57,7 +57,9 @@ public interface ReviewReportRepository
             rr.reason,
             rr.note,
             ru.email,
-            rr.createdAt
+            rr.createdAt,
+            rr.isEdited,
+            rr.status
         )
         from ReviewReport rr
         left join rr.reporter ru
@@ -113,6 +115,5 @@ public interface ReviewReportRepository
             @Param("productId") UUID productId,
             @Param("subOrderId") UUID subOrderId
     );
-
 
 }
