@@ -1,6 +1,7 @@
 package com.hsf.e_comerce.review.dto.response;
 
 import com.hsf.e_comerce.review.valueobject.ReviewReportReason;
+import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,4 +17,7 @@ public class ReviewReportItemResponse {
     private String note;
     private String reporterEmail;
     private LocalDateTime createdAt;
+    private boolean isEdited;
+    private ReviewReportStatus status;
+
 }
