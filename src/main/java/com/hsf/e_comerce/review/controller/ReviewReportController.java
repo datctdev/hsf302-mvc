@@ -54,20 +54,21 @@ public class ReviewReportController {
     }
 
     @PutMapping("/{reviewId}/report")
-    public String updateReport(
+    @ResponseBody
+    public ResponseEntity<?> updateReport(
             @PathVariable UUID reviewId,
             @ModelAttribute UpdateReportReviewRequest request,
-            @CurrentUser User user,
-            HttpServletRequest httpRequest,
-            RedirectAttributes redirect
+            @CurrentUser User user
     ) {
         try {
             reportService.updateReport(reviewId, user, request);
-            redirect.addFlashAttribute("success", "Đã cập nhật báo cáo");
-        } catch (RuntimeException ex) {
-            redirect.addFlashAttribute("error", ex.getMessage());
+            return ResponseEntity.ok("Cập nhật báo cáo thành công!");
+        } catch (IllegalStateException | IllegalArgumentException ex) {
+            // Trả về 400 Bad Request kèm lý do (VD: Đã sửa 1 lần rồi)
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi hệ thống.");
         }
-        return "redirect:" + httpRequest.getHeader("Referer");
     }
 
 }

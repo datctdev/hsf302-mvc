@@ -52,6 +52,10 @@ public class ReviewReport {
     @Column(nullable = false)
     private ReviewReportStatus status;
 
+    // Cờ đánh dấu đã chỉnh sửa
+    @Column(name = "is_edited", nullable = false)
+    private boolean isEdited = false;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -59,5 +63,7 @@ public class ReviewReport {
     @PrePersist
     void prePersist() {
         status = ReviewReportStatus.PENDING;
+        // Đảm bảo mặc định là false
+        if (!isEdited) isEdited = false;
     }
 }

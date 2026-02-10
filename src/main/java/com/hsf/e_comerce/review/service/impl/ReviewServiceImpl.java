@@ -200,12 +200,15 @@ public class ReviewServiceImpl implements ReviewService {
                                 review.getId(),
                                 currentUser.getId()
                         )
+                        // Lấy báo cáo bất kể trạng thái (Pending/Reviewed/Rejected)
                         .map(r -> new ReviewReportItemResponse(
                                 r.getId(),
                                 r.getReason(),
                                 r.getNote(),
                                 r.getReporter().getEmail(),
-                                r.getCreatedAt()
+                                r.getCreatedAt(),
+                                r.isEdited(),
+                                r.getStatus()
                         ))
                         .orElse(null);
             }

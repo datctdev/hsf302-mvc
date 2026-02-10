@@ -121,17 +121,26 @@ public class ReviewReportServiceImpl implements ReviewReportService {
                 .findByReviewIdAndReporterId(reviewId, reporter.getId())
                 .orElseThrow(() -> new RuntimeException("Bạn chưa báo cáo đánh giá này"));
 
+        // 1. Kiểm tra trạng thái: Phải là PENDING mới được sửa
         if (report.getStatus() != ReviewReportStatus.PENDING) {
-            throw new RuntimeException("Báo cáo đã được xử lý, không thể chỉnh sửa");
+            throw new IllegalStateException("Báo cáo đã được Admin tiếp nhận hoặc xử lý, không thể chỉnh sửa.");
+        }
+
+        // 2. Kiểm tra số lần sửa: Nếu isEdited là true thì chặn
+        if (report.isEdited()) {
+            throw new IllegalStateException("Bạn chỉ được phép chỉnh sửa báo cáo 1 lần duy nhất.");
         }
 
         if (request.getReason() == ReviewReportReason.OTHER &&
                 (request.getNote() == null || request.getNote().isBlank())) {
-            throw new RuntimeException("Vui lòng nhập lý do cụ thể");
+            throw new IllegalArgumentException("Vui lòng nhập lý do cụ thể");
         }
 
         report.setReason(request.getReason());
         report.setNote(request.getNote());
+
+        // 3. Đánh dấu là đã sửa
+        report.setEdited(true);
 
         reportRepository.save(report);
     }

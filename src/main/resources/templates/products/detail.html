@@ -235,6 +235,51 @@
             .star-rating-precision { margin-top: 0; font-size: 1.2rem; }
             .score-number span:first-child { font-size: 2rem; }
         }
+
+        /* --- STYLE CHO NÚT SỬA BÁO CÁO --- */
+
+        /* 1. Trạng thái Sửa được (Cờ cam + Hiệu ứng) */
+        .btn-report-direct.reported.editable {
+            cursor: pointer !important; /* Cho phép bấm */
+            position: relative;
+            background-color: #fff5f5;
+            border: 1px solid #ee4d2d;
+            opacity: 1 !important;
+        }
+
+        .btn-report-direct.reported.editable:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 5px rgba(238, 77, 45, 0.2);
+        }
+
+        /* 2. Icon bút chì nhỏ đè lên góc */
+        .btn-report-direct.reported.editable::after {
+            content: "\f303"; /* Mã Unicode của FontAwesome 'fa-pencil' */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #333;
+            color: #fff;
+            font-size: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #fff;
+        }
+
+        /* 3. Trạng thái Đã sửa xong (Khóa cứng) */
+        .btn-report-direct.reported.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+            color: #999;
+            border-color: transparent;
+        }
     </style>
 </head>
 <body>
@@ -421,14 +466,38 @@
                             </div>
                         </div>
 
-                        <div th:if="${currentUser != null and currentUser.id != review.userId}">
-                            <button th:if="${review.userReport == null}" type="button" class="btn-report-direct" title="Báo cáo"
-                                    th:data-id="${review.id}" onclick="openReportModal(this.getAttribute('data-id'))">
+                        <div th:if="${currentUser != null and currentUser.id != review.userId}" style="position: relative;">
+
+                            <button th:if="${review.userReport == null}"
+                                    type="button"
+                                    class="btn-report-direct"
+                                    title="Báo cáo đánh giá này"
+                                    th:data-id="${review.id}"
+                                    onclick="openReportModal(this.getAttribute('data-id'), null, null, false)">
                                 <i class="far fa-flag"></i>
                             </button>
-                            <button th:if="${review.userReport != null}" type="button" class="btn-report-direct reported" title="Đã báo cáo" disabled>
-                                <i class="fas fa-flag"></i>
-                            </button>
+
+                            <th:block th:if="${review.userReport != null}">
+
+                                <button th:if="${!review.userReport.edited and review.userReport.status.name() == 'PENDING'}"
+                                        type="button"
+                                        class="btn-report-direct reported editable"
+                                        title="Chỉnh sửa báo cáo (Chỉ khi Admin chưa duyệt)"
+                                        th:data-id="${review.id}"
+                                        th:data-reason="${review.userReport.reason}"
+                                        th:data-note="${review.userReport.note}"
+                                        onclick="openReportModal(this.getAttribute('data-id'), this.getAttribute('data-reason'), this.getAttribute('data-note'), true)">
+                                    <i class="fas fa-flag" style="color: #ee4d2d;"></i>
+                                </button>
+
+                                <button th:if="${review.userReport.edited or review.userReport.status.name() != 'PENDING'}"
+                                        type="button"
+                                        class="btn-report-direct reported locked"
+                                        th:title="${review.userReport.status.name() == 'PENDING' ? 'Bạn đã hết lượt chỉnh sửa' : 'Báo cáo đã được Admin xử lý'}"
+                                        disabled>
+                                    <i class="fas fa-flag"></i>
+                                </button>
+                            </th:block>
                         </div>
                     </div>
 
@@ -521,6 +590,7 @@
     let selectedVariants = {};
     let selectedVariantIds = {};
     let productData = /*[[${product}]]*/ null;
+    let isEditMode = false; // Biến toàn cục để xác định đang Thêm hay Sửa
 
     function changeMainImage(imageUrl, thumbnail) {
         document.getElementById('mainImage').src = imageUrl;
@@ -597,15 +667,63 @@
         if (isHidden) { const textarea = form.querySelector('textarea'); if (textarea) textarea.focus(); }
     }
 
-    // --- REPORT LOGIC ---
-    function openReportModal(reviewId) {
+    // --- REPORT LOGIC - MỞ MODAL ---
+    function openReportModal(reviewId, currentReason, currentNote, editMode) {
+        // Reset form về trạng thái sạch
         document.getElementById('reportForm').reset();
         document.getElementById('otherReasonGroup').classList.add('d-none');
         document.getElementById('otherNote').removeAttribute('required');
+
+        // Gán ID Review
         document.getElementById('reportReviewId').value = reviewId;
+
+        // Lưu trạng thái
+        isEditMode = editMode;
+
+        // Lấy các element giao diện
+        const modalTitle = document.querySelector('#reportModal .modal-title');
+        const submitBtn = document.querySelector('#reportModal button[type="submit"]');
+        const alertMsg = document.getElementById('edit-warning-msg');
+
+        if (isEditMode) {
+            // --- CHẾ ĐỘ SỬA ---
+            modalTitle.textContent = "Chỉnh sửa báo cáo";
+            submitBtn.textContent = "Cập nhật thay đổi";
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-warning');
+
+            // 1. Fill Lý do cũ (Radio button)
+            if (currentReason) {
+                // Selector tìm input radio có value trùng với lý do cũ
+                const radio = document.querySelector(`input[name="reason"][value="${currentReason}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    // Trigger sự kiện change thủ công để code xử lý ẩn/hiện ô Note chạy
+                    radio.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // 2. Fill Ghi chú cũ (Textarea)
+            if (currentNote && currentNote !== 'null') {
+                document.getElementById('otherNote').value = currentNote;
+            }
+
+        } else {
+            // --- CHẾ ĐỘ TẠO MỚI ---
+            modalTitle.textContent = "Báo cáo đánh giá";
+            submitBtn.textContent = "Gửi báo cáo";
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-primary');
+        }
+
+        // Mở Modal
         const modalEl = document.getElementById('reportModal');
-        if(typeof bootstrap !== 'undefined') { const myModal = new bootstrap.Modal(modalEl); myModal.show(); }
-        else { alert('Thiếu Bootstrap JS!'); }
+        if(typeof bootstrap !== 'undefined') {
+            const myModal = new bootstrap.Modal(modalEl);
+            myModal.show();
+        } else {
+            alert('Lỗi thư viện Bootstrap JS');
+        }
     }
 
     document.querySelectorAll('input[name="reason"]').forEach((elem) => {
@@ -617,48 +735,52 @@
         });
     });
 
+    // --- 2. GỬI FORM ---
     function submitReport(e) {
         e.preventDefault();
 
-        // 1. Lấy dữ liệu từ Form
         const reviewId = document.getElementById('reportReviewId').value;
         const reason = document.querySelector('input[name="reason"]:checked').value;
         const note = document.getElementById('otherNote').value;
-        const tokenInput = document.getElementById('csrf_token');
-        const csrfToken = tokenInput ? tokenInput.value : '';
+        const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
 
-        // 2. Ẩn Modal ngay lập tức cho mượt
+        // Đóng modal ngay cho mượt
         const modalEl = document.getElementById('reportModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         modalInstance.hide();
 
-        // 3. Gọi API về Backend
+        // QUAN TRỌNG: Chọn Method (POST = Tạo mới, PUT = Cập nhật)
+        const method = isEditMode ? 'PUT' : 'POST';
+
         fetch(`/reviews/${reviewId}/report`, {
-            method: 'POST',
+            method: method,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRF-TOKEN': csrfToken
             },
-            body: new URLSearchParams({ 'reason': reason, 'note': note })
+            body: new URLSearchParams({
+                'reason': reason,
+                'note': note
+            })
         })
             .then(async response => {
-                // Đọc nội dung trả về từ Server (Text hoặc JSON)
                 const message = await response.text();
 
                 if (response.ok) {
-                    // Trường hợp thành công (200 OK)
-                    showToastSuccess("Đã gửi báo cáo thành công!");
-                    // Reload để cập nhật trạng thái nút cờ (thành màu đỏ/disable)
+                    // Thành công
+                    const successMsg = isEditMode ? "Đã cập nhật báo cáo thành công!" : "Đã gửi báo cáo thành công!";
+                    showToastSuccess(successMsg);
+
+                    // Reload sau 1.5s để cập nhật giao diện (Nút chuyển trạng thái)
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    // Trường hợp lỗi (400 Bad Request, 500 Error...)
-                    // Hiển thị chính xác thông báo lỗi từ Backend gửi về
+                    // Thất bại (Lỗi logic từ Backend: Đã sửa rồi, Admin đã duyệt...)
                     alert("Lỗi: " + message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert("Đã có lỗi kết nối đến máy chủ.");
+                alert("Đã xảy ra lỗi kết nối.");
             });
     }
 
