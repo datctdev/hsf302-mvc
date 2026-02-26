@@ -197,7 +197,36 @@ Tất cả đều được set **email đã xác minh** (`emailVerified = true`)
 
 ---
 
-## 8. Chạy ứng dụng
+## 8. UI/UX: HTMX và Tailwind
+
+Dự án đã tích hợp **HTMX** và **Tailwind CSS** để cải thiện trải nghiệm người dùng:
+
+- **HTMX** (v2): gửi request AJAX bằng HTML attributes (`hx-get`, `hx-post`, `hx-swap`, …), cập nhật nội dung từng phần không cần reload trang. Đã cấu hình gửi kèm **CSRF token** cho Spring Security.
+- **Tailwind CSS** (Play CDN): dùng utility classes (`flex`, `rounded-lg`, `bg-blue-500`, …) trong template. Preflight tắt để không đè lên CSS hiện tại (`base.css`, `layout.css`).
+
+Cả hai được load trong layout (base, admin, seller) qua fragment `fragments/htmx-tailwind.html`.
+
+**Ví dụ HTMX (Thymeleaf):**
+
+```html
+<!-- Nút gửi GET, kết quả thay thế #result -->
+<button hx-get="/api/notifications" hx-target="#result" hx-swap="innerHTML" hx-trigger="click">
+  Load
+</button>
+<div id="result"></div>
+
+<!-- Form POST, swap cả trang -->
+<form hx-post="/cart/add" hx-target="body" hx-swap="innerHTML">
+  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+  <button type="submit">Thêm vào giỏ</button>
+</form>
+```
+
+**Ví dụ Tailwind:** thêm class vào phần tử, ví dụ `class="mt-4 p-4 rounded-lg bg-gray-100"`.
+
+---
+
+## 9. Chạy ứng dụng
 
 Sau khi đã:
 
@@ -226,7 +255,7 @@ mvnw.cmd spring-boot:run
 
 ---
 
-## 9. Tóm tắt nhanh
+## 10. Tóm tắt nhanh
 
 ```bash
 git clone <REPO_URL> hsf302-mvc
@@ -241,9 +270,9 @@ Mở http://localhost:8080, đăng nhập bằng `buyer@gmail.com` / `buyer123@`
 
 ---
 
-## 10. Main flows chính
+## 11. Main flows chính
 
-### 10.1. Đăng ký làm người bán (Seller)
+### 11.1. Đăng ký làm người bán (Seller)
 
 ```
 User đăng nhập
@@ -263,7 +292,7 @@ User đăng nhập
 
 ---
 
-### 10.2. Mua hàng & thanh toán
+### 11.2. Mua hàng & thanh toán
 
 ```
 Xem sản phẩm (/products, /products/{id})
@@ -286,7 +315,7 @@ Xem sản phẩm (/products, /products/{id})
 
 ---
 
-### 10.3. Đánh giá & Báo cáo Review (Rating & Report)
+### 11.3. Đánh giá & Báo cáo Review (Rating & Report)
 
 ```
 Buyer đã nhận hàng (Order DELIVERED, receivedByBuyer = true)
@@ -310,7 +339,7 @@ User (buyer hoặc người xem) thấy review vi phạm
 
 ---
 
-## 11. Danh sách tính năng CRUD
+## 12. Danh sách tính năng CRUD
 
 | Module | Create | Read | Update | Delete | Ghi chú |
 |--------|--------|------|--------|--------|--------|

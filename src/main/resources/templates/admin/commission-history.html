@@ -1,96 +1,64 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/admin-layout}">
 <head>
-    <meta charset="UTF-8">
     <title>Lịch sử hoa hồng - Admin</title>
-
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
+    <th:block th:fragment="content">
+        <h2 class="text-xl font-bold text-slate-900 mb-2">Lịch sử hoa hồng (Audit)</h2>
+        <p class="text-slate-600 text-sm mb-6">
+            Hoa hồng được lưu tại thời điểm đơn hàng hoàn tất. Không bị ảnh hưởng khi thay đổi commission sau này.
+        </p>
 
-<th:block th:replace="~{fragments/header :: header-admin}"></th:block>
-<th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+        <form method="get" th:action="@{/admin/commission/orders}" class="flex flex-wrap gap-4 items-end mb-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Từ ngày</label>
+                <input type="date" name="from" th:value="${param.from}" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Đến ngày</label>
+                <input type="date" name="to" th:value="${param.to}" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Seller Name</label>
+                <input type="text" name="sellerName" th:value="${param.sellerName}" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Lọc</button>
+        </form>
 
-<main class="main-content admin-content">
-    <div class="container">
-
-        <div class="section">
-            <h2>Lịch sử hoa hồng (Audit)</h2>
-            <p class="text-muted">
-                Hoa hồng được lưu tại thời điểm đơn hàng hoàn tất.
-                Không bị ảnh hưởng khi thay đổi commission sau này.
-            </p>
-
-            <!-- FILTER -->
-            <form method="get" th:action="@{/admin/commission/orders}" class="filter-form">
-
-                <div class="filter-group">
-                    <label>Từ ngày</label>
-                    <input type="date" name="from" th:value="${param.from}">
-                </div>
-
-                <div class="filter-group">
-                    <label>Đến ngày</label>
-                    <input type="date" name="to" th:value="${param.to}">
-                </div>
-
-                <div class="filter-group">
-                    <label>Seller Name</label>
-                    <input type="text" name="sellerName" th:value="${param.sellerName}">
-                </div>
-
-                <div class="filter-group">
-                    <button type="submit" class="btn btn-primary">Lọc</button>
-                </div>
-            </form>
-
-            <!-- TABLE -->
-            <div class="table-wrapper">
-                <table class="admin-table">
-                    <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Seller</th>
-                        <th>Order Amount</th>
-                        <th>Commission</th>
-                        <th>Created At</th>
-                        <th>Chi tiết</th>
-                    </tr>
+        <div class="rounded-xl border border-slate-200 overflow-hidden bg-white">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Order ID</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Seller</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Order Amount</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Commission</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Created At</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Chi tiết</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="c : ${commissions}">
-                        <td th:text="${c.orderId}"></td>
-                        <td th:text="${c.sellerName}"></td>
-                        <td th:text="${#numbers.formatDecimal(c.orderAmount,1,2)} + ' đ'"></td>
-                        <td th:text="${#numbers.formatDecimal(c.commissionAmount,1,2)} + ' đ'"></td>
-                        <td th:text="${#temporals.format(c.createdAt,'dd/MM/yyyy HH:mm')}"></td>
-                        <td>
-                            <a th:href="@{'/admin/commission/orders/' + ${c.orderId}}"
-                               class="btn btn-sm btn-outline">
-                                Xem
-                            </a>
-                        </td>
-                    </tr>
-
-                    <tr th:if="${#lists.isEmpty(commissions)}">
-                        <td colspan="7" style="text-align:center;">Không có dữ liệu</td>
-                    </tr>
+                        <tr th:each="c : ${commissions}" class="border-t border-slate-200 hover:bg-slate-50">
+                            <td class="px-4 py-3 text-sm" th:text="${c.orderId}"></td>
+                            <td class="px-4 py-3 text-sm" th:text="${c.sellerName}"></td>
+                            <td class="px-4 py-3 text-sm" th:text="${#numbers.formatDecimal(c.orderAmount,1,2)} + ' đ'"></td>
+                            <td class="px-4 py-3 text-sm" th:text="${#numbers.formatDecimal(c.commissionAmount,1,2)} + ' đ'"></td>
+                            <td class="px-4 py-3 text-sm" th:text="${#temporals.format(c.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+                            <td class="px-4 py-3"><a th:href="@{'/admin/commission/orders/' + ${c.orderId}}" class="no-underline text-sm font-medium text-primary-600 hover:underline">Xem</a></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(commissions)}">
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">Không có dữ liệu</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-
-            <br>
-            <a th:href="@{/admin/commission}" class="btn btn-secondary">
-                Quay lại
-            </a>
-
         </div>
 
-    </div>
-</main>
-
+        <div class="mt-6">
+            <a th:href="@{/admin/commission}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Quay lại</a>
+        </div>
+    </th:block>
 </body>
 </html>

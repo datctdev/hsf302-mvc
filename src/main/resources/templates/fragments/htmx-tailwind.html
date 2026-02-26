@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head">
+    <!-- CSRF meta for HTMX (Spring Security) -->
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind: built locally (npm run build:css) - no CDN -->
+    <link rel="stylesheet" th:href="@{/css/tailwind.css}">
+</head>
+<body>
+    <!-- HTMX + CSRF config (place before other scripts) -->
+    <th:block th:fragment="scripts">
+        <script src="https://unpkg.com/htmx.org@2.0.3/dist/htmx.min.js"></script>
+        <script>
+            (function() {
+                document.body.addEventListener('htmx:configRequest', function(evt) {
+                    var meta = document.querySelector('meta[name="_csrf"]');
+                    var header = document.querySelector('meta[name="_csrf_header"]');
+                    if (meta && header) {
+                        evt.detail.headers[header.getAttribute('content')] = meta.getAttribute('content');
+                    }
+                });
+                document.body.addEventListener('htmx:afterSwap', function(evt) {
+                    if (evt.detail.target.id === 'toast-container' && evt.detail.target.innerHTML.trim()) {
+                        setTimeout(function() { evt.detail.target.innerHTML = ''; }, 3500);
+                    }
+                });
+            })();
+        </script>
+    </th:block>
+</body>
+</html>

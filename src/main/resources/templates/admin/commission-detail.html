@@ -1,158 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/admin-layout}">
 <head>
-    <meta charset="UTF-8">
-    <title>Chi tiết hoa hồng</title>
-
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
-    <style>
-        /* ===== Commission Detail ===== */
-
-        .commission-card {
-            padding: 24px;
-        }
-
-        .commission-summary {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 15px;
-        }
-
-        .summary-row.highlight {
-            font-size: 18px;
-            color: #e53935;
-        }
-
-        .divider {
-            margin: 24px 0;
-        }
-
-        .commission-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        .commission-table thead {
-            background-color: #f5f5f5;
-        }
-
-        .commission-table th,
-        .commission-table td {
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            text-align: center;
-        }
-
-        .commission-table th {
-            font-weight: 600;
-        }
-
-        .commission-table tbody tr:hover {
-            background-color: #fafafa;
-        }
-
-        .commission-amount {
-            font-weight: 600;
-            color: #d32f2f;
-        }
-    </style>
+    <title>Chi tiết hoa hồng - Admin</title>
 </head>
 <body>
+    <th:block th:fragment="content">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Chi tiết Commission</h2>
 
-<th:block th:replace="~{fragments/header :: header-admin}"></th:block>
-<th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
-
-<main class="main-content admin-content">
-    <div class="container">
-        <div class="section">
-
-            <h2>Chi tiết Commission</h2>
-
-            <div class="card commission-card">
-
-                <!-- Thông tin chung -->
-                <div class="commission-summary">
-
-                    <div class="summary-row">
-                        <span>Order ID:</span>
-                        <strong th:text="${commission.orderId}"></strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Seller:</span>
-                        <strong th:text="${commission.sellerName}"></strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Tổng tiền đơn hàng:</span>
-                        <strong th:text="${#numbers.formatDecimal(commission.orderAmount,1,2)} + ' đ'"></strong>
-                    </div>
-
-                    <div class="summary-row highlight">
-                        <span>Tổng hoa hồng nền tảng:</span>
-                        <strong th:text="${#numbers.formatDecimal(commission.totalCommission,1,2)} + ' đ'"></strong>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Thời điểm tạo:</span>
-                        <strong th:text="${#temporals.format(commission.createdAt,'dd/MM/yyyy HH:mm')}"></strong>
-                    </div>
-
-                </div>
-
-                <hr class="divider"/>
-
-                <!-- Bảng chi tiết từng sản phẩm -->
-                <h3>Chi tiết hoa hồng theo sản phẩm</h3>
-
-                <table class="commission-table">
-                    <thead>
-                    <tr>
-                        <th>Sản phẩm</th>
-                        <th>Đơn giá</th>
-                        <th>Số lượng</th>
-                        <th>Tỷ lệ (%)</th>
-                        <th>Hoa hồng</th>
-                    </tr>
+        <div class="rounded-xl border border-slate-200 bg-white p-6 mb-6">
+            <div class="space-y-3 mb-6">
+                <div class="flex justify-between text-sm"><span class="text-slate-600">Order ID:</span><strong th:text="${commission.orderId}"></strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-600">Seller:</span><strong th:text="${commission.sellerName}"></strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-600">Tổng tiền đơn hàng:</span><strong th:text="${#numbers.formatDecimal(commission.orderAmount,1,2)} + ' đ'"></strong></div>
+                <div class="flex justify-between text-lg text-red-600 font-semibold"><span>Tổng hoa hồng nền tảng:</span><strong th:text="${#numbers.formatDecimal(commission.totalCommission,1,2)} + ' đ'"></strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-600">Thời điểm tạo:</span><strong th:text="${#temporals.format(commission.createdAt,'dd/MM/yyyy HH:mm')}"></strong></div>
+            </div>
+            <hr class="border-slate-200 my-6">
+            <h3 class="font-semibold text-slate-900 mb-4">Chi tiết hoa hồng theo sản phẩm</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Sản phẩm</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-slate-900">Đơn giá</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-slate-900">Số lượng</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-slate-900">Tỷ lệ (%)</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-slate-900">Hoa hồng</th>
+                        </tr>
                     </thead>
-
                     <tbody>
-                    <tr th:each="item : ${commission.items}">
-                        <td th:text="${item.productName}"></td>
-
-                        <td th:text="${#numbers.formatDecimal(item.unitPrice,1,2)} + ' đ'"></td>
-
-                        <td th:text="${item.quantity}"></td>
-
-                        <td th:text="${#numbers.formatDecimal(item.commissionRate,1,2)} + '%'"></td>
-
-                        <td class="commission-amount"
-                            th:text="${#numbers.formatDecimal(item.commissionAmount,1,2)} + ' đ'">
-                        </td>
-                    </tr>
+                        <tr th:each="item : ${commission.items}" class="border-t border-slate-200 hover:bg-slate-50">
+                            <td class="px-4 py-3 text-sm" th:text="${item.productName}"></td>
+                            <td class="px-4 py-3 text-sm text-center" th:text="${#numbers.formatDecimal(item.unitPrice,1,2)} + ' đ'"></td>
+                            <td class="px-4 py-3 text-sm text-center" th:text="${item.quantity}"></td>
+                            <td class="px-4 py-3 text-sm text-center" th:text="${#numbers.formatDecimal(item.commissionRate,1,2)} + '%'"></td>
+                            <td class="px-4 py-3 text-sm text-center font-semibold text-red-600" th:text="${#numbers.formatDecimal(item.commissionAmount,1,2)} + ' đ'"></td>
+                        </tr>
                     </tbody>
                 </table>
-
             </div>
-
-            <br>
-            <a th:href="@{/admin/commission/orders}" class="btn btn-secondary">
-                Quay lại
-            </a>
-
         </div>
-    </div>
-</main>
-
+        <a th:href="@{/admin/commission/orders}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Quay lại</a>
+    </th:block>
 </body>
 </html>
