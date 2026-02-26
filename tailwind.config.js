@@ -41,5 +41,32 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        ecommerce: {
+          "primary": "#3b82f6",
+          "primary-content": "#ffffff",
+          "secondary": "#64748b",
+          "secondary-content": "#ffffff",
+          "accent": "#0ea5e9",
+          "neutral": "#334155",
+          "base-100": "#ffffff",
+          "base-200": "#f1f5f9",
+          "base-300": "#e2e8f0",
+          "info": "#3b82f6",
+          "success": "#22c55e",
+          "warning": "#f59e0b",
+          "error": "#ef4444",
+        },
+      },
+      "light",
+    ],
+    darkTheme: false,
+    base: true,
+    styled: true,
+    utils: true,
+    logs: false,
+  },
 };

@@ -2,252 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layouts/base}">
 <head>
     <title>Chi Tiết Sản Phẩm - E-commerce</title>
-    <th:block th:fragment="additional-css">
-        <link rel="stylesheet" th:href="@{/css/review.css}">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <style>
-        .product-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
-        .product-thumbnail:hover, .product-thumbnail.active { border-color: #3b82f6; }
-        .variant-option { padding: 0.5rem 1rem; border: 1px solid #e5e7eb; border-radius: 2px; cursor: pointer; transition: all 0.2s; background: #fff; min-width: 80px; text-align: center; }
-        .variant-option:hover { border-color: #3b82f6; color: #3b82f6; }
-        .variant-option.selected { border-color: #3b82f6; color: #3b82f6; position: relative; }
+    <th:block th:fragment="additional-css"></th:block>
+    <style>
+        .product-thumbnail.active { border-color: #3b82f6; }
         .variant-option.selected::after { content: "✓"; position: absolute; bottom: 0; right: 0; color: #fff; background: #3b82f6; font-size: 10px; padding: 0 4px; }
-        .variant-option.disabled { opacity: 0.5; cursor: not-allowed; background: #f9fafb; }
-        /* --- REVIEW & FILTER STYLES --- */
-        .reviews-container { background: #fff; padding: 2rem; border-radius: 4px; box-shadow: 0 1px 1px 0 rgba(0,0,0,.05); margin-top: 2rem; }
-
-        .review-filter-bar {
-            background-color: #fffbf8;
-            border: 1px solid #f9ede5;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-        }
-
-        .filter-summary { margin-right: 2rem; text-align: center; color: #ee4d2d; }
-        .filter-score { font-size: 3rem; line-height: 3rem; }
-        .filter-score span { font-size: 1.5rem; color: #ee4d2d; }
-        .filter-stars { font-size: 1.2rem; margin-top: 0.5rem; }
-
-        .filter-options { flex: 1; display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(0,0,0,.09);
-            background: #fff;
-            color: rgba(0,0,0,.8);
-            text-decoration: none;
-            border-radius: 2px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .filter-btn:hover { color: #ee4d2d; border-color: #ee4d2d; }
-        .filter-btn.active { border-color: #ee4d2d; color: #ee4d2d; font-weight: 500; }
-
-        /* Sort Bar */
-        .sort-bar { display: flex; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #f1f1f1; padding-bottom: 10px; }
-        .sort-select { padding: 5px; border: 1px solid #ddd; border-radius: 2px; outline: none; }
-
-        /* --- UI REPORT (FLAG ICON & MODAL) --- */
-        .review-header { display: flex; justify-content: space-between; align-items: flex-start; }
-
-        .btn-report-direct {
-            width: 30px; height: 30px; border-radius: 50%;
-            border: 1px solid transparent; background: transparent;
-            color: #ccc; font-size: 0.9rem;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s ease;
-        }
-        .btn-report-direct:hover { background-color: #fff5f5; color: #ee4d2d; border-color: #ee4d2d; }
-        .btn-report-direct.reported { color: #ee4d2d; cursor: default; opacity: 0.7; }
-        .btn-report-direct.reported:hover { background: transparent; border-color: transparent; }
-
-        /* Modal Fix */
-        .modal { padding-right: 0 !important; }
-        .modal.show { display: flex !important; align-items: center; justify-content: center; }
-        .modal-dialog { margin: 0 auto; width: 100%; max-width: 500px; }
-        .modal-content { border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border-radius: 8px; }
-
-        /* Report Options */
-        .report-reasons-list { display: flex; flex-direction: column; gap: 10px; }
-        .custom-radio-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 15px; border: 1px solid #e5e5e5; border-radius: 4px;
-            cursor: pointer; transition: all 0.2s; background: #fff; margin: 0;
-        }
-        .custom-radio-item:hover { border-color: #ee4d2d; background-color: #fffcfc; }
-        .custom-radio-item input[type="radio"] { position: absolute; opacity: 0; cursor: pointer; }
-        .checkmark { height: 16px; width: 16px; border: 1px solid #ddd; border-radius: 50%; position: relative; }
-        .custom-radio-item input:checked ~ .checkmark { border-color: #ee4d2d; border-width: 5px; }
-        .custom-radio-item:has(input:checked) { border-color: #ee4d2d; background-color: #fffbfb; }
-        #otherReasonGroup { margin-top: 12px; }
-
-        /* Toast */
-        .custom-toast-success {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8); color: white; padding: 15px 30px;
-            border-radius: 4px; z-index: 9999; font-size: 1rem;
-            display: flex; align-items: center; gap: 10px;
-            animation: fadeInOut 3s forwards;
-        }
-        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; display: none; } }
-
-        @media (max-width: 768px) {
-            .product-detail { grid-template-columns: 1fr; }
-            .product-main-image { height: 300px; }
-            .review-filter-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .filter-summary { margin-right: 0; margin-bottom: 10px; }
-        }
-
-        /* 1. Hộp bộ lọc màu hồng */
-        .shopee-filter-box {
-            background-color: #fffbf8;
-            border: 1px solid #f9ede5;
-            padding: 1.875rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            border-radius: 2px;
-        }
-
-        /* 2. Cột điểm số bên trái */
-        .shopee-score-wrapper {
-            margin-right: 2.5rem;
-            text-align: center;
-            color: #ee4d2d;
-        }
-
-        .score-number {
-            font-size: 1.125rem;
-            line-height: 1.5rem;
-            color: #ee4d2d;
-        }
-
-        .score-number span:first-child {
-            font-size: 3rem;
-        }
-
-        .score-total {
-            font-size: 1.5rem;
-            color: rgba(0,0,0,.54);
-            margin-left: 5px;
-        }
-
-        /* 3. KỸ THUẬT VẼ SAO CHÍNH XÁC (Star Precision) */
-        .star-rating-precision {
-            position: relative;
-            display: inline-block;
-            font-size: 1.7rem;
-            margin-top: 10px;
-        }
-
-        .stars-bg {
-            color: #d5d5d5;
-        }
-
-        .stars-fill {
-            color: #ee4d2d;
-            position: absolute;
-            top: 0;
-            left: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        /* 4. Các nút lọc bên phải */
-        .shopee-filter-options {
-            flex: 1;
-            margin-left: 1rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .shopee-btn {
-            height: 2rem;
-            line-height: 2rem;
-            min-width: 6.25rem;
-            text-align: center;
-            padding: 0 0.625rem;
-            background-color: #fff;
-            border: 1px solid rgba(0,0,0,.09);
-            box-sizing: border-box;
-            display: inline-block;
-            text-decoration: none;
-            color: rgba(0,0,0,.8);
-            border-radius: 2px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .shopee-btn:hover {
-            color: #ee4d2d;
-            border-color: #ee4d2d;
-        }
-
-        .shopee-btn.active {
-            border-color: #ee4d2d;
-            color: #ee4d2d;
-            font-weight: 500;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .shopee-filter-box { flex-direction: column; align-items: flex-start; padding: 1rem; }
-            .shopee-score-wrapper { margin-bottom: 1rem; display: flex; align-items: center; gap: 15px; }
-            .star-rating-precision { margin-top: 0; font-size: 1.2rem; }
-            .score-number span:first-child { font-size: 2rem; }
-        }
-
-        /* --- STYLE CHO NÚT SỬA BÁO CÁO --- */
-
-        /* 1. Trạng thái Sửa được (Cờ cam + Hiệu ứng) */
-        .btn-report-direct.reported.editable {
-            cursor: pointer !important; /* Cho phép bấm */
-            position: relative;
-            background-color: #fff5f5;
-            border: 1px solid #ee4d2d;
-            opacity: 1 !important;
-        }
-
-        .btn-report-direct.reported.editable:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 5px rgba(238, 77, 45, 0.2);
-        }
-
-        /* 2. Icon bút chì nhỏ đè lên góc */
-        .btn-report-direct.reported.editable::after {
-            content: "\f303"; /* Mã Unicode của FontAwesome 'fa-pencil' */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #333;
-            color: #fff;
-            font-size: 8px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #fff;
-        }
-
-        /* 3. Trạng thái Đã sửa xong (Khóa cứng) */
-        .btn-report-direct.reported.locked {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #f5f5f5;
-            color: #999;
-            border-color: transparent;
-        }
+        .star-rating-precision { position: relative; display: inline-block; font-size: 1.7rem; margin-top: 10px; }
+        .stars-fill { color: #ee4d2d; position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; z-index: 1; }
+        .btn-report-direct.reported.editable::after { content: "✎"; position: absolute; top: -5px; right: -5px; background: #333; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #fff; }
+        #reportModal.show { display: flex !important; }
     </style>
 </head>
 <body>
@@ -258,7 +20,7 @@
             <div>
                 <img th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}" id="mainImage" class="w-full h-[400px] md:h-[500px] object-cover rounded-lg bg-slate-100 mb-4" onerror="this.src='/images/placeholder.png'">
                 <div class="flex gap-2 flex-wrap" th:if="${product.images != null and product.images.size() > 1}">
-                    <img th:each="img, iterStat : ${product.images}" th:src="${img.imageUrl}" th:alt="${product.name}" th:classappend="${iterStat.first} ? 'active' : ''" class="product-thumbnail" th:data-url="${img.imageUrl}" onclick="changeMainImage(this.getAttribute('data-url'), this)">
+                    <img th:each="img, iterStat : ${product.images}" th:src="${img.imageUrl}" th:alt="${product.name}" th:classappend="${iterStat.first} ? 'active' : ''" class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors product-thumbnail" th:data-url="${img.imageUrl}" onclick="changeMainImage(this.getAttribute('data-url'), this)">
                 </div>
             </div>
             <div>
@@ -275,91 +37,70 @@
                     <div th:each="variantGroup : ${variantGroups}" class="mb-4">
                         <label class="block text-sm font-medium text-slate-700 mb-2" th:text="${variantGroup.key}">Variant Name</label>
                         <div class="flex gap-2 flex-wrap">
-                            <div th:each="variant : ${variantGroup.value}" class="variant-option" th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''" th:attr="data-variant-id=${variant.id}, data-variant-name=${variant.name}, data-variant-value=${variant.value}, data-stock-quantity=${variant.stockQuantity}" onclick="handleVariantClick(this)" th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">Variant Value</div>
+                            <div th:each="variant : ${variantGroup.value}" class="variant-option relative px-4 py-2 border border-slate-200 rounded cursor-pointer transition bg-white min-w-[80px] text-center hover:border-blue-500 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50" th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''" th:attr="data-variant-id=${variant.id}, data-variant-name=${variant.name}, data-variant-value=${variant.value}, data-stock-quantity=${variant.stockQuantity}" onclick="handleVariantClick(this)" th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">Variant Value</div>
                         </div>
                     </div>
                 </div>
                 <div class="mt-6">
-                    <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}">
+                    <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}"
+                          hx-post="@{/cart/add}" hx-trigger="submit" hx-swap="none">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="productId" th:value="${product.id}"/>
                         <input type="hidden" id="variantIdInput" name="variantId" value="">
                         <input type="hidden" name="quantity" value="1">
-                        <button type="button" class="w-full py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition" id="addToCartBtn" onclick="addToCart()">Thêm vào giỏ hàng</button>
+                        <button type="button" class="w-full py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition" id="addToCartBtn" onclick="if(prepareAddToCart()) this.form.requestSubmit()">Thêm vào giỏ hàng</button>
                     </form>
                     <a th:if="${currentUser == null}" th:href="@{'/login?redirect=/products/' + ${product.id}}" class="block w-full py-3 text-center rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition no-underline">Đăng nhập để mua hàng</a>
                 </div>
             </div>
         </div>
 
-        <div th:if="${product != null}" class="reviews-container">
-            <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem; text-transform: uppercase;">Đánh giá sản phẩm</h3>
+        <div th:if="${product != null}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mt-8">
+            <h3 class="text-lg font-semibold text-slate-900 uppercase mb-6 mt-0">Đánh giá sản phẩm</h3>
 
-            <div class="shopee-filter-box">
-                <div class="shopee-score-wrapper">
-                    <div class="score-number">
-                        <span th:text="${reviewSummary.averageRating}">0.0</span>
-                        <span class="score-total">/ 5</span>
-                    </div>
-
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6 p-6 bg-amber-50/80 border border-amber-200 rounded-lg mb-4">
+                <div class="text-center text-orange-500 mr-6">
+                    <div class="text-3xl sm:text-4xl font-semibold" th:text="${reviewSummary.averageRating}">0.0</div>
+                    <span class="text-lg text-slate-500 ml-1">/ 5</span>
                     <div class="star-rating-precision">
-                        <div class="stars-bg">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                        </div>
-
-                        <div class="stars-fill" th:style="'width: ' + ${(reviewSummary.averageRating / 5.0) * 100} + '%'">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                        </div>
+                        <div class="text-slate-300">★★★★★</div>
+                        <div class="stars-fill" th:style="'width: ' + ${(reviewSummary.averageRating / 5.0) * 100} + '%'">★★★★★</div>
                     </div>
                 </div>
 
-                <div class="shopee-filter-options">
+                <div class="flex-1 flex flex-wrap gap-2">
                     <a th:href="@{'/products/' + ${product.id}(reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn"
-                       th:classappend="${currentRating == null and currentHasImages == null and currentHasComments == null} ? 'active'">
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == null and currentHasImages == null and currentHasComments == null} ? '!border-orange-500 !text-orange-500 font-medium' : ''">
                         Tất Cả (<span th:text="${reviewSummary.totalReviews}"></span>)
                     </a>
-
                     <a th:href="@{'/products/' + ${product.id}(rating=5, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentRating == 5} ? 'active'">
-                        5 Sao (<span th:text="${reviewSummary.count5Star}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == 5} ? '!border-orange-500 !text-orange-500 font-medium' : ''">5 Sao (<span th:text="${reviewSummary.count5Star}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(rating=4, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentRating == 4} ? 'active'">
-                        4 Sao (<span th:text="${reviewSummary.count4Star}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == 4} ? '!border-orange-500 !text-orange-500 font-medium' : ''">4 Sao (<span th:text="${reviewSummary.count4Star}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(rating=3, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentRating == 3} ? 'active'">
-                        3 Sao (<span th:text="${reviewSummary.count3Star}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == 3} ? '!border-orange-500 !text-orange-500 font-medium' : ''">3 Sao (<span th:text="${reviewSummary.count3Star}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(rating=2, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentRating == 2} ? 'active'">
-                        2 Sao (<span th:text="${reviewSummary.count2Star}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == 2} ? '!border-orange-500 !text-orange-500 font-medium' : ''">2 Sao (<span th:text="${reviewSummary.count2Star}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(rating=1, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentRating == 1} ? 'active'">
-                        1 Sao (<span th:text="${reviewSummary.count1Star}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentRating == 1} ? '!border-orange-500 !text-orange-500 font-medium' : ''">1 Sao (<span th:text="${reviewSummary.count1Star}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(hasComments=true, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentHasComments == true} ? 'active'">
-                        Có Bình Luận (<span th:text="${reviewSummary.countWithComments}"></span>)
-                    </a>
-
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentHasComments == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Bình Luận (<span th:text="${reviewSummary.countWithComments}"></span>)</a>
                     <a th:href="@{'/products/' + ${product.id}(hasImages=true, reviewPage=0, sortBy=${currentSort})}"
-                       class="shopee-btn" th:classappend="${currentHasImages == true} ? 'active'">
-                        Có Hình Ảnh (<span th:text="${reviewSummary.countWithImages}"></span>)
-                    </a>
+                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                       th:classappend="${currentHasImages == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Hình Ảnh (<span th:text="${reviewSummary.countWithImages}"></span>)</a>
                 </div>
             </div>
 
-            <div class="sort-bar">
-                <span style="font-weight: 500; margin-right: 10px;">Sắp xếp theo:</span>
-                <select class="sort-select" onchange="window.location.href=this.value">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                <span class="font-medium text-slate-700">Sắp xếp theo:</span>
+                <select class="px-2 py-1 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-orange-400" onchange="window.location.href=this.value">
                     <option th:value="@{'/products/' + ${product.id}(sortBy='newest', rating=${currentRating}, hasImages=${currentHasImages})}"
                             th:selected="${currentSort == 'newest'}">Mới Nhất</option>
                     <option th:value="@{'/products/' + ${product.id}(sortBy='oldest', rating=${currentRating}, hasImages=${currentHasImages})}"
@@ -367,94 +108,87 @@
                 </select>
             </div>
 
-            <div class="review-list">
-                <div th:if="${reviews == null or reviews.isEmpty()}" style="text-align: center; color: #999; padding: 3rem;">
-                    <i class="far fa-comment-dots" style="font-size: 3rem; margin-bottom: 1rem; display: block; color: #ddd;"></i>
+            <div>
+                <div th:if="${reviews == null or reviews.isEmpty()}" class="text-center text-slate-500 py-12">
+                    <span class="text-5xl block mb-4 text-slate-200">💬</span>
                     <p>Chưa có đánh giá nào phù hợp với bộ lọc.</p>
                 </div>
 
-                <div th:each="review : ${reviews}" class="review-item" style="border-bottom: 1px solid #f1f1f1; padding: 1.5rem 0;">
-                    <div class="review-header">
-                        <div style="display: flex; gap: 15px; flex: 1;">
+                <div th:each="review : ${reviews}" class="border-b border-slate-100 py-6">
+                    <div class="flex flex-wrap justify-between items-start gap-4">
+                        <div class="flex gap-4 flex-1 min-w-0">
                             <img th:src="${review.userAvatarUrl != null ? review.userAvatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
                                  onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-                                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #eee;">
-
+                                 class="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0">
                             <div>
-                                <div style="font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 4px;" th:text="${review.userFullName}">User</div>
-                                <div style="color: #ee4d2d; font-size: 0.7rem; margin-bottom: 5px;">
-                                    <span th:each="i : ${#numbers.sequence(1, 5)}"><i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i></span>
+                                <div class="text-sm font-semibold text-slate-800 mb-1" th:text="${review.userFullName}">User</div>
+                                <div class="text-orange-500 text-xs mb-1">
+                                    <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating} ? '★' : '☆'">★</span>
                                 </div>
-                                <div style="color: rgba(0,0,0,.54); font-size: 0.75rem;">
+                                <div class="text-slate-500 text-xs">
                                     <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
-                                    <span th:if="${review.isVerifiedPurchase}" style="color: #28a745;"><i class="fas fa-check-circle"></i> Đã mua hàng</span>
+                                    <span th:if="${review.isVerifiedPurchase}" class="text-green-600">✓ Đã mua hàng</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div th:if="${currentUser != null and currentUser.id != review.userId}" style="position: relative;">
-
+                        <div th:if="${currentUser != null and currentUser.id != review.userId}" class="relative">
                             <button th:if="${review.userReport == null}"
                                     type="button"
-                                    class="btn-report-direct"
+                                    class="w-8 h-8 rounded-full border border-transparent bg-transparent text-slate-300 text-sm flex items-center justify-center cursor-pointer hover:bg-red-50 hover:text-orange-500 hover:border-orange-500 transition btn-report-direct"
                                     title="Báo cáo đánh giá này"
                                     th:data-id="${review.id}"
                                     onclick="openReportModal(this.getAttribute('data-id'), null, null, false)">
-                                <i class="far fa-flag"></i>
+                                🚩
                             </button>
-
                             <th:block th:if="${review.userReport != null}">
-
                                 <button th:if="${!review.userReport.edited and review.userReport.status.name() == 'PENDING'}"
                                         type="button"
-                                        class="btn-report-direct reported editable"
+                                        class="relative w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer text-orange-500 bg-orange-50 border-orange-500 hover:scale-110 hover:shadow btn-report-direct reported editable"
                                         title="Chỉnh sửa báo cáo (Chỉ khi Admin chưa duyệt)"
                                         th:data-id="${review.id}"
                                         th:data-reason="${review.userReport.reason}"
                                         th:data-note="${review.userReport.note}"
                                         onclick="openReportModal(this.getAttribute('data-id'), this.getAttribute('data-reason'), this.getAttribute('data-note'), true)">
-                                    <i class="fas fa-flag" style="color: #ee4d2d;"></i>
+                                    🚩
                                 </button>
-
                                 <button th:if="${review.userReport.edited or review.userReport.status.name() != 'PENDING'}"
                                         type="button"
-                                        class="btn-report-direct reported locked"
+                                        class="w-8 h-8 rounded-full flex items-center justify-center opacity-60 cursor-not-allowed bg-slate-100 text-slate-400 border border-transparent btn-report-direct reported locked"
                                         th:title="${review.userReport.status.name() == 'PENDING' ? 'Bạn đã hết lượt chỉnh sửa' : 'Báo cáo đã được Admin xử lý'}"
-                                        disabled>
-                                    <i class="fas fa-flag"></i>
-                                </button>
+                                        disabled>🚩</button>
                             </th:block>
                         </div>
                     </div>
 
-                    <div style="margin-top: 15px; margin-left: 55px;">
-                        <div style="color: #333; font-size: 0.95rem; line-height: 1.5; white-space: pre-line; margin-bottom: 10px;" th:text="${review.comment}">Nội dung...</div>
-                        <div th:if="${not #lists.isEmpty(review.imageUrls)}" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                            <img th:each="img : ${review.imageUrls}" th:src="${img}" style="width: 72px; height: 72px; object-fit: cover; border: 1px solid #f5f5f5; cursor: zoom-in;" onclick="window.open(this.src)">
+                    <div class="mt-4 ml-14">
+                        <div class="text-slate-800 text-sm leading-relaxed whitespace-pre-line mb-2" th:text="${review.comment}">Nội dung...</div>
+                        <div th:if="${not #lists.isEmpty(review.imageUrls)}" class="flex gap-2 flex-wrap mb-2">
+                            <img th:each="img : ${review.imageUrls}" th:src="${img}" class="w-[72px] h-[72px] object-cover border border-slate-100 cursor-zoom-in" onclick="window.open(this.src)">
                         </div>
 
-                        <div class="seller-reply-box" th:if="${review.sellerReply != null or review.sellerCanReply}">
+                        <div th:if="${review.sellerReply != null or review.sellerCanReply}" class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
                             <div th:if="${review.sellerReply != null}">
-                                <div class="seller-reply-header">
-                                    <span class="shop-badge">Phản hồi từ Shop</span>
-                                    <span class="reply-time" th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></span>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-orange-600">Phản hồi từ Shop</span>
+                                    <span class="text-xs text-slate-500" th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></span>
                                 </div>
-                                <div th:id="'reply-content-' + ${review.id}" class="seller-reply-content" th:text="${review.sellerReply.reply}"></div>
+                                <div th:id="'reply-content-' + ${review.id}" class="text-sm text-slate-700" th:text="${review.sellerReply.reply}"></div>
                                 <div th:if="${review.sellerCanReply}">
-                                    <a href="javascript:void(0)" class="seller-reply-edit" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Chỉnh sửa</a>
+                                    <a href="javascript:void(0)" class="text-xs text-primary-600 hover:underline" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Chỉnh sửa</a>
                                 </div>
                             </div>
-                            <form th:if="${review.sellerReply == null and review.sellerCanReply}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}" method="post" style="margin-top:8px;">
+                            <form th:if="${review.sellerReply == null and review.sellerCanReply}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}" method="post" class="mt-2">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <textarea name="reply" rows="3" class="form-control" placeholder="Nhập phản hồi..."></textarea>
-                                <button type="submit" class="btn btn-sm btn-primary mt-2">Gửi phản hồi</button>
+                                <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Nhập phản hồi..."></textarea>
+                                <button type="submit" class="mt-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium">Gửi phản hồi</button>
                             </form>
-                            <form th:if="${review.sellerReply != null and review.sellerCanReply}" th:id="'reply-form-' + ${review.id}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}" method="post" class="hidden" style="margin-top:8px;">
+                            <form th:if="${review.sellerReply != null and review.sellerCanReply}" th:id="'reply-form-' + ${review.id}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}" method="post" class="hidden mt-2">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <textarea name="reply" rows="3" class="form-control" th:text="${review.sellerReply.reply}"></textarea>
-                                <div style="margin-top:6px; text-align: right;">
-                                    <button type="button" class="btn btn-sm btn-secondary" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Hủy</button>
-                                    <button type="submit" class="btn btn-sm btn-primary">Lưu</button>
+                                <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" th:text="${review.sellerReply.reply}"></textarea>
+                                <div class="mt-2 text-right">
+                                    <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-sm" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Hủy</button>
+                                    <button type="submit" class="ml-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm">Lưu</button>
                                 </div>
                             </form>
                         </div>
@@ -462,10 +196,10 @@
                 </div>
             </div>
 
-            <div class="pagination" th:if="${reviews != null and reviews.totalPages > 1}" style="margin-top: 2rem; justify-content: center; display: flex; gap: 0.5rem;">
-                <a th:if="${reviews.hasPrevious()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="btn btn-sm btn-secondary">Trước</a>
-                <span style="margin: 0 10px; line-height: 30px;" th:text="'Trang ' + ${reviews.number + 1}"></span>
-                <a th:if="${reviews.hasNext()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number + 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="btn btn-sm btn-secondary">Sau</a>
+            <div th:if="${reviews != null and reviews.totalPages > 1}" class="flex justify-center items-center gap-2 mt-8">
+                <a th:if="${reviews.hasPrevious()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Trước</a>
+                <span class="mx-2 text-slate-600 text-sm" th:text="'Trang ' + (${reviews.number + 1})"></span>
+                <a th:if="${reviews.hasNext()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number + 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Sau</a>
             </div>
         </div>
 
@@ -473,31 +207,46 @@
             Sản phẩm không tồn tại hoặc chưa được xuất bản.
         </div>
 
-        <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0 justify-content-center pt-4">
-                <h5 class="modal-title fw-bold" style="font-size: 1.25rem;">Báo cáo đánh giá</h5>
+        <div class="modal fade fixed inset-0 z-[9999] hidden items-center justify-center p-4" id="reportModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog w-full max-w-md mx-auto">
+        <div class="modal-content bg-white rounded-xl shadow-xl border-0">
+            <div class="modal-header text-center pt-6 pb-0">
+                <h5 class="modal-title text-xl font-bold text-slate-900">Báo cáo đánh giá</h5>
             </div>
             <form id="reportForm" onsubmit="submitReport(event)">
                 <input type="hidden" id="csrf_token" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <div class="modal-body pt-2 px-4">
+                <div class="modal-body pt-4 px-6">
                     <input type="hidden" id="reportReviewId" name="reviewId">
-                    <p class="text-muted text-center mb-4" style="font-size: 0.95rem;">Vui lòng chọn lý do bạn muốn báo cáo đánh giá này</p>
-                    <div class="report-reasons-list">
-                        <label class="custom-radio-item"><span class="reason-text">Spam / Đánh giá ảo</span><input type="radio" name="reason" value="SPAM" required><span class="checkmark"></span></label>
-                        <label class="custom-radio-item"><span class="reason-text">Ngôn từ thô tục / Phản cảm</span><input type="radio" name="reason" value="OFFENSIVE_LANGUAGE"><span class="checkmark"></span></label>
-                        <label class="custom-radio-item"><span class="reason-text">Công kích cá nhân</span><input type="radio" name="reason" value="PERSONAL_ATTACK"><span class="checkmark"></span></label>
-                        <label class="custom-radio-item"><span class="reason-text">Nội dung không liên quan</span><input type="radio" name="reason" value="IRRELEVANT_CONTENT"><span class="checkmark"></span></label>
-                        <label class="custom-radio-item"><span class="reason-text">Lý do khác</span><input type="radio" name="reason" value="OTHER" id="reasonOther"><span class="checkmark"></span></label>
+                    <p class="text-slate-500 text-center mb-4 text-sm">Vui lòng chọn lý do bạn muốn báo cáo đánh giá này</p>
+                    <div class="flex flex-col gap-2">
+                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                            <span>Spam / Đánh giá ảo</span>
+                            <input type="radio" name="reason" value="SPAM" required class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                        </label>
+                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                            <span>Ngôn từ thô tục / Phản cảm</span>
+                            <input type="radio" name="reason" value="OFFENSIVE_LANGUAGE" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                        </label>
+                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                            <span>Công kích cá nhân</span>
+                            <input type="radio" name="reason" value="PERSONAL_ATTACK" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                        </label>
+                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                            <span>Nội dung không liên quan</span>
+                            <input type="radio" name="reason" value="IRRELEVANT_CONTENT" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                        </label>
+                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                            <span>Lý do khác</span>
+                            <input type="radio" name="reason" value="OTHER" id="reasonOther" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                        </label>
                     </div>
-                    <div class="d-none" id="otherReasonGroup">
-                        <textarea class="form-control" id="otherNote" rows="3" placeholder="Mô tả chi tiết vi phạm..." style="width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; font-size: 0.95rem; resize: none;"></textarea>
+                    <div class="hidden mt-3" id="otherReasonGroup">
+                        <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm resize-none" id="otherNote" rows="3" placeholder="Mô tả chi tiết vi phạm..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-2 pb-4 justify-content-center gap-3">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="min-width: 100px; font-weight: 500;">Hủy</button>
-                    <button type="submit" class="btn btn-primary px-4" style="background-color: #ee4d2d; border: none; min-width: 100px; font-weight: 500;">Gửi</button>
+                <div class="modal-footer flex border-0 pt-4 pb-6 justify-center gap-3">
+                    <button type="button" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium min-w-[100px]" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-orange-500 text-white font-medium min-w-[100px] border-0">Gửi</button>
                 </div>
             </form>
         </div>
@@ -554,26 +303,33 @@
         btn.disabled = false;
     }
 
+    /** Prepare form for add-to-cart (set variantId). Returns true if valid so HTMX can submit. */
+    function prepareAddToCart() {
+        const form = document.getElementById('addToCartForm');
+        if (!form) return false;
+        if (productData && productData.variants && productData.variants.length > 0) {
+            const variantGroups = {};
+            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
+            const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
+            if (!allSelected) { alert('Vui lòng chọn đầy đủ thuộc tính.'); return false; }
+            const firstVariantId = Object.values(selectedVariantIds)[0];
+            if (firstVariantId) { document.getElementById('variantIdInput').value = firstVariantId; }
+            else {
+                const matchingVariant = productData.variants.find(v => selectedVariants[v.name] === v.value);
+                if (matchingVariant) document.getElementById('variantIdInput').value = matchingVariant.id;
+                else { alert('Lỗi biến thể.'); return false; }
+            }
+        } else { document.getElementById('variantIdInput').value = ''; }
+        return true;
+    }
+
     function addToCart() {
         const form = document.getElementById('addToCartForm');
         if (!form) {
             if (confirm('Bạn cần đăng nhập để mua hàng. Đi đến trang đăng nhập?')) window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
             return;
         }
-        if (productData && productData.variants && productData.variants.length > 0) {
-            const variantGroups = {};
-            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
-            const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
-            if (!allSelected) { alert('Vui lòng chọn đầy đủ thuộc tính.'); return; }
-            const firstVariantId = Object.values(selectedVariantIds)[0];
-            if (firstVariantId) { document.getElementById('variantIdInput').value = firstVariantId; }
-            else {
-                const matchingVariant = productData.variants.find(v => selectedVariants[v.name] === v.value);
-                if (matchingVariant) document.getElementById('variantIdInput').value = matchingVariant.id;
-                else { alert('Lỗi biến thể.'); return; }
-            }
-        } else { document.getElementById('variantIdInput').value = ''; }
-        form.submit();
+        if (prepareAddToCart()) form.requestSubmit();
     }
 
     function viewShop(shopId) { if (shopId) window.location.href = '/shops/' + shopId; }
@@ -594,7 +350,7 @@
     function openReportModal(reviewId, currentReason, currentNote, editMode) {
         // Reset form về trạng thái sạch
         document.getElementById('reportForm').reset();
-        document.getElementById('otherReasonGroup').classList.add('d-none');
+        document.getElementById('otherReasonGroup').classList.add('hidden');
         document.getElementById('otherNote').removeAttribute('required');
 
         // Gán ID Review
@@ -612,8 +368,8 @@
             // --- CHẾ ĐỘ SỬA ---
             modalTitle.textContent = "Chỉnh sửa báo cáo";
             submitBtn.textContent = "Cập nhật thay đổi";
-            submitBtn.classList.remove('btn-primary');
-            submitBtn.classList.add('btn-warning');
+            submitBtn.classList.remove('bg-orange-500');
+            submitBtn.classList.add('bg-amber-500');
 
             // 1. Fill Lý do cũ (Radio button)
             if (currentReason) {
@@ -635,8 +391,8 @@
             // --- CHẾ ĐỘ TẠO MỚI ---
             modalTitle.textContent = "Báo cáo đánh giá";
             submitBtn.textContent = "Gửi báo cáo";
-            submitBtn.classList.remove('btn-warning');
-            submitBtn.classList.add('btn-primary');
+            submitBtn.classList.remove('bg-amber-500');
+            submitBtn.classList.add('bg-orange-500');
         }
 
         // Mở Modal
@@ -653,8 +409,8 @@
         elem.addEventListener("change", function(event) {
             var otherBox = document.getElementById('otherReasonGroup');
             var otherInput = document.getElementById('otherNote');
-            if (event.target.value === "OTHER") { otherBox.classList.remove('d-none'); otherInput.setAttribute('required', 'true'); }
-            else { otherBox.classList.add('d-none'); otherInput.removeAttribute('required'); }
+            if (event.target.value === "OTHER") { otherBox.classList.remove('hidden'); otherInput.setAttribute('required', 'true'); }
+            else { otherBox.classList.add('hidden'); otherInput.removeAttribute('required'); }
         });
     });
 
@@ -709,8 +465,8 @@
 
     function showToastSuccess(message) {
         const toast = document.createElement('div');
-        toast.className = 'custom-toast-success';
-        toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+        toast.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-lg z-[9999] text-sm flex items-center gap-2';
+        toast.innerHTML = `✓ ${message}`;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     }

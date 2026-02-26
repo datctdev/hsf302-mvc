@@ -24,6 +24,11 @@
                         evt.detail.headers[header.getAttribute('content')] = meta.getAttribute('content');
                     }
                 });
+                document.body.addEventListener('htmx:afterSwap', function(evt) {
+                    if (evt.detail.target.id === 'toast-container' && evt.detail.target.innerHTML.trim()) {
+                        setTimeout(function() { evt.detail.target.innerHTML = ''; }, 3500);
+                    }
+                });
             })();
         </script>
     </th:block>

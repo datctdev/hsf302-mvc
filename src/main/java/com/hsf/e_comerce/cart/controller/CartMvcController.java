@@ -6,6 +6,7 @@ import com.hsf.e_comerce.cart.dto.response.CartResponse;
 import com.hsf.e_comerce.cart.service.CartService;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.auth.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,17 +38,39 @@ public class CartMvcController {
             @CurrentUser User currentUser,
             @Valid @ModelAttribute("addToCartRequest") AddToCartRequest request,
             BindingResult bindingResult,
-            RedirectAttributes redirectAttributes) {
-        
+            RedirectAttributes redirectAttributes,
+            Model model,
+            HttpServletRequest httpRequest) {
+
+        boolean hxRequest = "true".equalsIgnoreCase(httpRequest.getHeader("HX-Request"));
+
         if (bindingResult.hasErrors()) {
+            if (hxRequest) {
+                model.addAttribute("cartItemCount", cartService.getCartItemCount(currentUser));
+                model.addAttribute("toastMessage", "Vui lòng kiểm tra lại thông tin.");
+                model.addAttribute("toastError", true);
+                return "fragments/cart-fragments :: addToCartResponse";
+            }
             redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin.");
             return "redirect:/products/" + request.getProductId();
         }
 
         try {
             cartService.addToCart(currentUser, request);
+            if (hxRequest) {
+                model.addAttribute("cartItemCount", cartService.getCartItemCount(currentUser));
+                model.addAttribute("toastMessage", "Đã thêm sản phẩm vào giỏ hàng.");
+                model.addAttribute("toastError", false);
+                return "fragments/cart-fragments :: addToCartResponse";
+            }
             redirectAttributes.addFlashAttribute("success", "Đã thêm sản phẩm vào giỏ hàng.");
         } catch (Exception e) {
+            if (hxRequest) {
+                model.addAttribute("cartItemCount", cartService.getCartItemCount(currentUser));
+                model.addAttribute("toastMessage", e.getMessage());
+                model.addAttribute("toastError", true);
+                return "fragments/cart-fragments :: addToCartResponse";
+            }
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 

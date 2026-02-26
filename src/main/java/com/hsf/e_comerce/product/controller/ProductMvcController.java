@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -41,18 +42,27 @@ public class ProductMvcController {
             @RequestParam(required = false) UUID shopId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
             @RequestParam(required = false, defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String partial,
+            HttpServletRequest request,
             Model model) {
-        
-        Page<ProductResponse> products = productService.getPublishedProducts(
+
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",", 2);
+            sortBy = parts.length > 0 && !parts[0].isBlank() ? parts[0].trim() : sortBy;
+            sortDir = parts.length > 1 && !parts[1].isBlank() ? parts[1].trim() : sortDir;
+        }
+
+        Page<ProductResponse> productPage = productService.getPublishedProducts(
                 page, size, search, categoryId, shopId, minPrice, maxPrice, sortBy, sortDir
         );
-        
-        model.addAttribute("products", products.getContent());
+
+        model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", products.getTotalPages());
-        model.addAttribute("totalItems", products.getTotalElements());
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalItems", productPage.getTotalElements());
         model.addAttribute("search", search);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("shopId", shopId);
@@ -60,11 +70,26 @@ public class ProductMvcController {
         model.addAttribute("maxPrice", maxPrice);
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
-        
-        // Load categories
+        model.addAttribute("size", size);
+
+        boolean hxRequest = "true".equalsIgnoreCase(request.getHeader("HX-Request"));
+
+        if (hxRequest && "append".equals(partial)) {
+            model.addAttribute("nextPage", page + 1);
+            model.addAttribute("hasMore", page + 1 < productPage.getTotalPages());
+            return "products :: productCardsAppend";
+        }
+
+        if (hxRequest) {
+            model.addAttribute("nextPage", 1);
+            model.addAttribute("hasMore", productPage.getTotalPages() > 1);
+            return "products :: productListFragment";
+        }
+
+        model.addAttribute("nextPage", 1);
+        model.addAttribute("hasMore", productPage.getTotalPages() > 1);
         List<CategoryResponse> categories = productService.findAllCategory();
         model.addAttribute("categories", categories);
-        
         return "products";
     }
 

@@ -1,229 +1,89 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi Tiết Đơn Hàng - E-commerce</title>
-    
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <style>
-        .order-detail-container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .order-detail-card {
-            background: var(--bg-white);
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-sm);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .order-detail-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .order-status {
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-        }
-
-        .status-PENDING { background: #fff3cd; color: #856404; }
-        .status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
-        .status-PROCESSING { background: #d4edda; color: #155724; }
-        .status-SHIPPING { background: #cce5ff; color: #004085; }
-        .status-DELIVERED { background: #d4edda; color: #155724; }
-        .status-CANCELLED { background: #f8d7da; color: #721c24; }
-        .status-REFUNDED { background: #e2e3e5; color: #383d41; }
-
-        .order-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .order-item:last-child {
-            border-bottom: none;
-        }
-
-        .order-item-image {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-        }
-
-        .order-item-details {
-            flex: 1;
-        }
-
-        .order-item-name {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .order-item-variant {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .order-item-price {
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .order-summary {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .summary-section {
-            padding: 1rem;
-            background: var(--bg-light);
-            border-radius: var(--border-radius);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-        }
-
-        .summary-row.total {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            border-top: 2px solid var(--border-color);
-            padding-top: 1rem;
-            margin-top: 0.5rem;
-        }
-    </style>
 </head>
 <body>
-    <div th:replace="~{fragments/nav-home :: nav}"></div>
-
-    <div class="order-detail-container">
-        <div class="page-alerts" th:if="${success != null or error != null}">
-            <div th:if="${success}" class="alert alert-success" th:text="${success}" role="status"></div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}" role="alert"></div>
-        </div>
-
-        <div th:if="${order != null}" class="order-detail-card">
-            <div class="order-detail-header">
-                <div>
-                    <h1 th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h1>
-                    <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);" 
-                       th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
-                </div>
-                <span class="order-status" 
-                      th:classappend="'status-' + ${order.status}"
-                      th:text="${order.status}">Status</span>
+    <th:block th:fragment="content">
+        <div class="max-w-4xl mx-auto">
+            <div class="space-y-3 mb-6">
+                <div th:if="${success}" class="rounded-lg p-4 bg-green-50 text-green-800 text-sm" th:text="${success}" role="status"></div>
+                <div th:if="${error}" class="rounded-lg p-4 bg-red-50 text-red-800 text-sm" th:text="${error}" role="alert"></div>
             </div>
 
-            <div class="order-summary order-summary-grid">
-                <div class="summary-section">
-                    <h3>Thông Tin Giao Hàng</h3>
-                    <div class="summary-row">
-                        <span>Người nhận:</span>
-                        <span th:text="${order.shippingName}">Name</span>
+            <div th:if="${order != null}" class="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div class="flex flex-wrap justify-between items-start gap-4 p-6 border-b border-slate-200">
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900" th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h1>
+                        <p class="text-slate-500 text-sm mt-1" th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
                     </div>
-                    <div class="summary-row">
-                        <span>Số điện thoại:</span>
-                        <span th:text="${order.shippingPhone}">Phone</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Địa chỉ:</span>
-                        <span th:text="${order.shippingAddress}">Address</span>
-                    </div>
-                    <div th:if="${order.shippingCity != null}" class="summary-row">
-                        <span>Thành phố:</span>
-                        <span th:text="${order.shippingCity}">City</span>
-                    </div>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-700"
+                          th:classappend="${order.status.name() == 'DELIVERED'} ? 'bg-green-100 text-green-800' : (${order.status.name() == 'CANCELLED'} ? 'bg-red-100 text-red-800' : (${order.status.name() == 'PENDING_PAYMENT'} ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'))"
+                          th:text="${order.status}">Status</span>
                 </div>
 
-                <div class="summary-section">
-                    <h3>Tóm Tắt Đơn Hàng</h3>
-                    <div class="summary-row">
-                        <span>Shop:</span>
-                        <span th:text="${order.shopName}">Shop</span>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 mb-3">Thông Tin Giao Hàng</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-slate-500">Người nhận:</span><span th:text="${order.shippingName}">Name</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Số điện thoại:</span><span th:text="${order.shippingPhone}">Phone</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Địa chỉ:</span><span th:text="${order.shippingAddress}">Address</span></div>
+                            <div th:if="${order.shippingCity != null}" class="flex justify-between"><span class="text-slate-500">Thành phố:</span><span th:text="${order.shippingCity}">City</span></div>
+                        </div>
                     </div>
-                    <div class="summary-row">
-                        <span>Tạm tính:</span>
-                        <span th:text="${#numbers.formatDecimal(order.subtotal, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Subtotal</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Phí vận chuyển:</span>
-                        <span th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Shipping</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Tổng tiền:</span>
-                        <span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
-                    </div>
-                </div>
-            </div>
-
-            <div th:if="${order.ghnOrderCode != null and !order.ghnOrderCode.isEmpty()}" class="summary-section" style="margin-top: 1rem;">
-                <h3>Vận đơn GHN</h3>
-                <div class="summary-row">
-                    <span>Mã vận đơn:</span>
-                    <span><code th:text="${order.ghnOrderCode}">OrderCode</code></span>
-                </div>
-                <a th:href="@{https://donhang.ghn.vn/}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary" style="margin-top: 0.5rem;">
-                    Tra cứu tại GHN
-                </a>
-            </div>
-
-            <div style="margin-top: 2rem;">
-                <h3>Sản Phẩm</h3>
-                <div th:each="item : ${order.items}" class="order-item">
-                    <img th:src="${item.productImageUrl != null ? item.productImageUrl : '/images/placeholder.png'}" 
-                         alt="Product" class="order-item-image">
-                    <div class="order-item-details">
-                        <div class="order-item-name" th:text="${item.productName}">Product Name</div>
-                        <div th:if="${item.variantName != null}" class="order-item-variant"
-                             th:text="${item.variantName + ': ' + item.variantValue}">Variant</div>
-                        <div class="order-item-price">
-                            <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Price</span>
-                            <span> x </span>
-                            <span th:text="${item.quantity}">Quantity</span>
-                            <span> = </span>
-                            <span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 mb-3">Tóm Tắt Đơn Hàng</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-slate-500">Shop:</span><span th:text="${order.shopName}">Shop</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Tạm tính:</span><span th:text="${#numbers.formatDecimal(order.subtotal, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Subtotal</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Phí vận chuyển:</span><span th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Shipping</span></div>
+                            <div class="flex justify-between pt-2 mt-2 border-t border-slate-200 font-semibold text-base text-primary-600"><span>Tổng tiền:</span><span th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span></div>
                         </div>
                     </div>
                 </div>
+
+                <div th:if="${order.ghnOrderCode != null and !order.ghnOrderCode.isEmpty()}" class="px-6 pb-6">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 mb-2">Vận đơn GHN</h3>
+                        <div class="text-sm mb-2"><span class="text-slate-500">Mã vận đơn:</span> <code th:text="${order.ghnOrderCode}" class="px-1.5 py-0.5 bg-slate-200 rounded"></code></div>
+                        <a th:href="@{https://donhang.ghn.vn/}" target="_blank" rel="noopener noreferrer" class="text-sm no-underline px-4 py-2 rounded-lg border border-primary-500 text-primary-600 font-medium hover:bg-primary-50 inline-block">Tra cứu tại GHN</a>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <h3 class="font-semibold text-slate-900 mb-3">Sản Phẩm</h3>
+                    <div class="space-y-4">
+                        <div th:each="item : ${order.items}" class="flex gap-4 py-4 border-b border-slate-100 last:border-0">
+                            <img th:src="${item.productImageUrl != null ? item.productImageUrl : '/images/placeholder.png'}" alt="Product" class="w-24 h-24 object-cover rounded-lg flex-shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-slate-900" th:text="${item.productName}">Product Name</div>
+                                <div th:if="${item.variantName != null}" class="text-slate-500 text-sm mt-0.5" th:text="${item.variantName + ': ' + item.variantValue}">Variant</div>
+                                <div class="text-sm text-slate-600 mt-1">
+                                    <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Price</span>
+                                    <span> x </span>
+                                    <span th:text="${item.quantity}">Quantity</span>
+                                    <span> = </span>
+                                    <span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} + ' VNĐ'">Total</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${order.status.name() == 'PENDING_PAYMENT' or order.status.name() == 'CONFIRMED'}" class="px-6 pb-6">
+                    <form th:action="@{'/orders/' + ${order.id} + '/cancel'}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 cursor-pointer" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">Hủy Đơn Hàng</button>
+                    </form>
+                </div>
             </div>
 
-            <div th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}" style="margin-top: 2rem;">
-                <form th:action="@{'/orders/' + ${order.id} + '/cancel'}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="btn btn-danger"
-                            onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
-                        Hủy Đơn Hàng
-                    </button>
-                </form>
+            <div th:if="${order == null}" class="rounded-xl bg-white border border-slate-200 p-12 text-center">
+                <p class="text-slate-600 mb-4">Không tìm thấy đơn hàng.</p>
+                <a href="/orders" class="no-underline inline-block px-6 py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Quay Lại</a>
             </div>
         </div>
-
-        <div th:if="${order == null}" class="empty-state">
-            <p>Không tìm thấy đơn hàng.</p>
-            <a href="/orders" class="btn btn-primary">Quay Lại</a>
-        </div>
-    </div>
-
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    </th:block>
 </body>
 </html>

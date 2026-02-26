@@ -1,71 +1,50 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tổng quan của tôi - E-commerce</title>
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <style>
-        .summary-container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        .summary-container h1 { margin-bottom: 1.5rem; font-size: 1.5rem; }
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-box { background: var(--bg-white); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-sm); padding: 1.25rem; border-left: 4px solid var(--primary-color, #007bff); }
-        .stat-box h3 { margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-muted); }
-        .stat-box .value { font-size: 1.5rem; font-weight: 700; }
-        .recent-section h2 { margin: 1.5rem 0 0.75rem 0; font-size: 1.2rem; }
-        .order-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color, #eee); flex-wrap: wrap; }
-        .order-row a { text-decoration: none; color: inherit; }
-        .order-row .status { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
-        .status-CONFIRMED, .status-PROCESSING, .status-SHIPPED, .status-DELIVERED { background: #d4edda; color: #155724; }
-        .status-PENDING, .status-PENDING_PAYMENT { background: #fff3cd; color: #856404; }
-        .status-CANCELLED, .status-REFUNDED { background: #f8d7da; color: #721c24; }
-        .empty-recent { color: var(--text-muted); padding: 1rem 0; }
-    </style>
 </head>
 <body>
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+    <th:block th:fragment="content">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl font-bold text-base-content mb-6">Tổng quan của tôi</h1>
 
-    <main class="main-content">
-        <div class="summary-container">
-            <h1>Tổng quan của tôi</h1>
-
-            <div class="stats-row">
-                <div class="stat-box">
-                    <h3>Tổng số đơn</h3>
-                    <div class="value" th:text="${totalOrders != null ? totalOrders : 0}">0</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
+                    <div class="card-body py-5">
+                        <p class="text-sm font-medium text-base-content/60">Tổng số đơn</p>
+                        <p class="text-2xl font-bold" th:text="${totalOrders != null ? totalOrders : 0}">0</p>
+                    </div>
                 </div>
-                <div class="stat-box" style="border-left-color: #0d9488;">
-                    <h3>Tổng chi tiêu</h3>
-                    <div class="value" th:text="${totalSpent != null ? (#numbers.formatDecimal(totalSpent, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Đơn đã xác nhận → đã giao</span>
+                <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-secondary">
+                    <div class="card-body py-5">
+                        <p class="text-sm font-medium text-base-content/60">Tổng chi tiêu</p>
+                        <p class="text-2xl font-bold" th:text="${totalSpent != null ? (#numbers.formatDecimal(totalSpent, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</p>
+                        <p class="text-xs text-base-content/60">Đơn đã xác nhận → đã giao</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="recent-section">
-                <h2>Đơn gần đây</h2>
-                <div th:if="${recentOrders == null or recentOrders.empty}" class="empty-recent">Chưa có đơn hàng nào.</div>
-                <div th:if="${recentOrders != null and !recentOrders.empty}">
-                    <div th:each="order : ${recentOrders}" class="order-row">
-                        <a th:href="@{'/orders/' + ${order.id}}" style="flex: 1; min-width: 0;">
-                            <strong th:text="${order.orderNumber != null ? order.orderNumber : ('Đơn ' + order.id)}">#ORDER</strong>
-                            <span th:if="${order.createdAt != null}" th:text="' – ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}" style="color: var(--text-muted); font-size: 0.9rem;"></span>
-                            <span th:if="${order.shopName != null}" th:text="' – ' + ${order.shopName}" style="color: var(--text-muted); font-size: 0.9rem;"></span>
-                        </a>
-                        <span class="status" th:classappend="'status-' + ${order.status != null ? order.status.name() : ''}" th:text="${order.status != null ? order.status.name() : ''}">Status</span>
-                        <span th:if="${order.total != null}" th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT') + ' đ'}" style="font-weight: 600;"></span>
+            <div>
+                <h2 class="text-lg font-semibold text-base-content mb-3">Đơn gần đây</h2>
+                <div th:if="${recentOrders == null or recentOrders.empty}" class="text-base-content/60 py-4">Chưa có đơn hàng nào.</div>
+                <div th:if="${recentOrders != null and !recentOrders.empty}" class="card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="divide-y divide-base-200">
+                        <div th:each="order : ${recentOrders}" class="flex flex-wrap items-center justify-between gap-3 py-4 px-4">
+                            <a th:href="@{'/orders/' + ${order.id}}" class="flex-1 min-w-0 link link-hover font-medium">
+                                <strong th:text="${order.orderNumber != null ? order.orderNumber : ('Đơn ' + order.id)}">#ORDER</strong>
+                                <span th:if="${order.createdAt != null}" th:text="' – ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}" class="text-base-content/60 text-sm"></span>
+                                <span th:if="${order.shopName != null}" th:text="' – ' + ${order.shopName}" class="text-base-content/60 text-sm"></span>
+                            </a>
+                            <span class="badge badge-ghost" th:text="${order.status != null ? order.status.name() : ''}">Status</span>
+                            <span th:if="${order.total != null}" class="font-semibold" th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' đ'"></span>
+                        </div>
                     </div>
-                    <p style="margin-top: 1rem;">
-                        <a th:href="@{/orders}" class="btn btn-outline-primary" style="text-decoration: none;">Xem tất cả đơn hàng</a>
-                    </p>
+                    <div class="card-actions p-4 border-t border-base-200">
+                        <a th:href="@{/orders}" class="btn btn-outline btn-primary btn-sm">Xem tất cả đơn hàng</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-    <script th:src="@{/js/common.js}"></script>
+    </th:block>
 </body>
 </html>

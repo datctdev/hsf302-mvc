@@ -7,9 +7,11 @@
                 <a href="/products" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Sản phẩm</a>
                 <a href="/cart" class="flex items-center gap-1.5 no-underline text-slate-700 hover:text-primary-600 font-medium transition">
                     Giỏ hàng
-                    <span th:if="${cartItemCount != null and cartItemCount > 0}"
-                          class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
-                          th:text="${cartItemCount}"></span>
+                    <span id="cart-badge">
+                        <span th:if="${cartItemCount != null and cartItemCount > 0}"
+                              class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
+                              th:text="${cartItemCount}"></span>
+                    </span>
                 </a>
                 <a href="/about" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Giới thiệu</a>
             </div>
