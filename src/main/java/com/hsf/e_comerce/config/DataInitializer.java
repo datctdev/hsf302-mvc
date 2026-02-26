@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -138,6 +137,7 @@ public class DataInitializer implements CommandLineRunner {
                 user.setFullName(fullName);
                 user.setIsActive(true);
                 user.setEmailVerified(true); // Tài khoản mặc định (test) coi như đã xác minh
+                user.setDeleted(false);
                 user.setRole(role); // Set role cho user
                 
                 user = userRepository.save(user);
@@ -439,10 +439,6 @@ public class DataInitializer implements CommandLineRunner {
     private static final String SAMPLE_PRODUCT_IMAGE_URL =
             "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400";
 
-    private Product createProduct(Shop shop, String name, String desc, String sku, BigDecimal basePrice, ProductCategory category) {
-        return createProduct(shop, name, desc, sku, basePrice, category, null);
-    }
-
     private Product createProduct(Shop shop, String name, String desc, String sku, BigDecimal basePrice, ProductCategory category, String imageUrl) {
         if (productRepository.existsBySku(sku)) {
             return productRepository.findBySku(sku).orElse(null);
@@ -515,6 +511,9 @@ public class DataInitializer implements CommandLineRunner {
         order.setPlatformCommission(platformCommission);
         order.setCommissionRate(commissionRate);
         order.calculateTotal();
+        if (status == OrderStatus.DELIVERED) {
+            order.setReceivedByBuyer(true); // Mẫu đơn đã giao → cho phép đánh giá
+        }
         order = orderRepository.save(order);
 
         OrderItem item = new OrderItem();

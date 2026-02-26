@@ -16,7 +16,7 @@
     <th:block th:fragment="content">
         <nav class="text-sm text-slate-500 mb-4"><a href="/" class="no-underline text-primary-600 hover:underline">Trang chủ</a> / <a href="/products" class="no-underline text-primary-600 hover:underline">Sản phẩm</a> / <span id="productBreadcrumb">Chi tiết</span></nav>
 
-        <div th:if="${product != null}" class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-card p-6 mb-8" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
+        <div th:if="${product != null}" class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-card p-6 mb-8" th:attr="data-product-id=${product.id}" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
             <div>
                 <img th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}" id="mainImage" class="w-full h-[400px] md:h-[500px] object-cover rounded-lg bg-slate-100 mb-4" onerror="this.src='/images/placeholder.png'">
                 <div class="flex gap-2 flex-wrap" th:if="${product.images != null and product.images.size() > 1}">
@@ -43,7 +43,7 @@
                 </div>
                 <div class="mt-6">
                     <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}"
-                          hx-post="@{/cart/add}" hx-trigger="submit" hx-swap="none">
+                          th:attr="hx-post=@{/cart/add}" hx-trigger="submit" hx-swap="none">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="productId" th:value="${product.id}"/>
                         <input type="hidden" id="variantIdInput" name="variantId" value="">
@@ -253,16 +253,14 @@
     </div>
 </div>
 
-    </th:block>
-    <th:block th:fragment="scripts">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-    // --- LOGIC GIO HANG (Giữ nguyên) ---
-    let productId = /*[[${product != null ? product.id : null}]]*/ null;
-    let selectedVariants = {};
-    let selectedVariantIds = {};
-    let productData = /*[[${product}]]*/ null;
-    let isEditMode = false; // Biến toàn cục để xác định đang Thêm hay Sửa
+    // --- Biến và hàm (không dùng Thymeleaf ở đây để tránh lỗi cú pháp) ---
+    var productId = null;
+    var selectedVariants = {};
+    var selectedVariantIds = {};
+    var productData = null;
+    var isEditMode = false;
 
     function changeMainImage(imageUrl, thumbnail) {
         document.getElementById('mainImage').src = imageUrl;
@@ -471,18 +469,29 @@
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // Auto select first variant if exists
+    // Khởi tạo productId và productData từ DOM (tránh inject object Thymeleaf gây lỗi cú pháp)
     document.addEventListener('DOMContentLoaded', function() {
+        var productEl = document.querySelector('[data-product-id]');
+        if (productEl && productEl.getAttribute('data-product-id')) productId = productEl.getAttribute('data-product-id');
+        var options = document.querySelectorAll('.variant-option');
+        if (options.length > 0) {
+            productData = { variants: [] };
+            options.forEach(function(opt) {
+                var name = opt.dataset.variantName, value = opt.dataset.variantValue, id = opt.dataset.variantId, stock = parseInt(opt.dataset.stockQuantity || '0', 10);
+                if (name) productData.variants.push({ name: name, value: value, id: id, stockQuantity: stock });
+            });
+        }
         if (productData && productData.variants && productData.variants.length > 0) {
-            const variantGroups = {};
-            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = []; variantGroups[v.name].push(v); });
-            Object.keys(variantGroups).forEach(name => {
-                const firstAvailable = variantGroups[name].find(v => v.stockQuantity > 0);
+            var variantGroups = {};
+            productData.variants.forEach(function(v) { if (!variantGroups[v.name]) variantGroups[v.name] = []; variantGroups[v.name].push(v); });
+            Object.keys(variantGroups).forEach(function(name) {
+                var firstAvailable = variantGroups[name].find(function(v) { return v.stockQuantity > 0; });
                 if (firstAvailable) selectVariant(name, firstAvailable.value, firstAvailable.id, true);
             });
         }
     });
         </script>
+
     </th:block>
 </body>
 </html>
