@@ -37,7 +37,7 @@
                     <p class="text-primary-600 font-medium mt-1" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</p>
                     <p class="text-sm text-slate-600 mt-1 line-clamp-2" th:text="${product.description != null and product.description.length() > 100 ? product.description.substring(0, 100) + '...' : (product.description ?: '')}">Description</p>
                     <div class="flex flex-wrap gap-2 mt-2">
-                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700" th:classappend="${product.status.name() == 'PUBLISHED'} ? 'bg-green-100 text-green-800' : (${product.status.name() == 'DRAFT'} ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600')" th:text="${product.status.name() == 'PUBLISHED' ? 'Đã xuất bản' : (product.status.name() == 'DRAFT' ? 'Nháp' : 'Đã lưu trữ')}">Status</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700" th:classappend="${product.status == 'PUBLISHED'} ? 'bg-green-100 text-green-800' : (${product.status == 'DRAFT'} ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600')" th:text="${product.status == 'PUBLISHED' ? 'Đã xuất bản' : (product.status == 'DRAFT' ? 'Nháp' : 'Đã lưu trữ')}">Status</span>
                         <span th:if="${product.variants != null and !product.variants.empty}" class="text-xs text-slate-500" th:text="|${product.variants.size()} biến thể|">Variants</span>
                     </div>
                 </div>
