@@ -1,58 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Đánh giá - Seller</title>
 </head>
 <body>
-<div th:each="review : ${reviews}" class="review-card">
+    <th:block th:fragment="content">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Đánh giá sản phẩm</h2>
 
-    <!-- REVIEW GỐC -->
-    <div class="buyer-review">
-        <strong th:text="${review.userFullName}">N****a</strong>
-
-        <div>
-            <span th:each="i : ${#numbers.sequence(1,5)}">
-                <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
-            </span>
+        <div th:if="${reviews == null or reviews.empty}" class="text-center py-12 rounded-xl bg-slate-50 border border-slate-200">
+            <p class="text-slate-500">Chưa có đánh giá nào.</p>
         </div>
 
-        <p th:text="${review.comment}"></p>
+        <div th:if="${reviews != null and !reviews.empty}" class="space-y-6">
+            <div th:each="review : ${reviews}" class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                <div class="p-6">
+                    <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
+                        <strong class="text-slate-900" th:text="${review.userFullName}">N****a</strong>
+                        <div class="flex text-amber-500 text-sm">
+                            <span th:each="i : ${#numbers.sequence(1,5)}"><span th:text="${i <= review.rating ? '★' : '☆'}"></span></span>
+                        </div>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-2" th:text="${review.comment}"></p>
+                    <small class="text-slate-400 text-xs" th:text="${#temporals.format(review.createdAt,'dd-MM-yyyy HH:mm')}"></small>
+                </div>
 
-        <small th:text="${#temporals.format(review.createdAt,'dd-MM-yyyy HH:mm')}"></small>
-    </div>
+                <div th:if="${review.sellerReply == null}" class="px-6 pb-6">
+                    <form th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}" method="post" class="space-y-2">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <textarea name="reply" placeholder="Phản hồi cho đánh giá này..." maxlength="1000" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 min-h-[80px]"></textarea>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">Gửi phản hồi</button>
+                    </form>
+                </div>
 
-    <!-- SELLER CHƯA REPLY -->
-    <div th:if="${review.sellerReply == null}">
-        <form th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}"
-              method="post">
-            <textarea name="reply"
-                      placeholder="Phản hồi cho đánh giá này..."
-                      maxlength="1000"
-                      required></textarea>
-            <button type="submit">Gửi phản hồi</button>
-        </form>
-    </div>
-
-    <!-- SELLER ĐÃ REPLY -->
-    <div th:if="${review.sellerReply != null}" class="seller-reply">
-        <strong>Phản hồi của shop</strong>
-        <p th:text="${review.sellerReply.reply}"></p>
-        <small th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></small>
-
-        <form th:if="${review.sellerReply.editable}"
-              th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}"
-              method="post">
-            <textarea name="reply"
-                      th:text="${review.sellerReply.reply}"
-                      maxlength="1000"></textarea>
-            <button type="submit">Cập nhật</button>
-        </form>
-    </div>
-
-</div>
-
-
-
+                <div th:if="${review.sellerReply != null}" class="px-6 pb-6 border-t border-slate-100 pt-4">
+                    <strong class="text-sm text-slate-700">Phản hồi của shop</strong>
+                    <p class="text-slate-600 text-sm mt-1" th:text="${review.sellerReply.reply}"></p>
+                    <small class="text-slate-400 text-xs" th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></small>
+                    <form th:if="${review.sellerReply.editable}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}" method="post" class="mt-3 space-y-2">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <textarea name="reply" th:text="${review.sellerReply.reply}" maxlength="1000" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 min-h-[80px]"></textarea>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">Cập nhật</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </th:block>
 </body>
 </html>

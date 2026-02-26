@@ -1,11 +1,19 @@
-<!-- Navigation Fragment - Seller Pages - Đầy đủ chức năng seller -->
-<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-seller" class="nav-seller">
-    <div class="nav-container">
-        <a href="/">Trang chủ</a>
-        <a href="/profile">Hồ sơ</a>
-        <a href="/seller/shop">Quản Lý Shop</a>
-        <a href="/seller/products">Quản Lý Sản Phẩm</a>
-        <a href="/seller/statistics">Thống kê</a>
-        <a href="/seller/orders">Đơn hàng</a>
+<!-- Navigation Fragment - Seller Pages -->
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-seller" class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-1 overflow-x-auto">
+            <a th:href="@{/}" th:classappend="${requestURI == '/'} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Trang chủ</a>
+            <a th:href="@{/profile}" th:classappend="${requestURI.startsWith('/profile')} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Hồ sơ</a>
+            <a th:href="@{/seller/shop}" th:classappend="${requestURI.startsWith('/seller/shop')} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Quản Lý Shop</a>
+            <a th:href="@{/seller/products}" th:classappend="${requestURI.startsWith('/seller/products')} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Quản Lý Sản Phẩm</a>
+            <a th:href="@{/seller/statistics}" th:classappend="${requestURI.startsWith('/seller/statistics')} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Thống kê</a>
+            <a th:href="@{/seller/orders}" th:classappend="${requestURI.startsWith('/seller/orders')} ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50' : 'text-slate-700 hover:text-primary-600 hover:bg-slate-50'"
+               class="px-4 py-3 text-sm font-medium transition whitespace-nowrap">Đơn hàng</a>
+        </div>
     </div>
 </nav>

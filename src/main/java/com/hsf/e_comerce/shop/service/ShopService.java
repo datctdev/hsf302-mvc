@@ -1,8 +1,10 @@
 package com.hsf.e_comerce.shop.service;
 
+import aj.org.objectweb.asm.commons.Remapper;
 import com.hsf.e_comerce.shop.dto.request.UpdateShopRequest;
 import com.hsf.e_comerce.shop.dto.response.ShopResponse;
 import com.hsf.e_comerce.shop.entity.Shop;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +23,10 @@ public interface ShopService {
     long count();
 
     List<ShopResponse> findAllShops();
+
+    List<Shop> getAllShop();
+
+    String findByUserId(UUID sellerId);
+
+    List<UUID> findAllByNameContaining(String sellerName);
 }

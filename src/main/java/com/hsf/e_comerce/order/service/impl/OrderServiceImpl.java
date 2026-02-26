@@ -18,6 +18,8 @@ import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.order.valueobject.OrderStatusTransition;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.platform.service.CategoryCommissionService;
+import com.hsf.e_comerce.platform.service.CommissionService;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductImage;
 import com.hsf.e_comerce.product.entity.ProductVariant;
@@ -60,6 +62,8 @@ public class OrderServiceImpl implements OrderService {
     private final ReviewRepository reviewRepository;
     private final PlatformSettingService platformSettingService;
     private final ReviewReportRepository reviewReportRepository;
+    private final CommissionService commissionService;
+    private final CategoryCommissionService categoryCommissionService;
 
     @Override
     @Transactional
@@ -83,6 +87,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Validate stock and prepare order items
         BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal totalCommission = BigDecimal.ZERO;
         for (CartItem cartItem : shopCartItems) {
             Product product = cartItem.getProduct();
             ProductVariant variant = cartItem.getVariant();
@@ -100,7 +105,22 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal unitPrice = product.getBasePrice().add(
                     variant.getPriceModifier() != null ? variant.getPriceModifier() : BigDecimal.ZERO
             );
-            subtotal = subtotal.add(unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            BigDecimal itemTotal =
+                    unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+
+            subtotal = subtotal.add(itemTotal);
+
+            // 🔥 LẤY RATE THEO PRODUCT CATEGORY
+            UUID categoryId = product.getCategory().getId();
+
+            BigDecimal rate =
+                    categoryCommissionService.getCommissionByCategory(categoryId);
+
+            BigDecimal itemCommission =
+                    itemTotal.multiply(rate)
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            totalCommission = totalCommission.add(itemCommission);
         }
 
         // Generate order number
@@ -123,11 +143,8 @@ public class OrderServiceImpl implements OrderService {
         order.setNotes(request.getNotes());
         order.setSubtotal(subtotal);
         order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
-        // Hoa hồng nền tảng: platform_commission = subtotal * (commission_rate / 100)
-        BigDecimal commissionRate = platformSettingService.getCommissionRate();
-        BigDecimal platformCommission = subtotal.multiply(commissionRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        order.setPlatformCommission(platformCommission != null ? platformCommission : BigDecimal.ZERO);
-        order.setCommissionRate(commissionRate != null ? commissionRate.doubleValue() : null);
+        order.setPlatformCommission(totalCommission);
+        order.setCommissionRate(null); // vì nhiều category khác nhau
         order.calculateTotal();
 
         order = orderRepository.save(order);
@@ -318,6 +335,12 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(newStatus);
         order = orderRepository.save(order);
 
+        // 🔥 TẠO COMMISSION KHI GIAO HÀNG THÀNH CÔNG
+        if (newStatus == OrderStatus.DELIVERED) {
+
+            commissionService.createCommission(order);
+        }
+
         return mapToResponse(order);
     }
 
@@ -453,6 +476,9 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.DELIVERED);
         order.setDeliveredAt(LocalDateTime.now());
         orderRepository.save(order);
+
+        commissionService.createCommission(order);
+
         log.info("GHN webhook: đơn {} đã set DELIVERED (ghnOrderCode={}, clientOrderCode={})",
                 order.getOrderNumber(), ghnOrderCode, clientOrderCode);
         return true;

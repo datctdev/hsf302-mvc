@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Cart badge only (for OOB swap into #cart-badge) -->
+    <th:block th:fragment="cartBadge(count)">
+        <span th:if="${count != null and count > 0}"
+              class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
+              th:text="${count}"></span>
+    </th:block>
+
+    <!-- Toast message (for OOB swap into #toast-container) -->
+    <th:block th:fragment="toast(message, isError)">
+        <div th:if="${message}" th:class="${isError != null and isError} ? 'bg-red-50 text-red-800 border-red-200' : 'bg-green-50 text-green-800 border-green-200'"
+             class="rounded-lg p-4 border text-sm shadow-lg animate-fade-in"
+             role="alert">
+            <span th:text="${message}">Message</span>
+        </div>
+    </th:block>
+
+    <!-- HTMX add-to-cart response: badge + toast (both OOB) -->
+    <th:block th:fragment="addToCartResponse">
+        <span id="cart-badge" th:replace="~{fragments/cart-fragments :: cartBadge(cartItemCount)}" hx-swap-oob="true"></span>
+        <div id="toast-container" class="fixed top-20 right-4 z-50 max-w-sm" hx-swap-oob="true">
+            <div th:if="${toastMessage != null}" th:replace="~{fragments/cart-fragments :: toast(toastMessage, toastError)}"></div>
+        </div>
+    </th:block>
+</body>
+</html>
