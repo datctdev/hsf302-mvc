@@ -2,7 +2,12 @@ package com.hsf.e_comerce.platform.controller;
 
 import com.hsf.e_comerce.platform.dto.request.CommissionFilterRequest;
 import com.hsf.e_comerce.platform.dto.request.UpdateCommissionRateRequest;
+import com.hsf.e_comerce.platform.dto.response.CommissionByCategoryResponse;
+import com.hsf.e_comerce.platform.dto.response.CommissionByMonthResponse;
+import com.hsf.e_comerce.platform.dto.response.CommissionOverviewResponse;
+import com.hsf.e_comerce.platform.dto.response.TopSellerCommissionResponse;
 import com.hsf.e_comerce.platform.service.CommissionService;
+import com.hsf.e_comerce.platform.service.CommissionStatisticsService;
 import com.hsf.e_comerce.platform.service.PlatformSettingService;
 import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Controller
@@ -24,18 +30,8 @@ import java.util.UUID;
 public class AdminCommissionMvcController {
 
     private final PlatformSettingService platformSettingService;
+    private final CommissionStatisticsService statisticsService;
     private final CommissionService commissionService;
-    private final ShopService shopService;
-
-    @GetMapping
-    public String commissionForm(Model model) {
-        BigDecimal currentRate = platformSettingService.getCommissionRate();
-        model.addAttribute("commissionRate", currentRate);
-        model.addAttribute("updateCommissionRateRequest",
-                UpdateCommissionRateRequest.builder().commissionRate(currentRate).build());
-        model.addAttribute("shops", shopService.getAllShop());
-        return "admin/commission";
-    }
 
     @PostMapping
     public String updateCommissionRate(
@@ -74,5 +70,25 @@ public class AdminCommissionMvcController {
     public String detail(@PathVariable UUID orderId, Model model) {
         model.addAttribute("commission", commissionService.getByOrderId(orderId));
         return "admin/commission-detail";
+    }
+
+    @GetMapping
+    public String commissionPage(Model model) {
+
+        BigDecimal currentRate = platformSettingService.getCommissionRate();
+
+        model.addAttribute("commissionRate", currentRate);
+        model.addAttribute("updateCommissionRateRequest",
+                UpdateCommissionRateRequest.builder()
+                        .commissionRate(currentRate)
+                        .build());
+
+        // 👇 ADD STATISTICS HERE
+        model.addAttribute("overview", statisticsService.getOverview());
+        model.addAttribute("byMonth", statisticsService.getByMonth());
+        model.addAttribute("byCategory", statisticsService.getByCategory());
+        model.addAttribute("topSellers", statisticsService.getTopSellers(5));
+
+        return "admin/commission";
     }
 }
