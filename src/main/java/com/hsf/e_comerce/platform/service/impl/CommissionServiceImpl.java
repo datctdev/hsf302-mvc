@@ -176,6 +176,4 @@ public class CommissionServiceImpl implements CommissionService {
                 .createdAt(c.getCreatedAt())
                 .build();
     }
-
-
 }
