@@ -1,133 +1,113 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hồ Sơ - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/auth.css}">
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <nav class="nav-home">
-        <div class="nav-container">
-            <div class="nav-main">
-                <a href="/">Trang chủ</a>
-                <a href="/products">Sản phẩm</a>
-            </div>
-            <div class="nav-auth">
-                <a href="/">Quay lại</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="container">
+    <th:block th:fragment="content">
+        <div class="space-y-8">
             <!-- Flash Messages -->
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div class="space-y-3">
+                <div th:if="${success}" class="rounded-lg p-4 bg-green-50 text-green-800 text-sm" th:text="${success}"></div>
+                <div th:if="${error}" class="rounded-lg p-4 bg-red-50 text-red-800 text-sm" th:text="${error}"></div>
+            </div>
 
-            <!-- Profile Info Section -->
-            <div class="profile-section" th:if="${user}">
-                <div class="profile-header">
-                    <div class="avatar" th:style="${user.avatarUrl != null} ? 'background-image: url(' + ${user.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
+            <!-- Profile Info -->
+            <div th:if="${user}" class="bg-white rounded-xl shadow-card p-6">
+                <div class="flex flex-wrap items-center gap-6">
+                    <div class="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center text-2xl font-semibold text-primary-700 overflow-hidden shrink-0"
+                         th:style="${user.avatarUrl != null} ? 'background-image: url(' + ${user.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
                         <span th:if="${user.avatarUrl == null}" th:text="${#strings.substring(user.fullName, 0, 1).toUpperCase()}">U</span>
                     </div>
-                    <div class="profile-info">
-                        <h2 th:text="${user.fullName ?: 'Chưa cập nhật'}">Chưa cập nhật</h2>
-                        <p th:text="${user.email}">Email</p>
-                        <p th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">Chưa cập nhật</p>
-                        <span class="status-badge" th:classappend="${user.isActive} ? 'status-active' : 'status-inactive'" 
+                    <div>
+                        <h2 class="text-xl font-semibold text-slate-900" th:text="${user.fullName ?: 'Chưa cập nhật'}">Chưa cập nhật</h2>
+                        <p class="text-slate-600" th:text="${user.email}">Email</p>
+                        <p class="text-slate-600" th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">Chưa cập nhật</p>
+                        <span class="inline-block mt-2 px-2.5 py-0.5 rounded text-xs font-medium"
+                              th:classappend="${user.isActive} ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'"
                               th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Đang hoạt động</span>
                     </div>
                 </div>
             </div>
 
             <!-- Update Profile Form -->
-            <div class="profile-section">
-                <h3>Cập Nhật Thông Tin</h3>
-                <form id="updateProfileForm" class="auth-form" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data">
-                    <!-- CSRF Token -->
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">Cập Nhật Thông Tin</h3>
+                <form id="updateProfileForm" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                    <div class="form-group">
-                        <label for="fullName">Họ và Tên</label>
-                        <input type="text" id="fullName" th:field="*{fullName}">
-                        <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="error-message"></span>
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-slate-700 mb-1">Họ và Tên</label>
+                        <input type="text" id="fullName" th:field="*{fullName}"
+                               class="w-full rounded-lg border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="text-sm text-red-600 mt-1 block"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="phoneNumber">Số Điện Thoại</label>
-                        <input type="text" id="phoneNumber" th:field="*{phoneNumber}">
-                        <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error-message"></span>
+                    <div>
+                        <label for="phoneNumber" class="block text-sm font-medium text-slate-700 mb-1">Số Điện Thoại</label>
+                        <input type="text" id="phoneNumber" th:field="*{phoneNumber}"
+                               class="w-full rounded-lg border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="text-sm text-red-600 mt-1 block"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="avatarFile">Ảnh Đại Diện</label>
-                        <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)">
-                        <small>Chọn ảnh từ máy tính của bạn (JPG, PNG, GIF - tối đa 25MB)</small>
-                        <div id="avatarPreview" style="margin-top: 1rem; display: none;">
-                            <img id="avatarPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 50%; object-fit: cover;">
+                    <div>
+                        <label for="avatarFile" class="block text-sm font-medium text-slate-700 mb-1">Ảnh Đại Diện</label>
+                        <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)"
+                               class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700">
+                        <small class="text-slate-500 text-xs mt-1 block">Chọn ảnh từ máy tính của bạn (JPG, PNG, GIF - tối đa 25MB)</small>
+                        <div id="avatarPreview" class="mt-4 hidden">
+                            <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-full object-cover">
                         </div>
-                        <div th:if="${user != null && user.avatarUrl != null}" style="margin-top: 0.5rem;">
-                            <small>Ảnh hiện tại:</small>
-                            <img th:src="${user.avatarUrl}" alt="Current Avatar" style="max-width: 100px; max-height: 100px; border-radius: 50%; object-fit: cover; display: block; margin-top: 0.5rem;">
+                        <div th:if="${user != null and user.avatarUrl != null}" class="mt-2">
+                            <small class="text-slate-500">Ảnh hiện tại:</small>
+                            <img th:src="${user.avatarUrl}" alt="Current Avatar" class="max-w-[100px] max-h-[100px] rounded-full object-cover block mt-1">
                         </div>
-                        <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="error-message"></span>
+                        <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="text-sm text-red-600 mt-1 block"></span>
                     </div>
 
-                    <button type="submit" id="updateProfileBtn" class="submit-btn">Cập Nhật</button>
+                    <button type="submit" id="updateProfileBtn"
+                            class="bg-primary-500 text-white rounded-lg px-4 py-2.5 font-medium hover:bg-primary-600 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                        Cập Nhật
+                    </button>
                 </form>
             </div>
 
-            <!-- Seller Status Section -->
-            <div class="profile-section" th:if="${user}">
-                <h3>Trạng Thái Seller</h3>
+            <!-- Seller Status -->
+            <div th:if="${user}" class="bg-white rounded-xl shadow-card p-6">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">Trạng Thái Seller</h3>
                 <div th:if="${user.roles != null and user.roles.contains('ROLE_SELLER')}">
-                    <p style="color: green;">Bạn đã là Seller</p>
-                    <a href="/seller/shop" class="btn btn-success">Quản Lý Shop</a>
+                    <p class="text-green-700 mb-3">Bạn đã là Seller</p>
+                    <a href="/seller/shop" class="inline-block no-underline px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition">Quản Lý Shop</a>
                 </div>
                 <div th:if="${user.roles == null or !user.roles.contains('ROLE_SELLER')}">
-                    <p>Bạn chưa là Seller</p>
-                    <a href="/seller/become-seller" class="btn btn-primary">Trở Thành Seller</a>
+                    <p class="text-slate-600 mb-3">Bạn chưa là Seller</p>
+                    <a href="/seller/become-seller" class="inline-block no-underline px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Trở Thành Seller</a>
                 </div>
             </div>
 
-            <!-- Actions Section -->
-            <div class="profile-section">
-                <h3>Thao Tác</h3>
-                <div class="action-buttons">
-                    <a href="/change-password" class="btn btn-primary">Đổi Mật Khẩu</a>
-                    <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" style="display: inline;">
+            <!-- Actions -->
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">Thao Tác</h3>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/change-password" class="inline-block no-underline px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Đổi Mật Khẩu</a>
+                    <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" class="inline">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản?')">
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản?')">
                             Vô Hiệu Hóa Tài Khoản
                         </button>
                     </form>
-                    <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" style="display: inline;">
+                    <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" class="inline">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition">
                             Kích Hoạt Tài Khoản
                         </button>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/auth.js}"></script>
+    </th:block>
+    <th:block th:fragment="additional-js">
+        <script th:src="@{/js/auth.js}"></script>
+    </th:block>
 </body>
 </html>

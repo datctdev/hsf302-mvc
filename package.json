@@ -1,0 +1,11 @@
+{
+  "name": "hsf302-mvc",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i tailwind-src/input.css -o src/main/resources/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i tailwind-src/input.css -o src/main/resources/static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}

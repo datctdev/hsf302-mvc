@@ -1,131 +1,103 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/admin-layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
-    <!-- Admin Header -->
-    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
-    
-    <!-- Admin Navigation -->
-    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
-
-    <!-- Main Content -->
-    <main class="main-content admin-content">
-        <div class="container">
-            <!-- Thống kê theo thời gian -->
-            <div class="section" style="margin-bottom: 1.5rem;">
-                <h2 style="margin-bottom: 0.75rem;">Thống kê theo thời gian</h2>
-                <form th:action="@{/admin/dashboard}" method="get" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
-                    <div>
-                        <label for="fromDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Từ ngày</label>
-                        <input type="date" id="fromDate" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label for="toDate" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Đến ngày</label>
-                        <input type="date" id="toDate" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" style="padding: 0.5rem; border: 1px solid var(--border-color, #ddd); border-radius: 4px;">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Xem</button>
-                </form>
-                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <a th:href="${urlLast7}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">7 ngày qua</a>
-                    <a th:href="${urlLast30}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">30 ngày qua</a>
-                    <a th:href="${urlLast90}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">90 ngày qua</a>
-                    <a th:href="${urlAll}" class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.9rem; background: var(--bg-light, #f5f5f5); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none;">Tất cả</a>
-                </div>
-                <p th:if="${fromDate != null or toDate != null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">
-                    Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
-                </p>
-                <p th:if="${fromDate == null and toDate == null}" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted, #666);">Đang xem: Tất cả thời gian</p>
+    <th:block th:fragment="content">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Thống kê theo thời gian</h2>
+        <form th:action="@{/admin/dashboard}" method="get" class="flex flex-wrap gap-3 items-end mb-4">
+            <div>
+                <label for="fromDate" class="block text-sm font-medium text-slate-700 mb-1">Từ ngày</label>
+                <input type="date" id="fromDate" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             </div>
-
-            <!-- Statistics Cards -->
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <h3>Tổng Users</h3>
-                    <div class="value" th:text="${totalUsers ?: 0}">0</div>
-                    <div class="description">Tổng số người dùng</div>
-                </div>
-                <div class="stat-card success">
-                    <h3>Yêu Cầu Seller</h3>
-                    <div class="value" th:text="${pendingRequests ?: 0}">0</div>
-                    <div class="description">Đang chờ duyệt</div>
-                </div>
-                <div class="stat-card warning">
-                    <h3>Tổng Shops</h3>
-                    <div class="value" th:text="${totalShops ?: 0}">0</div>
-                    <div class="description">Shops đang hoạt động</div>
-                </div>
-                <div class="stat-card danger">
-                    <h3>Tổng Đơn Hàng</h3>
-                    <div class="value" th:text="${totalOrders ?: 0}">0</div>
-                    <div class="description">Tất cả đơn hàng</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #0d9488;">
-                    <h3>Tổng Doanh Thu Các Shop</h3>
-                    <div class="value" th:text="${totalRevenueShops != null ? (#numbers.formatDecimal(totalRevenueShops, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
-                    <div class="description">Doanh thu hàng (tiền đơn − phí ship), đơn đã xác nhận → đã giao</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #6f42c1;">
-                    <h3>Tổng Hoa Hồng Nền Tảng</h3>
-                    <div class="value" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
-                    <div class="description">Hoa hồng thu từ đơn đã xác nhận → đã giao</div>
-                </div>
+            <div>
+                <label for="toDate" class="block text-sm font-medium text-slate-700 mb-1">Đến ngày</label>
+                <input type="date" id="toDate" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Xem</button>
+        </form>
+        <div class="flex flex-wrap gap-2 mb-4">
+            <a th:href="${urlLast7}" class="no-underline px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition">7 ngày qua</a>
+            <a th:href="${urlLast30}" class="no-underline px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition">30 ngày qua</a>
+            <a th:href="${urlLast90}" class="no-underline px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition">90 ngày qua</a>
+            <a th:href="${urlAll}" class="no-underline px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition">Tất cả</a>
+        </div>
+        <p class="text-sm text-slate-500 mb-6" th:if="${fromDate != null or toDate != null}">
+            Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
+        </p>
+        <p class="text-sm text-slate-500 mb-6" th:if="${fromDate == null and toDate == null}">Đang xem: Tất cả thời gian</p>
 
-            <!-- Quick Actions -->
-            <div class="section">
-                <h2>Thao Tác Nhanh</h2>
-                <div class="quick-actions">
-                    <a href="/admin/seller-requests" class="action-card">
-                        <h3>📋 Duyệt Yêu Cầu Seller</h3>
-                        <p>Xem và duyệt các yêu cầu trở thành seller</p>
-                    </a>
-                    <a href="/admin/users" class="action-card">
-                        <h3>👥 Quản Lý Users</h3>
-                        <p>Xem danh sách và quản lý người dùng</p>
-                    </a>
-                    <a href="/admin/products" class="action-card">
-                        <h3>📦 Quản Lý Sản Phẩm</h3>
-                        <p>Xem và quản lý tất cả sản phẩm</p>
-                    </a>
-                    <a href="/admin/orders" class="action-card">
-                        <h3>🛒 Quản Lý Đơn Hàng</h3>
-                        <p>Xem và xử lý đơn hàng</p>
-                    </a>
-                    <a href="/admin/commission" class="action-card">
-                        <h3>💰 Cấu hình hoa hồng</h3>
-                        <p>Thay đổi tỷ lệ hoa hồng nền tảng theo từng sản phẩm</p>
-                    </a>
-                </div>
+        <!-- Stat cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-primary-500">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Tổng Users</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${totalUsers ?: 0}">0</div>
+                <p class="text-xs text-slate-500 mt-1">Tổng số người dùng</p>
             </div>
-
-            <!-- Recent Activity -->
-            <div class="section">
-                <h2>Hoạt Động Gần Đây</h2>
-                <p th:if="${recentActivities == null or recentActivities.empty}" style="color: #666;">Chưa có hoạt động nào.</p>
-                <ul th:if="${recentActivities != null and !recentActivities.empty}" style="list-style: none; padding: 0; margin: 0.5rem 0 0 0;">
-                    <li th:each="act : ${recentActivities}" style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color, #eee); display: flex; align-items: center; gap: 0.75rem;">
-                        <span th:if="${act.type == 'ORDER'}" style="background: var(--primary-color, #007bff); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Đơn</span>
-                        <span th:if="${act.type == 'SELLER_REQUEST'}" style="background: #6f42c1; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Yêu cầu</span>
-                        <a th:href="${act.linkUrl}" th:text="${act.title}" style="flex: 1; text-decoration: none; color: inherit;"></a>
-                        <span th:if="${act.at != null}" th:text="${#temporals.format(act.at, 'dd/MM/yyyy HH:mm')}" style="font-size: 0.85rem; color: var(--text-muted, #666);"></span>
-                    </li>
-                </ul>
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-success">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Yêu Cầu Seller</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${pendingRequests ?: 0}">0</div>
+                <p class="text-xs text-slate-500 mt-1">Đang chờ duyệt</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-warning">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Tổng Shops</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${totalShops ?: 0}">0</div>
+                <p class="text-xs text-slate-500 mt-1">Shops đang hoạt động</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-danger">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Tổng Đơn Hàng</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${totalOrders ?: 0}">0</div>
+                <p class="text-xs text-slate-500 mt-1">Tất cả đơn hàng</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-teal-500">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Tổng Doanh Thu Các Shop</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${totalRevenueShops != null ? (#numbers.formatDecimal(totalRevenueShops, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                <p class="text-xs text-slate-500 mt-1">Doanh thu hàng (đơn đã xác nhận → đã giao)</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-purple-500">
+                <h3 class="text-sm font-medium text-slate-600 mb-1">Tổng Hoa Hồng Nền Tảng</h3>
+                <div class="text-2xl font-bold text-slate-900" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
+                <p class="text-xs text-slate-500 mt-1">Hoa hồng thu từ đơn</p>
             </div>
         </div>
-    </main>
 
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/admin.js}"></script>
+        <!-- Quick actions -->
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Thao Tác Nhanh</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <a href="/admin/seller-requests" class="block no-underline p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-card-hover transition">
+                <h3 class="font-semibold text-slate-900 mb-1">📋 Duyệt Yêu Cầu Seller</h3>
+                <p class="text-sm text-slate-600">Xem và duyệt các yêu cầu trở thành seller</p>
+            </a>
+            <a href="/admin/users" class="block no-underline p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-card-hover transition">
+                <h3 class="font-semibold text-slate-900 mb-1">👥 Quản Lý Users</h3>
+                <p class="text-sm text-slate-600">Xem danh sách và quản lý người dùng</p>
+            </a>
+            <a href="/admin/products" class="block no-underline p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-card-hover transition">
+                <h3 class="font-semibold text-slate-900 mb-1">📦 Quản Lý Sản Phẩm</h3>
+                <p class="text-sm text-slate-600">Xem và quản lý tất cả sản phẩm</p>
+            </a>
+            <a href="/admin/orders" class="block no-underline p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-card-hover transition">
+                <h3 class="font-semibold text-slate-900 mb-1">🛒 Quản Lý Đơn Hàng</h3>
+                <p class="text-sm text-slate-600">Xem và xử lý đơn hàng</p>
+            </a>
+            <a href="/admin/commission" class="block no-underline p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-card-hover transition">
+                <h3 class="font-semibold text-slate-900 mb-1">💰 Cấu hình hoa hồng</h3>
+                <p class="text-sm text-slate-600">Tỷ lệ hoa hồng nền tảng theo sản phẩm</p>
+            </a>
+        </div>
+
+        <!-- Recent activity -->
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Hoạt Động Gần Đây</h2>
+        <p th:if="${recentActivities == null or recentActivities.empty}" class="text-slate-500">Chưa có hoạt động nào.</p>
+        <ul th:if="${recentActivities != null and !recentActivities.empty}" class="divide-y divide-slate-200 rounded-xl bg-white border border-slate-200 overflow-hidden">
+            <li th:each="act : ${recentActivities}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                <span th:if="${act.type == 'ORDER'}" class="px-2 py-0.5 rounded text-xs font-medium bg-primary-500 text-white">Đơn</span>
+                <span th:if="${act.type == 'SELLER_REQUEST'}" class="px-2 py-0.5 rounded text-xs font-medium bg-purple-500 text-white">Yêu cầu</span>
+                <a th:href="${act.linkUrl}" th:text="${act.title}" class="flex-1 no-underline text-slate-900 hover:text-primary-600"></a>
+                <span th:if="${act.at != null}" th:text="${#temporals.format(act.at, 'dd/MM/yyyy HH:mm')}" class="text-sm text-slate-500"></span>
+            </li>
+        </ul>
+    </th:block>
 </body>
 </html>

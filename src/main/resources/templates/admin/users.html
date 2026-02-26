@@ -1,178 +1,94 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/admin-layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Users - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
-    <!-- Admin Header -->
-    <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
-    
-    <!-- Admin Navigation -->
-    <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
-    
-    <!-- Main Content -->
-    <main class="main-content admin-content">
-        <div class="container">
-            <div class="section">
-                <h2>Quản Lý Users</h2>
-                
-                <div class="filters">
-                    <label for="roleFilter">Lọc theo role: </label>
-                    <select id="roleFilter">
-                        <option value="">Tất cả</option>
-                        <option value="ROLE_BUYER">Buyer</option>
-                        <option value="ROLE_SELLER">Seller</option>
-                        <option value="ROLE_ADMIN">Admin</option>
-                    </select>
-                    
-                    <label for="statusFilter" style="margin-left: 1rem;">Lọc theo trạng thái: </label>
-                    <select id="statusFilter">
-                        <option value="">Tất cả</option>
-                        <option value="true">Đang hoạt động</option>
-                        <option value="false">Đã vô hiệu hóa</option>
-                    </select>
-                </div>
+    <th:block th:fragment="content">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Quản Lý Users</h2>
 
-                <!-- Flash Messages -->
-                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div class="flex flex-wrap gap-4 items-center mb-6">
+            <label class="text-sm font-medium text-slate-700">Lọc theo role:</label>
+            <select id="roleFilter" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Tất cả</option>
+                <option value="ROLE_BUYER">Buyer</option>
+                <option value="ROLE_SELLER">Seller</option>
+                <option value="ROLE_ADMIN">Admin</option>
+            </select>
+            <label class="text-sm font-medium text-slate-700 ml-4">Lọc theo trạng thái:</label>
+            <select id="statusFilter" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Tất cả</option>
+                <option value="true">Đang hoạt động</option>
+                <option value="false">Đã vô hiệu hóa</option>
+            </select>
+        </div>
 
-                <div id="usersContainer" class="requests-list">
-                    <!-- Users loaded from Model -->
-                    <div th:if="${users != null and !users.empty}" th:each="user : ${users}">
-                        <div class="request-card">
-                            <div class="request-header" style="display: flex; align-items: center; gap: 1rem;">
-                                <div th:if="${user.avatarUrl != null}" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden;">
-                                    <img th:src="${user.avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                                <div th:unless="${user.avatarUrl != null}" 
-                                     style="width: 50px; height: 50px; border-radius: 50%; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;"
-                                     th:text="${#strings.substring(user.fullName ?: user.email, 0, 1).toUpperCase()}">U</div>
-                                <div style="flex: 1;">
-                                    <h3 style="margin: 0;" th:text="${user.fullName ?: user.email}">User Name</h3>
-                                    <span class="status-badge" 
-                                          th:classappend="${user.isActive} ? 'status-active' : 'status-inactive'"
-                                          th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Status</span>
-                                </div>
-                            </div>
-                            <div class="request-details">
-                                <div class="detail-item">
-                                    <label>Email:</label>
-                                    <span th:text="${user.email}">Email</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Số điện thoại:</label>
-                                    <span th:text="${user.phoneNumber ?: 'N/A'}">Phone</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Roles:</label>
-                                    <span th:text="${#strings.listJoin(user.roles, ', ')}">Roles</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Ngày tạo:</label>
-                                    <span th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm')}">Date</span>
-                                </div>
-                            </div>
-                            <div class="request-actions">
-                                <a th:href="@{'/admin/users/edit/' + ${user.id}}" class="btn btn-primary">Chỉnh sửa</a>
-                                <form th:if="${user.isActive}" 
-                                      th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" 
-                                      method="post" 
-                                      style="display: inline;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="btn btn-warning" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa user này?')">Vô hiệu hóa</button>
-                                </form>
-                                <form th:unless="${user.isActive}" 
-                                      th:action="@{'/admin/users/' + ${user.id} + '/activate'}" 
-                                      method="post" 
-                                      style="display: inline;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="btn btn-success">Kích hoạt</button>
-                                </form>
-                            </div>
-                        </div>
+        <div class="space-y-3 mb-6">
+            <div th:if="${success}" class="rounded-lg p-4 bg-green-50 text-green-800 text-sm" th:text="${success}"></div>
+            <div th:if="${error}" class="rounded-lg p-4 bg-red-50 text-red-800 text-sm" th:text="${error}"></div>
+        </div>
+
+        <div id="usersContainer" class="space-y-4">
+            <div th:if="${users != null and !users.empty}" th:each="user : ${users}" class="user-card bg-white rounded-xl border border-slate-200 shadow-sm p-6"
+                 th:attr="data-roles=${#strings.listJoin(user.roles, ',')}, data-active=${user.isActive}">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div th:if="${user.avatarUrl != null}" class="w-12 h-12 rounded-full overflow-hidden shrink-0">
+                        <img th:src="${user.avatarUrl}" alt="Avatar" class="w-full h-full object-cover">
                     </div>
-                    <div th:if="${users == null or users.empty}" class="empty-state">
-                        <h3>Không có users nào</h3>
+                    <div th:unless="${user.avatarUrl != null}" class="w-12 h-12 rounded-full bg-primary-500 text-white flex items-center justify-center font-semibold shrink-0" th:text="${#strings.substring(user.fullName ?: user.email, 0, 1).toUpperCase()}">U</div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-slate-900 m-0" th:text="${user.fullName ?: user.email}">User Name</h3>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium" th:classappend="${user.isActive} ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'" th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Status</span>
                     </div>
                 </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 text-sm">
+                    <div class="detail-item"><span class="text-slate-500">Email:</span> <span th:text="${user.email}">Email</span></div>
+                    <div class="detail-item"><span class="text-slate-500">Số điện thoại:</span> <span th:text="${user.phoneNumber ?: 'N/A'}">Phone</span></div>
+                    <div class="detail-item"><span class="text-slate-500">Roles:</span> <span class="roles-text" th:text="${#strings.listJoin(user.roles, ', ')}">Roles</span></div>
+                    <div class="detail-item"><span class="text-slate-500">Ngày tạo:</span> <span th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm')}">Date</span></div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <a th:href="@{'/admin/users/edit/' + ${user.id}}" class="inline-block no-underline px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition">Chỉnh sửa</a>
+                    <form th:if="${user.isActive}" th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" method="post" class="inline">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="px-4 py-2 rounded-lg border border-amber-500 text-amber-700 text-sm font-medium hover:bg-amber-50 transition" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa user này?')">Vô hiệu hóa</button>
+                    </form>
+                    <form th:unless="${user.isActive}" th:action="@{'/admin/users/' + ${user.id} + '/activate'}" method="post" class="inline">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition">Kích hoạt</button>
+                    </form>
+                </div>
+            </div>
+            <div th:if="${users == null or users.empty}" class="text-center py-12 rounded-xl bg-slate-50 border border-slate-200">
+                <p class="text-slate-500">Không có users nào</p>
             </div>
         </div>
-    </main>
 
-    <!-- Edit User Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Chỉnh Sửa User</h3>
-            </div>
-            <!-- Modal will be shown when clicking edit button, redirects to edit page -->
-        </div>
-    </div>
-
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/admin.js}"></script>
-    <script>
-        // Filter users on client side (data already loaded from Model)
-        document.addEventListener('DOMContentLoaded', function() {
-            const roleFilter = document.getElementById('roleFilter');
-            const statusFilter = document.getElementById('statusFilter');
-            
-            if (roleFilter) {
-                roleFilter.addEventListener('change', filterUsers);
-            }
-            if (statusFilter) {
-                statusFilter.addEventListener('change', filterUsers);
-            }
-        });
-
-        function filterUsers() {
-            const roleFilter = document.getElementById('roleFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            
-            const userCards = document.querySelectorAll('#usersContainer > div');
-            
-            userCards.forEach(card => {
-                let show = true;
-                
-                // Filter by role
-                if (roleFilter) {
-                    const rolesText = card.querySelector('.detail-item:has(label:contains("Roles"))')?.textContent || '';
-                    if (!rolesText.includes(roleFilter)) {
-                        show = false;
-                    }
-                }
-                
-                // Filter by status
-                if (statusFilter !== '') {
-                    const isActive = statusFilter === 'true';
-                    const statusBadge = card.querySelector('.status-badge');
-                    const isUserActive = statusBadge?.textContent.includes('Đang hoạt động');
-                    if (isUserActive !== isActive) {
-                        show = false;
-                    }
-                }
-                
-                card.style.display = show ? 'block' : 'none';
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var roleFilter = document.getElementById('roleFilter');
+                var statusFilter = document.getElementById('statusFilter');
+                if (roleFilter) roleFilter.addEventListener('change', filterUsers);
+                if (statusFilter) statusFilter.addEventListener('change', filterUsers);
             });
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) {
-                document.getElementById('editModal').style.display = 'none';
+            function filterUsers() {
+                var roleFilter = document.getElementById('roleFilter').value;
+                var statusFilter = document.getElementById('statusFilter').value;
+                var cards = document.querySelectorAll('#usersContainer .user-card');
+                cards.forEach(function(card) {
+                    var show = true;
+                    if (roleFilter) {
+                        var roles = (card.getAttribute('data-roles') || '').split(',');
+                        if (roles.indexOf(roleFilter) === -1) show = false;
+                    }
+                    if (statusFilter !== '') {
+                        var active = card.getAttribute('data-active') === 'true';
+                        if ((statusFilter === 'true' && !active) || (statusFilter === 'false' && active)) show = false;
+                    }
+                    card.style.display = show ? 'block' : 'none';
+                });
             }
-        }
-    </script>
+        </script>
+    </th:block>
 </body>
 </html>

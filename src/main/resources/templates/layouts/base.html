@@ -1,47 +1,25 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" class="font-sans antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ?: 'E-commerce'">E-commerce</title>
-    
-    <!-- Base CSS -->
+    <th:block th:replace="~{fragments/htmx-tailwind :: head}"></th:block>
     <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    
-    <!-- Additional CSS (can be overridden in pages) -->
-    <th:block th:fragment="additional-css">
-        <!-- Additional CSS links -->
-    </th:block>
+    <th:block th:fragment="additional-css"></th:block>
 </head>
-<body>
-    <!-- Header -->
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
     <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
     <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
-    
-    <!-- Main Content -->
-    <main class="main-content">
-        <div th:replace="~{::content}">
-            <!-- Page content goes here -->
+    <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div th:replace="~{::content}"><!-- Page content --></div>
         </div>
     </main>
-    
-    <!-- Footer -->
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-    
-    <!-- Base JavaScript -->
+    <th:block th:replace="~{fragments/htmx-tailwind :: scripts}"></th:block>
     <script th:src="@{/js/common.js}"></script>
-    
-    <!-- Additional JavaScript (can be overridden in pages) -->
-    <th:block th:fragment="additional-js">
-        <!-- Additional JS scripts -->
-    </th:block>
-    
-    <!-- Page-specific scripts -->
-    <th:block th:fragment="scripts">
-        <!-- Page scripts go here -->
-    </th:block>
+    <th:block th:fragment="additional-js"></th:block>
+    <th:block th:fragment="scripts"></th:block>
 </body>
 </html>

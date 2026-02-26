@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ControllerAdvice
@@ -17,6 +18,12 @@ public class GlobalControllerAdvice {
 
     private final UserService userService;
     private final CartService cartService;
+
+    /** Exposed for nav active state (Thymeleaf no longer provides #request by default). */
+    @ModelAttribute("requestURI")
+    public String requestURI(HttpServletRequest request) {
+        return request != null ? request.getRequestURI() : "";
+    }
     
     // Request-scoped cache using ThreadLocal to avoid multiple queries per request
     private static final ThreadLocal<ConcurrentHashMap<String, Object>> REQUEST_CACHE = new ThreadLocal<>();

@@ -1,32 +1,32 @@
 <!-- Navigation Fragment - Home/General Pages -->
-<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-home" class="nav-home">
-    <div class="nav-container">
-        <div class="nav-main">
-            <a href="/">Trang chủ</a>
-            <a href="/products">Sản phẩm</a>
-            <a href="/cart">
-                Giỏ hàng
-                <span th:if="${cartItemCount != null and cartItemCount > 0}"
-                      class="cart-badge"
-                      th:text="${cartItemCount}"></span>
-            </a>
-            <a href="/about">Giới thiệu</a>
-        </div>
-        <!-- Show login/register links if not authenticated -->
-        <div th:if="${currentUser == null}" class="nav-auth">
-            <a href="/login">Đăng nhập</a>
-            <a href="/register">Đăng ký</a>
-        </div>
-        <!-- Show user info if authenticated -->
-        <div th:if="${currentUser != null}" class="user-info">
-            <a href="/my-summary" class="profile-link">Tổng quan</a>
-            <a href="/orders" class="profile-link">Đơn hàng</a>
-            <a href="/profile" class="profile-link">Hồ sơ</a>
-            <span class="user-name" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button type="submit" class="logout-btn">Đăng xuất</button>
-            </form>
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-home" class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-12 gap-6">
+            <div class="flex items-center gap-6">
+                <a href="/" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Trang chủ</a>
+                <a href="/products" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Sản phẩm</a>
+                <a href="/cart" class="flex items-center gap-1.5 no-underline text-slate-700 hover:text-primary-600 font-medium transition">
+                    Giỏ hàng
+                    <span th:if="${cartItemCount != null and cartItemCount > 0}"
+                          class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
+                          th:text="${cartItemCount}"></span>
+                </a>
+                <a href="/about" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Giới thiệu</a>
+            </div>
+            <div th:if="${currentUser == null}" class="flex items-center gap-3">
+                <a href="/login" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Đăng nhập</a>
+                <a href="/register" class="no-underline px-3 py-1.5 text-sm font-medium rounded bg-primary-500 text-white hover:bg-primary-600 transition">Đăng ký</a>
+            </div>
+            <div th:if="${currentUser != null}" class="flex items-center gap-4">
+                <a href="/my-summary" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Tổng quan</a>
+                <a href="/orders" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Đơn hàng</a>
+                <a href="/profile" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Hồ sơ</a>
+                <span class="text-slate-600 text-sm" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
+                <form th:action="@{/logout}" method="post" class="inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="text-slate-600 hover:text-red-600 text-sm font-medium transition">Đăng xuất</button>
+                </form>
+            </div>
         </div>
     </div>
 </nav>
