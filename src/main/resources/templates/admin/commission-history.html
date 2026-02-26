@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử hoa hồng - Admin</title>
+
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<th:block th:replace="~{fragments/header :: header-admin}"></th:block>
+<th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
+
+<main class="main-content admin-content">
+    <div class="container">
+
+        <div class="section">
+            <h2>Lịch sử hoa hồng (Audit)</h2>
+            <p class="text-muted">
+                Hoa hồng được lưu tại thời điểm đơn hàng hoàn tất.
+                Không bị ảnh hưởng khi thay đổi commission sau này.
+            </p>
+
+            <!-- FILTER -->
+            <form method="get" th:action="@{/admin/commission/orders}" class="filter-form">
+
+                <div class="filter-group">
+                    <label>Từ ngày</label>
+                    <input type="date" name="from" th:value="${param.from}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Đến ngày</label>
+                    <input type="date" name="to" th:value="${param.to}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Seller Name</label>
+                    <input type="text" name="sellerName" th:value="${param.sellerName}">
+                </div>
+
+                <div class="filter-group">
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+                </div>
+            </form>
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Seller</th>
+                        <th>Order Amount</th>
+                        <th>Commission</th>
+                        <th>Created At</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${commissions}">
+                        <td th:text="${c.orderId}"></td>
+                        <td th:text="${c.sellerName}"></td>
+                        <td th:text="${#numbers.formatDecimal(c.orderAmount,1,2)} + ' đ'"></td>
+                        <td th:text="${#numbers.formatDecimal(c.commissionAmount,1,2)} + ' đ'"></td>
+                        <td th:text="${#temporals.format(c.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <a th:href="@{'/admin/commission/orders/' + ${c.orderId}}"
+                               class="btn btn-sm btn-outline">
+                                Xem
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(commissions)}">
+                        <td colspan="7" style="text-align:center;">Không có dữ liệu</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <br>
+            <a th:href="@{/admin/commission}" class="btn btn-secondary">
+                Quay lại
+            </a>
+
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>
