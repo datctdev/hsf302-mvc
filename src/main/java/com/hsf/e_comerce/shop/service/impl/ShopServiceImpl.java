@@ -97,6 +97,30 @@ public class ShopServiceImpl implements ShopService {
         return shopRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Override
+    public List<Shop> getAllShop() {
+        return this.shopRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String findByUserId(UUID sellerId) {
+
+        return shopRepository.findByUserId(sellerId)
+                .map(Shop::getName)
+                .orElse("N/A");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> findAllByNameContaining(String name) {
+
+        return shopRepository.findByNameContainingIgnoreCase(name)
+                .stream()
+                .map(shop -> shop.getUser().getId())
+                .toList();
+    }
+
     private ShopResponse mapToResponse(Shop shop) {
         return ShopResponse.builder()
                 .id(shop.getId())

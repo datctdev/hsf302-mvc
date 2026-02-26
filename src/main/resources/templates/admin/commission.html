@@ -19,7 +19,7 @@
             <div class="section">
                 <h2>Cấu hình hoa hồng nền tảng</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                    Tỷ lệ hoa hồng được áp dụng trên giá trị sản phẩm (subtotal) của mỗi đơn hàng. 
+                    Tỷ lệ hoa hồng được áp dụng trên giá trị sản phẩm (subtotal) của mỗi đơn hàng.
                     Ví dụ: sản phẩm 100.000đ, 10% → nền tảng thu 10.000đ. Chỉ đơn hàng mới sau khi cập nhật sẽ dùng tỷ lệ mới.
                 </p>
 
@@ -32,14 +32,27 @@
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div style="margin-bottom: 1rem;">
                             <label for="commissionRate">Tỷ lệ hoa hồng (%)</label>
-                            <input type="number" id="commissionRate" th:field="*{commissionRate}" 
-                                   step="0.01" min="0" max="100" 
+                            <input type="number" id="commissionRate" th:field="*{commissionRate}"
+                                   step="0.01" min="0" max="100"
                                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius);"
                                    required>
                             <div th:if="${#fields.hasErrors('commissionRate')}" class="alert alert-danger" th:errors="*{commissionRate}"></div>
                         </div>
                         <button type="submit" class="btn btn-primary">Cập nhật</button>
                     </form>
+                    <hr style="margin: 2rem 0;">
+
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                        <a th:href="@{/admin/commission/categories}"
+                           class="btn btn-secondary">
+                            Cấu hình hoa hồng theo danh mục
+                        </a>
+
+                        <a th:href="@{/admin/commission/orders}"
+                           class="btn btn-outline">
+                            Xem lịch sử hoa hồng (Audit)
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
