@@ -1,39 +1,24 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" class="font-sans antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ?: 'Admin - E-commerce'">Admin - E-commerce</title>
-    
-    <!-- Base CSS -->
+    <th:block th:replace="~{fragments/htmx-tailwind :: head}"></th:block>
     <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
-    
-    <th:block th:fragment="additional-css">
-        <!-- Additional head content -->
-    </th:block>
+    <th:block th:fragment="additional-css"></th:block>
 </head>
-<body>
-    <!-- Admin Header -->
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-900" data-theme="ecommerce">
     <th:block th:replace="~{fragments/header :: header-admin}"></th:block>
-    
-    <!-- Admin Navigation -->
     <th:block th:replace="~{fragments/nav-admin :: nav-admin}"></th:block>
-    
-    <!-- Main Content -->
-    <main class="main-content admin-content">
-        <div th:replace="~{::content}">
-            <!-- Page content goes here -->
+    <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div th:replace="~{::content}"><!-- Page content --></div>
         </div>
     </main>
-    
-    <!-- Base JavaScript -->
+    <th:block th:replace="~{fragments/htmx-tailwind :: scripts}"></th:block>
     <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/admin.js}"></script>
-    
-    <th:block th:fragment="scripts">
-        <!-- Page scripts go here -->
-    </th:block>
+    <th:block th:fragment="scripts"></th:block>
 </body>
 </html>

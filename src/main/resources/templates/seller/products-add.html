@@ -1,167 +1,115 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}">
-    <meta name="_csrf_header" th:content="${_csrf.parameterName}">
-    <title>Thêm Sản Phẩm - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/seller.css}">
+    <title>Thêm Sản Phẩm - Seller</title>
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <th:block th:replace="~{fragments/nav-seller :: nav-seller}"></th:block>
+    <th:block th:fragment="content">
+        <style>.image-upload-area.dragover{border-color:#0ea5e9;box-shadow:0 0 0 2px rgba(14,165,233,.3);}.wizard-step .wizard-step-number{background:#e2e8f0;color:#475569;}.wizard-step.active .wizard-step-number,.wizard-step.completed .wizard-step-number{background:#0ea5e9;color:#fff;}</style>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="csrfTokenInput"/>
+        <div class="max-w-4xl mx-auto rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-bold text-slate-900 mb-8">Thêm Sản Phẩm Mới</h2>
 
-    <!-- Main Content -->
-    <main class="main-content seller-content">
-        <div class="container">
-            <div class="wizard-container">
-                <h2 style="margin-bottom: 2rem;">Thêm Sản Phẩm Mới</h2>
+            <div class="flex flex-wrap gap-4 mb-8 border-b border-slate-200 pb-4">
+                <div class="wizard-step flex items-center gap-2" data-step="1">
+                    <div class="wizard-step-number w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-semibold">1</div>
+                    <div class="wizard-step-label text-sm font-medium text-slate-700">Thông Tin & Hình Ảnh</div>
+                </div>
+                <div class="wizard-step flex items-center gap-2" data-step="2">
+                    <div class="wizard-step-number w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-semibold">2</div>
+                    <div class="wizard-step-label text-sm text-slate-500">Biến Thể & Danh Mục</div>
+                </div>
+                <div class="wizard-step flex items-center gap-2" data-step="3">
+                    <div class="wizard-step-number w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-semibold">3</div>
+                    <div class="wizard-step-label text-sm text-slate-500">Xem Lại & Lưu</div>
+                </div>
+            </div>
 
-                <!-- Wizard Steps -->
-                <div class="wizard-steps">
-                    <div class="wizard-step active" data-step="1">
-                        <div class="wizard-step-number">1</div>
-                        <div class="wizard-step-label">Thông Tin & Hình Ảnh</div>
+            <form id="productForm" style="display: none;"></form>
+
+            <div id="step1">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">Thông Tin Cơ Bản & Hình Ảnh</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="productName" class="block text-sm font-medium text-slate-700 mb-1">Tên sản phẩm *</label>
+                        <input type="text" id="productName" name="name" required oninput="autoGenerateSku()" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
                     </div>
-                    <div class="wizard-step" data-step="2">
-                        <div class="wizard-step-number">2</div>
-                        <div class="wizard-step-label">Biến Thể & Danh Mục</div>
+                    <div>
+                        <label for="productDescription" class="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+                        <textarea id="productDescription" name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"></textarea>
                     </div>
-                    <div class="wizard-step" data-step="3">
-                        <div class="wizard-step-number">3</div>
-                        <div class="wizard-step-label">Xem Lại & Lưu</div>
+                    <div>
+                        <label for="productSku" class="block text-sm font-medium text-slate-700 mb-1">SKU (Mã hàng tồn kho) *</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="productSku" name="sku" placeholder="VD: SHIRT-COTTON-001" required class="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                            <button type="button" onclick="autoGenerateSku()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50 whitespace-nowrap">Tự động tạo</button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1"><strong>SKU là gì?</strong> Mã định danh duy nhất cho sản phẩm (Stock Keeping Unit). Click "Tự động tạo" để tạo SKU từ tên sản phẩm, hoặc nhập thủ công.</p>
+                    </div>
+                    <div>
+                        <label for="productBasePrice" class="block text-sm font-medium text-slate-700 mb-1">Giá cơ bản (VNĐ) *</label>
+                        <input type="number" id="productBasePrice" name="basePrice" min="0" step="0.01" required class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div id="defaultStockQuantityGroup">
+                        <label for="productStockQuantity" class="block text-sm font-medium text-slate-700 mb-1">Số lượng tồn kho *</label>
+                        <input type="number" id="productStockQuantity" name="stockQuantity" min="0" value="0" required class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                        <p class="text-xs text-slate-500 mt-1">Số lượng tồn kho mặc định. Nếu bạn thêm biến thể ở bước 2, số lượng này sẽ không được sử dụng.</p>
+                    </div>
+                    <div>
+                        <label for="productStatus" class="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                        <select id="productStatus" name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                            <option value="DRAFT">Nháp</option>
+                            <option value="PUBLISHED">Xuất bản</option>
+                        </select>
                     </div>
                 </div>
+                <hr class="my-8 border-slate-200">
+                <h4 class="font-semibold text-slate-900 mb-3">Hình Ảnh Sản Phẩm (Tùy chọn)</h4>
+                <div class="image-upload-area border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary-400 transition-colors" id="imageUploadArea">
+                    <p class="text-slate-500 text-sm">Kéo thả hình ảnh vào đây hoặc click để chọn</p>
+                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4" id="imagePreviewGrid"></div>
+            </div>
 
-                <!-- Wizard Content -->
-                <form id="productForm" style="display: none;">
-                    <!-- Hidden form for actual submission -->
-                </form>
-                    <!-- Step 1: Basic Info + Images -->
-                    <div class="wizard-content" id="step1">
-                        <h3>Thông Tin Cơ Bản & Hình Ảnh</h3>
-                        
-                        <div class="form-group">
-                            <label for="productName">Tên sản phẩm *</label>
-                            <input type="text" id="productName" name="name" required oninput="autoGenerateSku()">
-                        </div>
-                        <div class="form-group">
-                            <label for="productDescription">Mô tả</label>
-                            <textarea id="productDescription" name="description" rows="4"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="productSku">SKU (Mã hàng tồn kho) *</label>
-                            <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
-                                <input type="text" id="productSku" name="sku" placeholder="VD: SHIRT-COTTON-001" required style="flex: 1;">
-                                <button type="button" class="btn btn-secondary" onclick="autoGenerateSku()" style="white-space: nowrap;">Tự động tạo</button>
-                            </div>
-                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                                <strong>SKU là gì?</strong> Mã định danh duy nhất cho sản phẩm (Stock Keeping Unit). 
-                                Click "Tự động tạo" để tạo SKU từ tên sản phẩm, hoặc nhập thủ công.
-                            </small>
-                        </div>
-                        <div class="form-group">
-                            <label for="productBasePrice">Giá cơ bản (VNĐ) *</label>
-                            <input type="number" id="productBasePrice" name="basePrice" min="0" step="0.01" required>
-                        </div>
-                        <div class="form-group" id="defaultStockQuantityGroup">
-                            <label for="productStockQuantity">Số lượng tồn kho *</label>
-                            <input type="number" id="productStockQuantity" name="stockQuantity" min="0" value="0" required>
-                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                                Số lượng tồn kho mặc định. Nếu bạn thêm biến thể ở bước 2, số lượng này sẽ không được sử dụng.
-                            </small>
-                        </div>
-                        <div class="form-group">
-                            <label for="productStatus">Trạng thái</label>
-                            <select id="productStatus" name="status">
-                                <option value="DRAFT">Nháp</option>
-                                <option value="PUBLISHED">Xuất bản</option>
-                            </select>
-                        </div>
-
-                        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border-color);">
-
-                        <h4 style="margin-bottom: 1rem;">Hình Ảnh Sản Phẩm (Tùy chọn)</h4>
-                        <div class="image-upload-area" id="imageUploadArea">
-                            <p>Kéo thả hình ảnh vào đây hoặc click để chọn</p>
-                            <input type="file" id="imageInput" multiple accept="image/*" style="display: none;">
-                        </div>
-                        <div class="image-preview-grid" id="imagePreviewGrid">
-                            <!-- Images will be added here -->
-                        </div>
+            <div id="step2" style="display: none;">
+                <h3 class="text-lg font-semibold text-slate-900 mb-2">Biến Thể & Danh Mục (Tùy chọn)</h3>
+                <p class="text-slate-500 text-sm mb-6">Bạn có thể thêm biến thể (màu sắc, size, v.v.) và chọn danh mục. Nếu không cần, có thể bỏ qua bước này.</p>
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-slate-900">Biến Thể Sản Phẩm</h4>
+                        <button type="button" onclick="addVariant()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50">+ Thêm Biến Thể</button>
                     </div>
+                    <div id="variantList" class="space-y-4"></div>
+                    <p class="text-xs text-slate-500 mt-2">Biến thể giúp quản lý các phiên bản khác nhau của sản phẩm (VD: Màu đỏ Size M, Màu xanh Size L)</p>
+                </div>
+                <hr class="my-8 border-slate-200">
+                <div>
+                    <label for="productCategory" class="block text-sm font-medium text-slate-700 mb-1">Danh Mục Sản Phẩm</label>
+                    <select id="productCategory" name="categoryId" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                        <option value="">-- Chọn danh mục (Tùy chọn) --</option>
+                        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Category Name</option>
+                    </select>
+                    <p class="text-xs text-slate-500 mt-1">Chọn danh mục phù hợp để khách hàng dễ tìm thấy sản phẩm của bạn</p>
+                </div>
+            </div>
 
-                    <!-- Step 2: Variants + Category -->
-                    <div class="wizard-content" id="step2" style="display: none;">
-                        <h3>Biến Thể & Danh Mục (Tùy chọn)</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                            Bạn có thể thêm biến thể (màu sắc, size, v.v.) và chọn danh mục. Nếu không cần, có thể bỏ qua bước này.
-                        </p>
+            <div id="step3" style="display: none;">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">Xem Lại & Lưu Sản Phẩm</h3>
+                <div id="reviewContent"></div>
+            </div>
 
-                        <div style="margin-bottom: 2rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <h4 style="margin: 0;">Biến Thể Sản Phẩm</h4>
-                                <button type="button" class="btn btn-secondary" onclick="addVariant()">+ Thêm Biến Thể</button>
-                            </div>
-                            <div class="variant-list" id="variantList">
-                                <!-- Variants will be added here -->
-                            </div>
-                            <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
-                                Biến thể giúp quản lý các phiên bản khác nhau của sản phẩm (VD: Màu đỏ Size M, Màu xanh Size L)
-                            </p>
-                        </div>
-
-                        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border-color);">
-
-                        <div class="form-group">
-                            <label for="productCategory">Danh Mục Sản Phẩm</label>
-                            <select id="productCategory" name="categoryId">
-                                <option value="">-- Chọn danh mục (Tùy chọn) --</option>
-                                <option th:each="category : ${categories}" 
-                                        th:value="${category.id}" 
-                                        th:text="${category.name}">Category Name</option>
-                            </select>
-                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                                Chọn danh mục phù hợp để khách hàng dễ tìm thấy sản phẩm của bạn
-                            </small>
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Review -->
-                    <div class="wizard-content" id="step3" style="display: none;">
-                        <h3>Xem Lại & Lưu Sản Phẩm</h3>
-                        <div id="reviewContent">
-                            <!-- Review content will be generated here -->
-                        </div>
-                    </div>
-
-                    <!-- Wizard Actions -->
-                    <div class="wizard-actions">
-                        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">Quay Lại</button>
-                        <div style="flex: 1;"></div>
-                        <button type="button" class="btn btn-outline-secondary" id="skipBtn" onclick="skipToReview()" style="display: none;">Bỏ qua & Xem lại</button>
-                        <button type="button" class="btn btn-success" id="saveNowBtn" onclick="saveProductNow()" style="display: none;">Lưu ngay (Nháp)</button>
-                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Tiếp Theo</button>
-                        <button type="button" class="btn btn-success" id="submitBtn" onclick="submitProduct()" style="display: none;">Lưu Sản Phẩm</button>
-                    </div>
-                </form>
+            <div class="flex flex-wrap gap-3 items-center mt-8 pt-6 border-t border-slate-200">
+                <button type="button" id="prevBtn" onclick="previousStep()" style="display: none;" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Quay Lại</button>
+                <div class="flex-1"></div>
+                <button type="button" id="skipBtn" onclick="skipToReview()" style="display: none;" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Bỏ qua & Xem lại</button>
+                <button type="button" id="saveNowBtn" onclick="saveProductNow()" style="display: none;" class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700">Lưu ngay (Nháp)</button>
+                <button type="button" id="nextBtn" onclick="nextStep()" class="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Tiếp Theo</button>
+                <button type="button" id="submitBtn" onclick="submitProduct()" style="display: none;" class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700">Lưu Sản Phẩm</button>
             </div>
         </div>
-    </main>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
-
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
+        <script>
     <script>
         let currentStep = 1;
         const totalSteps = 3;
@@ -277,13 +225,13 @@
             });
 
             const imageItem = document.createElement('div');
-            imageItem.className = 'image-preview-item';
+            imageItem.className = 'relative rounded-lg overflow-hidden border border-slate-200';
             imageItem.innerHTML = `
-                <img src="${imageUrl}" alt="Preview">
-                ${imageIndex === 0 ? '<span class="thumbnail-badge">Thumbnail</span>' : ''}
-                <div class="image-actions">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="setThumbnail(${imageIndex})">Đặt làm ảnh đại diện</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeImage(${imageIndex})">Xóa</button>
+                <img src="${imageUrl}" alt="Preview" class="w-full h-24 object-cover">
+                ${imageIndex === 0 ? '<span class="absolute top-1 left-1 px-2 py-0.5 rounded bg-primary-500 text-white text-xs">Thumbnail</span>' : ''}
+                <div class="p-2 flex gap-2 flex-wrap">
+                    <button type="button" class="px-2 py-1 rounded text-xs font-medium bg-primary-500 text-white hover:bg-primary-600" onclick="setThumbnail(${imageIndex})">Đặt làm ảnh đại diện</button>
+                    <button type="button" class="px-2 py-1 rounded text-xs font-medium border border-red-500 text-red-600 hover:bg-red-50" onclick="removeImage(${imageIndex})">Xóa</button>
                 </div>
             `;
             previewGrid.appendChild(imageItem);
@@ -306,13 +254,13 @@
             previewGrid.innerHTML = '';
             productData.images.forEach((img, index) => {
                 const imageItem = document.createElement('div');
-                imageItem.className = 'image-preview-item';
+                imageItem.className = 'relative rounded-lg overflow-hidden border border-slate-200';
                 imageItem.innerHTML = `
-                    <img src="${img.imageUrl}" alt="Preview">
-                    ${img.isThumbnail ? '<span class="thumbnail-badge">Thumbnail</span>' : ''}
-                    <div class="image-actions">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="setThumbnail(${index})">Đặt làm ảnh đại diện</button>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="removeImage(${index})">Xóa</button>
+                    <img src="${img.imageUrl}" alt="Preview" class="w-full h-24 object-cover">
+                    ${img.isThumbnail ? '<span class="absolute top-1 left-1 px-2 py-0.5 rounded bg-primary-500 text-white text-xs">Thumbnail</span>' : ''}
+                    <div class="p-2 flex gap-2 flex-wrap">
+                        <button type="button" class="px-2 py-1 rounded text-xs font-medium bg-primary-500 text-white hover:bg-primary-600" onclick="setThumbnail(${index})">Đặt làm ảnh đại diện</button>
+                        <button type="button" class="px-2 py-1 rounded text-xs font-medium border border-red-500 text-red-600 hover:bg-red-50" onclick="removeImage(${index})">Xóa</button>
                     </div>
                 `;
                 previewGrid.appendChild(imageItem);
@@ -330,39 +278,34 @@
             }
             
             const variantItem = document.createElement('div');
-            variantItem.className = 'variant-item';
+            variantItem.className = 'variant-item border border-slate-200 rounded-xl p-4';
             variantItem.innerHTML = `
-                <div class="variant-item-header">
-                    <h4>Biến Thể ${variantIndex + 1}</h4>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant(${variantIndex})">Xóa</button>
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-medium text-slate-900">Biến Thể ${variantIndex + 1}</h4>
+                    <button type="button" class="px-2 py-1 rounded text-xs font-medium border border-red-500 text-red-600 hover:bg-red-50" onclick="removeVariant(${variantIndex})">Xóa</button>
                 </div>
-                <div class="variant-fields">
-                    <div class="form-group">
-                        <label>Tên thuộc tính * (VD: Màu sắc, Size)</label>
-                        <input type="text" class="variant-name" placeholder="Màu sắc" required>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tên thuộc tính * (VD: Màu sắc, Size)</label>
+                        <input type="text" class="variant-name w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Màu sắc" required>
                     </div>
-                    <div class="form-group">
-                        <label>Giá trị * (VD: Đỏ, XL)</label>
-                        <input type="text" class="variant-value" placeholder="Đỏ" required>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá trị * (VD: Đỏ, XL)</label>
+                        <input type="text" class="variant-value w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Đỏ" required>
                     </div>
-                    <div class="form-group">
-                        <label>Giá chênh lệch (VNĐ)</label>
-                        <input type="number" class="variant-price-modifier" value="0" step="0.01" placeholder="0">
-                        <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                            Số tiền chênh lệch so với giá cơ bản. Ví dụ: Giá cơ bản 200,000 VNĐ, chênh lệch +20,000 VNĐ → Giá variant = 220,000 VNĐ
-                        </small>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá chênh lệch (VNĐ)</label>
+                        <input type="number" class="variant-price-modifier w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="0" step="0.01" placeholder="0">
+                        <p class="text-xs text-slate-500 mt-0.5">Số tiền chênh lệch so với giá cơ bản. Ví dụ: +20,000 VNĐ → Giá variant = giá cơ bản + 20,000</p>
                     </div>
-                    <div class="form-group">
-                        <label>Số lượng tồn kho *</label>
-                        <input type="number" class="variant-stock" value="0" min="0" required>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Số lượng tồn kho *</label>
+                        <input type="number" class="variant-stock w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="0" min="0" required>
                     </div>
-                    <div class="form-group">
-                        <label>SKU Variant (Mã biến thể) *</label>
-                        <input type="text" class="variant-sku" placeholder="VD: SHIRT-001-RED-M, SHOE-002-BLACK-42" required>
-                        <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                            Mã SKU riêng cho biến thể này. Thường kết hợp SKU sản phẩm + thuộc tính.
-                            <br>Ví dụ: Nếu Product SKU là "SHIRT-001", variant "Đỏ, Size M" có thể là "SHIRT-001-RED-M"
-                        </small>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">SKU Variant (Mã biến thể) *</label>
+                        <input type="text" class="variant-sku w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="VD: SHIRT-001-RED-M" required>
+                        <p class="text-xs text-slate-500 mt-0.5">Mã SKU riêng cho biến thể. VD: SHIRT-001-RED-M</p>
                     </div>
                 </div>
             `;
@@ -389,38 +332,33 @@
             variantList.innerHTML = '';
             productData.variants.forEach((variant, index) => {
                 const variantItem = document.createElement('div');
-                variantItem.className = 'variant-item';
+                variantItem.className = 'variant-item border border-slate-200 rounded-xl p-4';
                 variantItem.innerHTML = `
-                    <div class="variant-item-header">
-                        <h4>Biến Thể ${index + 1}</h4>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant(${index})">Xóa</button>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-slate-900">Biến Thể ${index + 1}</h4>
+                        <button type="button" class="px-2 py-1 rounded text-xs font-medium border border-red-500 text-red-600 hover:bg-red-50" onclick="removeVariant(${index})">Xóa</button>
                     </div>
-                    <div class="variant-fields">
-                        <div class="form-group">
-                            <label>Tên thuộc tính *</label>
-                            <input type="text" class="variant-name" value="${variant.name}" required>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tên thuộc tính *</label>
+                            <input type="text" class="variant-name w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="${escapeHtml(variant.name)}" required>
                         </div>
-                        <div class="form-group">
-                            <label>Giá trị *</label>
-                            <input type="text" class="variant-value" value="${variant.value}" required>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Giá trị *</label>
+                            <input type="text" class="variant-value w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="${escapeHtml(variant.value)}" required>
                         </div>
-                        <div class="form-group">
-                            <label>Giá chênh lệch (VNĐ)</label>
-                            <input type="number" class="variant-price-modifier" value="${variant.priceModifier}" step="0.01" placeholder="0">
-                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                                Số tiền chênh lệch so với giá cơ bản. Ví dụ: +20,000 VNĐ hoặc -10,000 VNĐ
-                            </small>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Giá chênh lệch (VNĐ)</label>
+                            <input type="number" class="variant-price-modifier w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="${variant.priceModifier}" step="0.01" placeholder="0">
+                            <p class="text-xs text-slate-500 mt-0.5">Số tiền chênh lệch so với giá cơ bản</p>
                         </div>
-                        <div class="form-group">
-                            <label>Số lượng tồn kho *</label>
-                            <input type="number" class="variant-stock" value="${variant.stockQuantity}" min="0" required>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Số lượng tồn kho *</label>
+                            <input type="number" class="variant-stock w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="${variant.stockQuantity}" min="0" required>
                         </div>
-                        <div class="form-group">
-                            <label>SKU Variant (Mã biến thể) *</label>
-                            <input type="text" class="variant-sku" value="${variant.sku}" placeholder="VD: SHIRT-001-RED-M" required>
-                            <small style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
-                                Mã SKU riêng cho biến thể này. Thường kết hợp SKU sản phẩm + thuộc tính.
-                            </small>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">SKU Variant *</label>
+                            <input type="text" class="variant-sku w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value="${escapeHtml(variant.sku)}" placeholder="VD: SHIRT-001-RED-M" required>
                         </div>
                     </div>
                 `;
@@ -692,25 +630,23 @@
                 if (opt) catName = opt.text;
             }
             let html = `
-                <div class="review-section">
-                    <h4>Thông Tin Cơ Bản</h4>
-                    <p><strong>Tên:</strong> ${escapeHtml(productData.name)}</p>
-                    <p><strong>SKU:</strong> ${escapeHtml(productData.sku)}</p>
-                    <p><strong>Giá:</strong> ${formatPrice(productData.basePrice)} VNĐ</p>
-                    <p><strong>Trạng thái:</strong> ${productData.status === 'PUBLISHED' ? 'Xuất bản' : 'Nháp'}</p>
-                    ${productData.description ? `<p><strong>Mô tả:</strong> ${escapeHtml(productData.description)}</p>` : ''}
-                    ${catName ? `<p><strong>Danh mục:</strong> ${escapeHtml(catName)}</p>` : ''}
+                <div class="mb-6">
+                    <h4 class="font-semibold text-slate-900 mb-2">Thông Tin Cơ Bản</h4>
+                    <p class="text-sm text-slate-600"><strong>Tên:</strong> ${escapeHtml(productData.name)}</p>
+                    <p class="text-sm text-slate-600"><strong>SKU:</strong> ${escapeHtml(productData.sku)}</p>
+                    <p class="text-sm text-slate-600"><strong>Giá:</strong> ${formatPrice(productData.basePrice)} VNĐ</p>
+                    <p class="text-sm text-slate-600"><strong>Trạng thái:</strong> ${productData.status === 'PUBLISHED' ? 'Xuất bản' : 'Nháp'}</p>
+                    ${productData.description ? `<p class="text-sm text-slate-600"><strong>Mô tả:</strong> ${escapeHtml(productData.description)}</p>` : ''}
+                    ${catName ? `<p class="text-sm text-slate-600"><strong>Danh mục:</strong> ${escapeHtml(catName)}</p>` : ''}
                 </div>
             `;
 
             if (productData.images.length > 0) {
                 html += `
-                    <div class="review-section">
-                        <h4>Hình Ảnh (${productData.images.length})</h4>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            ${productData.images.map(img => `
-                                <img src="${img.imageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;" alt="Preview">
-                            `).join('')}
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-slate-900 mb-2">Hình Ảnh (${productData.images.length})</h4>
+                        <div class="flex gap-2 flex-wrap">
+                            ${productData.images.map(img => `<img src="${img.imageUrl}" class="w-24 h-24 object-cover rounded-lg border border-slate-200" alt="Preview">`).join('')}
                         </div>
                     </div>
                 `;
@@ -718,11 +654,9 @@
 
             if (productData.variants.length > 0) {
                 html += `
-                    <div class="review-section">
-                        <h4>Biến Thể (${productData.variants.length})</h4>
-                        ${productData.variants.map(v => `
-                            <p>${escapeHtml(v.name)}: ${escapeHtml(v.value)} - Giá: ${formatPrice(v.priceModifier)} VNĐ - Tồn kho: ${v.stockQuantity} - SKU: ${escapeHtml(v.sku)}</p>
-                        `).join('')}
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-slate-900 mb-2">Biến Thể (${productData.variants.length})</h4>
+                        ${productData.variants.map(v => `<p class="text-sm text-slate-600">${escapeHtml(v.name)}: ${escapeHtml(v.value)} - Giá: ${formatPrice(v.priceModifier)} VNĐ - Tồn kho: ${v.stockQuantity} - SKU: ${escapeHtml(v.sku)}</p>`).join('')}
                     </div>
                 `;
             }
@@ -755,5 +689,6 @@
             return div.innerHTML;
         }
     </script>
+    </th:block>
 </body>
 </html>

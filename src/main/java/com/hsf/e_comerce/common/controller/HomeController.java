@@ -4,6 +4,11 @@ import com.hsf.e_comerce.auth.service.UserService;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.platform.dto.request.CommissionFilterRequest;
+import com.hsf.e_comerce.platform.dto.response.CommissionOverviewResponse;
+import com.hsf.e_comerce.platform.dto.response.CommissionResponse;
+import com.hsf.e_comerce.platform.service.CommissionService;
+import com.hsf.e_comerce.platform.service.CommissionStatisticsService;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.review.service.ReviewReportService;
@@ -48,6 +53,8 @@ public class HomeController {
     private final OrderService orderService;
     private final ProductService productService;
     private final ReviewReportService reviewReportService;
+    private final CommissionService commissionService;
+
 
     @GetMapping("/")
     public String hello(Model model) {
@@ -119,13 +126,44 @@ public class HomeController {
                 "reportedReviewCount",
                 reviewReportService.countPendingReportedReviews()
         );
+        BigDecimal totalCommission = BigDecimal.ZERO;
+        long totalCommissionOrders = 0;
+
+        try {
+            List<CommissionResponse> commissions =
+                    commissionService.getCommissions(new CommissionFilterRequest());
+
+            for (CommissionResponse c : commissions) {
+
+                if (c.getCreatedAt() == null) continue;
+
+                LocalDate d = c.getCreatedAt().toLocalDate();
+
+                if (fromDate != null && d.isBefore(fromDate)) continue;
+                if (toDate != null && d.isAfter(toDate)) continue;
+
+                totalCommission = totalCommission.add(
+                        c.getCommissionAmount() != null
+                                ? c.getCommissionAmount()
+                                : BigDecimal.ZERO
+                );
+
+                totalCommissionOrders++;
+            }
+
+        } catch (Exception e) {
+            totalCommission = BigDecimal.ZERO;
+            totalCommissionOrders = 0;
+        }
+
+        model.addAttribute("totalCommission", totalCommission);
+        model.addAttribute("totalOrders", totalCommissionOrders);
 
         try {
             List<OrderResponse> orders = orderService.getAllOrders();
             BigDecimal totalRevenueShops = BigDecimal.ZERO;
-            BigDecimal totalCommission = BigDecimal.ZERO;
             for (OrderResponse o : orders) {
-                if (!REVENUE_STATUSES.contains(o.getStatus())) continue;
+                if (o.getStatus() != OrderStatus.DELIVERED) continue;
                 LocalDateTime createdAt = o.getCreatedAt();
                 if (createdAt != null) {
                     LocalDate d = createdAt.toLocalDate();
@@ -135,15 +173,10 @@ public class HomeController {
                 BigDecimal tot = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
                 BigDecimal ship = o.getShippingFee() != null ? o.getShippingFee() : BigDecimal.ZERO;
                 totalRevenueShops = totalRevenueShops.add(tot.subtract(ship));
-                if (o.getPlatformCommission() != null) {
-                    totalCommission = totalCommission.add(o.getPlatformCommission());
-                }
             }
             model.addAttribute("totalRevenueShops", totalRevenueShops);
-            model.addAttribute("totalCommission", totalCommission);
         } catch (Exception e) {
             model.addAttribute("totalRevenueShops", BigDecimal.ZERO);
-            model.addAttribute("totalCommission", BigDecimal.ZERO);
         }
 
         // Hoạt động gần đây: trích từ orders + seller_requests, N bản ghi mới nhất

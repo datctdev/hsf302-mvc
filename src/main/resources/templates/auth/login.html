@@ -1,87 +1,55 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Nhập - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/auth.css}">
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <div class="auth-container">
-                <div class="auth-header">
-                    <h1>Đăng Nhập</h1>
-                    <p>Chào mừng bạn trở lại!</p>
-                </div>
-
-                <!-- Flash Messages -->
-                <div class="page-alerts">
-                    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-                    <div th:if="${param.expired}" class="alert alert-danger">
-                        Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
+    <th:block th:fragment="content">
+        <div class="max-w-md mx-auto">
+            <div class="card bg-base-100 shadow-card border border-base-200">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <h1 class="card-title text-2xl">Đăng Nhập</h1>
+                        <p class="text-base-content/70 mt-1">Chào mừng bạn trở lại!</p>
                     </div>
-                    <div th:if="${param.error != null and param.error[0] == 'email_not_verified'}" class="alert alert-danger">
-                        Email chưa được xác minh. Vui lòng kiểm tra hộp thư và nhấn link trong email.
-                        <a th:href="@{/resend-verification}" class="d-block mt-1">Gửi lại email xác minh</a>
+
+                    <div class="space-y-3 mb-4">
+                        <div th:if="${success}" class="alert alert-success text-sm" th:text="${success}"></div>
+                        <div th:if="${param.expired}" class="alert alert-error text-sm">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</div>
+                        <div th:if="${param.error != null and param.error[0] == 'email_not_verified'}" class="alert alert-error text-sm">
+                            Email chưa được xác minh. Vui lòng kiểm tra hộp thư và nhấn link trong email.
+                            <a th:href="@{/resend-verification}" class="block mt-1 link link-hover font-medium">Gửi lại email xác minh</a>
+                        </div>
+                        <div th:if="${param.error != null and param.error[0] == 'true'}" class="alert alert-error text-sm">Email hoặc mật khẩu không đúng. Vui lòng thử lại.</div>
+                        <div th:if="${param.logout}" class="alert alert-success text-sm">Bạn đã đăng xuất thành công.</div>
+                        <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
                     </div>
-                    <div th:if="${param.error != null and param.error[0] == 'true'}" class="alert alert-danger">
-                        Email hoặc mật khẩu không đúng. Vui lòng thử lại.
-                    </div>
-                    <div th:if="${param.logout}" class="alert alert-success">
-                        Bạn đã đăng xuất thành công.
-                    </div>
-                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-                </div>
 
-                <form id="loginForm" class="auth-form" th:action="@{/login}" method="post">
-                <!-- CSRF Token -->
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <form id="loginForm" th:action="@{/login}" method="post" class="space-y-4">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <div class="form-control">
+                            <label for="username" class="label"><span class="label-text">Email *</span></label>
+                            <input type="email" id="username" name="username" required autofocus class="input input-bordered w-full">
+                        </div>
+                        <div class="form-control">
+                            <label for="password" class="label"><span class="label-text">Mật Khẩu *</span></label>
+                            <input type="password" id="password" name="password" required class="input input-bordered w-full">
+                        </div>
+                        <div class="form-control">
+                            <label class="label cursor-pointer justify-start gap-2">
+                                <input type="checkbox" id="remember-me" name="remember-me" class="checkbox checkbox-primary checkbox-sm">
+                                <span class="label-text">Ghi nhớ đăng nhập</span>
+                            </label>
+                        </div>
+                        <button type="submit" id="loginBtn" class="btn btn-primary w-full">Đăng Nhập</button>
+                    </form>
 
-                <div class="form-group">
-                    <label for="username">Email *</label>
-                    <input type="email" id="username" name="username" required autofocus>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Mật Khẩu *</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="checkbox-label" for="remember-me">
-                        <input type="checkbox" id="remember-me" name="remember-me">
-                        <span>Ghi nhớ đăng nhập</span>
-                    </label>
-                </div>
-
-                <button type="submit" id="loginBtn" class="submit-btn">Đăng Nhập</button>
-            </form>
-
-                <div class="auth-footer">
-                    <p>Chưa có tài khoản? <a th:href="@{/register}">Đăng ký ngay</a></p>
+                    <p class="mt-4 text-center text-sm text-base-content/70">
+                        Chưa có tài khoản? <a th:href="@{/register}" class="link link-primary font-medium">Đăng ký ngay</a>
+                    </p>
                 </div>
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/auth.js}"></script>
+    </th:block>
 </body>
 </html>

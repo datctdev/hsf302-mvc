@@ -1,133 +1,102 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hồ Sơ - E-commerce</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/base.css}">
-    <link rel="stylesheet" th:href="@{/css/layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
-    <link rel="stylesheet" th:href="@{/css/auth.css}">
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <nav class="nav-home">
-        <div class="nav-container">
-            <div class="nav-main">
-                <a href="/">Trang chủ</a>
-                <a href="/products">Sản phẩm</a>
-            </div>
-            <div class="nav-auth">
-                <a href="/">Quay lại</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="container">
-            <!-- Flash Messages -->
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-            <!-- Profile Info Section -->
-            <div class="profile-section" th:if="${user}">
-                <div class="profile-header">
-                    <div class="avatar" th:style="${user.avatarUrl != null} ? 'background-image: url(' + ${user.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
-                        <span th:if="${user.avatarUrl == null}" th:text="${#strings.substring(user.fullName, 0, 1).toUpperCase()}">U</span>
-                    </div>
-                    <div class="profile-info">
-                        <h2 th:text="${user.fullName ?: 'Chưa cập nhật'}">Chưa cập nhật</h2>
-                        <p th:text="${user.email}">Email</p>
-                        <p th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">Chưa cập nhật</p>
-                        <span class="status-badge" th:classappend="${user.isActive} ? 'status-active' : 'status-inactive'" 
-                              th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Đang hoạt động</span>
-                    </div>
-                </div>
+    <th:block th:fragment="content">
+        <div class="space-y-8">
+            <div class="space-y-3">
+                <div th:if="${success}" class="alert alert-success text-sm" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
             </div>
 
-            <!-- Update Profile Form -->
-            <div class="profile-section">
-                <h3>Cập Nhật Thông Tin</h3>
-                <form id="updateProfileForm" class="auth-form" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data">
-                    <!-- CSRF Token -->
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-                    <div class="form-group">
-                        <label for="fullName">Họ và Tên</label>
-                        <input type="text" id="fullName" th:field="*{fullName}">
-                        <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="error-message"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phoneNumber">Số Điện Thoại</label>
-                        <input type="text" id="phoneNumber" th:field="*{phoneNumber}">
-                        <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error-message"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="avatarFile">Ảnh Đại Diện</label>
-                        <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)">
-                        <small>Chọn ảnh từ máy tính của bạn (JPG, PNG, GIF - tối đa 25MB)</small>
-                        <div id="avatarPreview" style="margin-top: 1rem; display: none;">
-                            <img id="avatarPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 50%; object-fit: cover;">
+            <div th:if="${user}" class="card bg-base-100 shadow-card border border-base-200">
+                <div class="card-body">
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div class="avatar placeholder">
+                            <div class="w-20 rounded-full bg-primary text-primary-content text-2xl font-semibold"
+                                 th:style="${user.avatarUrl != null} ? 'background-image: url(' + ${user.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
+                                <span th:if="${user.avatarUrl == null}" th:text="${#strings.substring(user.fullName, 0, 1).toUpperCase()}">U</span>
+                            </div>
                         </div>
-                        <div th:if="${user != null && user.avatarUrl != null}" style="margin-top: 0.5rem;">
-                            <small>Ảnh hiện tại:</small>
-                            <img th:src="${user.avatarUrl}" alt="Current Avatar" style="max-width: 100px; max-height: 100px; border-radius: 50%; object-fit: cover; display: block; margin-top: 0.5rem;">
+                        <div>
+                            <h2 class="text-xl font-semibold text-base-content" th:text="${user.fullName ?: 'Chưa cập nhật'}">Chưa cập nhật</h2>
+                            <p class="text-base-content/70" th:text="${user.email}">Email</p>
+                            <p class="text-base-content/70" th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">Chưa cập nhật</p>
+                            <span class="badge mt-2" th:classappend="${user.isActive} ? 'badge-success' : 'badge-ghost'" th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Đang hoạt động</span>
                         </div>
-                        <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="error-message"></span>
                     </div>
-
-                    <button type="submit" id="updateProfileBtn" class="submit-btn">Cập Nhật</button>
-                </form>
-            </div>
-
-            <!-- Seller Status Section -->
-            <div class="profile-section" th:if="${user}">
-                <h3>Trạng Thái Seller</h3>
-                <div th:if="${user.roles != null and user.roles.contains('ROLE_SELLER')}">
-                    <p style="color: green;">Bạn đã là Seller</p>
-                    <a href="/seller/shop" class="btn btn-success">Quản Lý Shop</a>
-                </div>
-                <div th:if="${user.roles == null or !user.roles.contains('ROLE_SELLER')}">
-                    <p>Bạn chưa là Seller</p>
-                    <a href="/seller/become-seller" class="btn btn-primary">Trở Thành Seller</a>
                 </div>
             </div>
 
-            <!-- Actions Section -->
-            <div class="profile-section">
-                <h3>Thao Tác</h3>
-                <div class="action-buttons">
-                    <a href="/change-password" class="btn btn-primary">Đổi Mật Khẩu</a>
-                    <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" style="display: inline;">
+            <div class="card bg-base-100 shadow-card border border-base-200">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">Cập Nhật Thông Tin</h3>
+                    <form id="updateProfileForm" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data" class="space-y-4">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản?')">
-                            Vô Hiệu Hóa Tài Khoản
-                        </button>
-                    </form>
-                    <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" style="display: inline;">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-success">
-                            Kích Hoạt Tài Khoản
-                        </button>
+                        <div class="form-control">
+                            <label for="fullName" class="label"><span class="label-text">Họ và Tên</span></label>
+                            <input type="text" id="fullName" th:field="*{fullName}" class="input input-bordered w-full">
+                            <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="label text-error text-sm mt-1"></span>
+                        </div>
+                        <div class="form-control">
+                            <label for="phoneNumber" class="label"><span class="label-text">Số Điện Thoại</span></label>
+                            <input type="text" id="phoneNumber" th:field="*{phoneNumber}" class="input input-bordered w-full">
+                            <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="label text-error text-sm mt-1"></span>
+                        </div>
+                        <div class="form-control">
+                            <label for="avatarFile" class="label"><span class="label-text">Ảnh Đại Diện</span></label>
+                            <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)" class="file-input file-input-bordered w-full max-w-xs">
+                            <label class="label"><span class="label-text-alt text-base-content/60">JPG, PNG, GIF - tối đa 25MB</span></label>
+                            <div id="avatarPreview" class="mt-4 hidden">
+                                <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-full object-cover">
+                            </div>
+                            <div th:if="${user != null and user.avatarUrl != null}" class="mt-2">
+                                <span class="label-text-alt text-base-content/60">Ảnh hiện tại:</span>
+                                <img th:src="${user.avatarUrl}" alt="Current Avatar" class="max-w-[100px] max-h-[100px] rounded-full object-cover block mt-1">
+                            </div>
+                            <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="label text-error text-sm mt-1"></span>
+                        </div>
+                        <button type="submit" id="updateProfileBtn" class="btn btn-primary">Cập Nhật</button>
                     </form>
                 </div>
             </div>
+
+            <div th:if="${user}" class="card bg-base-100 shadow-card border border-base-200">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">Trạng Thái Seller</h3>
+                    <div th:if="${user.roles != null and user.roles.contains('ROLE_SELLER')}">
+                        <p class="text-success mb-3">Bạn đã là Seller</p>
+                        <a href="/seller/shop" class="btn btn-success btn-sm">Quản Lý Shop</a>
+                    </div>
+                    <div th:if="${user.roles == null or !user.roles.contains('ROLE_SELLER')}">
+                        <p class="text-base-content/70 mb-3">Bạn chưa là Seller</p>
+                        <a href="/seller/become-seller" class="btn btn-primary btn-sm">Trở Thành Seller</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-base-100 shadow-card border border-base-200">
+                <div class="card-body">
+                    <h3 class="card-title text-lg">Thao Tác</h3>
+                    <div class="card-actions flex-wrap">
+                        <a href="/change-password" class="btn btn-primary btn-sm">Đổi Mật Khẩu</a>
+                        <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" class="inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-error btn-sm" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản?')">Vô Hiệu Hóa Tài Khoản</button>
+                        </form>
+                        <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" class="inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-success btn-sm">Kích Hoạt Tài Khoản</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script th:src="@{/js/auth.js}"></script>
+    </th:block>
+    <th:block th:fragment="additional-js">
+        <script th:src="@{/js/auth.js}"></script>
+    </th:block>
 </body>
 </html>

@@ -1,11 +1,13 @@
 <!-- Footer Fragment -->
-<footer xmlns:th="http://www.thymeleaf.org" th:fragment="footer" class="main-footer">
-    <div class="footer-inner">
-        <p>&copy; 2026 E-commerce của HSF</p>
-        <div class="footer-links">
-            <a href="/">Trang chủ</a>
-            <a href="/products">Sản phẩm</a>
-            <a href="/about">Giới thiệu</a>
+<footer xmlns:th="http://www.thymeleaf.org" th:fragment="footer" class="bg-slate-100 border-t border-slate-200 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-slate-500 text-sm">&copy; 2026 E-commerce của HSF</p>
+            <div class="flex items-center gap-6 text-slate-500 text-sm">
+                <a href="/" class="no-underline hover:text-primary-600 transition">Trang chủ</a>
+                <a href="/products" class="no-underline hover:text-primary-600 transition">Sản phẩm</a>
+                <a href="/about" class="no-underline hover:text-primary-600 transition">Giới thiệu</a>
+            </div>
         </div>
     </div>
 </footer>
