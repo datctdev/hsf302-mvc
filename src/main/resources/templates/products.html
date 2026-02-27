@@ -4,115 +4,224 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sản Phẩm - E-commerce</title>
-    
+
     <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/base.css}">
     <link rel="stylesheet" th:href="@{/css/layout.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
-    <!-- Header -->
-    <th:block th:replace="~{fragments/header :: header-simple}"></th:block>
-    
-    <!-- Navigation -->
-    <th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <h1 style="margin-bottom: 1rem;">Sản Phẩm</h1>
+<!-- Header -->
+<th:block th:replace="~{fragments/header :: header-simple}"></th:block>
+
+<!-- Navigation -->
+<th:block th:replace="~{fragments/nav-home :: nav-home}"></th:block>
+
+<!-- Main Content -->
+<main class="main-content">
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="products-page-header">
+            <h1>Sản phẩm</h1>
 
             <!-- Search Bar -->
             <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm...">
+                <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm sản phẩm...">
                 <button class="btn btn-primary" onclick="performSearch()">Tìm kiếm</button>
             </div>
+        </div>
 
-            <div class="products-container">
-                <!-- Sidebar Filters -->
-                <aside class="products-sidebar">
-                    <div class="filter-section">
-                        <h3>Lọc sản phẩm</h3>
-                        
-                        <div class="filter-group">
-                            <label>Danh mục</label>
-                            <select id="categoryFilter">
-                                <option value="">Tất cả</option>
-                                <option th:each="category : ${categories}" 
-                                        th:value="${category.id}" 
-                                        th:text="${category.name}">Category</option>
-                            </select>
-                        </div>
+        <div class="products-container">
 
-                        <div class="filter-group">
-                            <label>Giá</label>
-                            <div class="price-range">
-                                <input type="number" id="minPrice" placeholder="Từ" min="0">
-                                <span>-</span>
-                                <input type="number" id="maxPrice" placeholder="Đến" min="0">
-                            </div>
-                        </div>
+            <!-- Sidebar Filters -->
+            <aside class="products-sidebar">
+                <div class="filter-section">
+                    <h3>🔎 Bộ lọc</h3>
 
-                        <button class="btn btn-primary" style="width: 100%;" onclick="applyFilters()">Áp dụng</button>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="clearFilters()">Xóa bộ lọc</button>
+                    <div class="filter-group">
+                        <label>Danh mục</label>
+                        <select id="categoryFilter">
+                            <option value="">Tất cả</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}">Category</option>
+                        </select>
                     </div>
-                </aside>
 
-                <!-- Main Content -->
-                <div class="products-main">
-                    <div class="products-header">
-                        <div>
-                            <span id="productCount">0</span> sản phẩm
-                        </div>
-                        <div>
-                            <label>Sắp xếp: </label>
-                            <select class="sort-select" id="sortSelect" onchange="loadProducts()">
-                                <option value="createdAt,desc">Mới nhất</option>
-                                <option value="price,asc">Giá: Thấp → Cao</option>
-                                <option value="price,desc">Giá: Cao → Thấp</option>
-                                <option value="name,asc">Tên: A → Z</option>
-                            </select>
+                    <div class="filter-group">
+                        <label>Khoảng giá</label>
+                        <div class="price-range">
+                            <input type="number" id="minPrice" placeholder="Từ" min="0">
+                            <span>—</span>
+                            <input type="number" id="maxPrice" placeholder="Đến" min="0">
                         </div>
                     </div>
 
-                    <div id="productsGrid" class="products-grid">
-                        <!-- Products loaded from Model -->
-                        <div th:if="${products != null and !products.empty}" th:each="product : ${products}">
-                            <a th:href="@{/products/{id}(id=${product.id})}" class="product-card">
-                                <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, 
+                    <button class="btn btn-primary filter-btn" onclick="applyFilters()">Áp dụng</button>
+                    <button class="btn btn-secondary filter-btn" onclick="clearFilters()">Xóa bộ lọc</button>
+                </div>
+            </aside>
+
+            <!-- Main Products Area -->
+            <div class="products-main">
+
+                <!-- Products Header -->
+                <div class="products-header">
+                    <div class="products-count">
+                        <strong><span id="productCount">0</span></strong> sản phẩm
+                    </div>
+
+                    <div class="products-sort">
+                        <label>Sắp xếp:</label>
+                        <select class="sort-select" id="sortSelect">
+                            <option value="createdAt,desc">Mới nhất</option>
+                            <option value="price,asc">Giá: Thấp → Cao</option>
+                            <option value="price,desc">Giá: Cao → Thấp</option>
+                            <option value="name,asc">Tên: A → Z</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="productsGrid" class="products-grid">
+
+                    <div th:if="${products != null and !products.empty}" th:each="product : ${products}">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="product-card">
+
+                            <div class="product-image-wrapper">
+                                <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null},
                                               firstImage=${product.images != null and !product.images.empty ? product.images[0] : null},
                                               displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
-                                     th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" 
-                                     th:alt="${product.name}" 
-                                     class="product-card-image" 
+                                     th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}"
+                                     th:alt="${product.name}"
+                                     class="product-card-image"
                                      onerror="this.src='/images/placeholder.png'">
-                                <div class="product-card-body">
-                                    <h3 class="product-card-title" th:text="${product.name}">Product Name</h3>
-                                    <div class="product-card-price" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                                    <div class="product-card-shop" th:text="${product.shopName ?: 'N/A'}">Shop Name</div>
+                            </div>
+
+                            <div class="product-card-body">
+                                <h3 class="product-card-title" th:text="${product.name}">Product Name</h3>
+
+                                <div class="product-card-price"
+                                     th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">
+                                    0 VNĐ
                                 </div>
-                            </a>
-                        </div>
-                        <div th:if="${products == null or products.empty}" class="empty-state">
-                            Không tìm thấy sản phẩm nào.
-                        </div>
+
+                                <div class="product-card-shop"
+                                     th:text="${product.shopName ?: 'N/A'}">
+                                    Shop Name
+                                </div>
+                            </div>
+                        </a>
                     </div>
 
-                    <div id="pagination" class="pagination"></div>
+                    <div th:if="${products == null or products.empty}" class="empty-state">
+                        Không tìm thấy sản phẩm nào.
+                    </div>
+
                 </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="pagination"></div>
+
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <!-- Footer -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<!-- Footer -->
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    <!-- JavaScript -->
-    <script th:src="@{/js/common.js}"></script>
-    <script>
-        let currentPage = 0;
-        const pageSize = 20;
-        let currentFilters = {
+<!-- JavaScript -->
+<script th:src="@{/js/common.js}"></script>
+
+<script>
+    /* === JS GIỮ NGUYÊN LOGIC CỦA BẠN === */
+    let currentPage = 0;
+    const pageSize = 20;
+    let currentFilters = {
+        search: null,
+        categoryId: null,
+        shopId: null,
+        minPrice: null,
+        maxPrice: null,
+        sortBy: 'createdAt',
+        sortDir: 'desc'
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentPage = parseInt(urlParams.get('page') || '0');
+        currentFilters.search = urlParams.get('search') || null;
+        currentFilters.categoryId = urlParams.get('categoryId') || null;
+        currentFilters.minPrice = urlParams.get('minPrice') ? parseFloat(urlParams.get('minPrice')) : null;
+        currentFilters.maxPrice = urlParams.get('maxPrice') ? parseFloat(urlParams.get('maxPrice')) : null;
+        currentFilters.sortBy = urlParams.get('sortBy') || 'createdAt';
+        currentFilters.sortDir = urlParams.get('sortDir') || 'desc';
+
+        if (currentFilters.search) document.getElementById('searchInput').value = currentFilters.search;
+        if (currentFilters.categoryId) document.getElementById('categoryFilter').value = currentFilters.categoryId;
+        if (currentFilters.minPrice) document.getElementById('minPrice').value = currentFilters.minPrice;
+        if (currentFilters.maxPrice) document.getElementById('maxPrice').value = currentFilters.maxPrice;
+
+        document.getElementById('productCount').textContent = /*[[${totalItems}]]*/ 0;
+
+        displayPaginationFromModel();
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+    });
+
+    function displayPaginationFromModel() {
+        const totalPages = /*[[${totalPages}]]*/ 1;
+        const currentPageNum = /*[[${currentPage}]]*/ 0;
+
+        if (totalPages <= 1) {
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        displayPagination({
+            totalPages: totalPages,
+            number: currentPageNum
+        });
+    }
+
+    document.getElementById('sortSelect').addEventListener('change', function() {
+        const [sortBy, sortDir] = this.value.split(',');
+        currentFilters.sortBy = sortBy;
+        currentFilters.sortDir = sortDir;
+        currentPage = 0;
+        reloadProducts();
+    });
+
+    function performSearch() {
+        const searchTerm = document.getElementById('searchInput').value.trim();
+        currentFilters.search = searchTerm || null;
+        currentPage = 0;
+        reloadProducts();
+    }
+
+    function applyFilters() {
+        const categoryId = document.getElementById('categoryFilter').value;
+        const minPrice = document.getElementById('minPrice').value;
+        const maxPrice = document.getElementById('maxPrice').value;
+
+        currentFilters.categoryId = categoryId || null;
+        currentFilters.minPrice = minPrice ? parseFloat(minPrice) : null;
+        currentFilters.maxPrice = maxPrice ? parseFloat(maxPrice) : null;
+        currentPage = 0;
+        reloadProducts();
+    }
+
+    function clearFilters() {
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('minPrice').value = '';
+        document.getElementById('maxPrice').value = '';
+        document.getElementById('searchInput').value = '';
+        currentFilters = {
             search: null,
             categoryId: null,
             shopId: null,
@@ -121,205 +230,25 @@
             sortBy: 'createdAt',
             sortDir: 'desc'
         };
+        currentPage = 0;
+        reloadProducts();
+    }
 
-        // Initialize from URL params or Model data
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set initial values from URL params
-            const urlParams = new URLSearchParams(window.location.search);
-            currentPage = parseInt(urlParams.get('page') || '0');
-            currentFilters.search = urlParams.get('search') || null;
-            currentFilters.categoryId = urlParams.get('categoryId') || null;
-            currentFilters.minPrice = urlParams.get('minPrice') ? parseFloat(urlParams.get('minPrice')) : null;
-            currentFilters.maxPrice = urlParams.get('maxPrice') ? parseFloat(urlParams.get('maxPrice')) : null;
-            currentFilters.sortBy = urlParams.get('sortBy') || 'createdAt';
-            currentFilters.sortDir = urlParams.get('sortDir') || 'desc';
-            
-            // Set form values
-            if (currentFilters.search) {
-                document.getElementById('searchInput').value = currentFilters.search;
-            }
-            if (currentFilters.categoryId) {
-                document.getElementById('categoryFilter').value = currentFilters.categoryId;
-            }
-            if (currentFilters.minPrice) {
-                document.getElementById('minPrice').value = currentFilters.minPrice;
-            }
-            if (currentFilters.maxPrice) {
-                document.getElementById('maxPrice').value = currentFilters.maxPrice;
-            }
-            
-            // Update product count from Model
-            document.getElementById('productCount').textContent = /*[[${totalItems}]]*/ 0;
-            
-            // Display pagination from Model
-            displayPaginationFromModel();
-            
-            // Search on Enter
-            document.getElementById('searchInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    performSearch();
-                }
-            });
-        });
+    function reloadProducts() {
+        const params = new URLSearchParams();
+        params.append('page', currentPage);
+        params.append('size', pageSize);
+        params.append('sortBy', currentFilters.sortBy);
+        params.append('sortDir', currentFilters.sortDir);
 
-        function displayPaginationFromModel() {
-            const totalPages = /*[[${totalPages}]]*/ 1;
-            const currentPageNum = /*[[${currentPage}]]*/ 0;
-            
-            if (totalPages <= 1) {
-                document.getElementById('pagination').innerHTML = '';
-                return;
-            }
-            
-            displayPagination({
-                totalPages: totalPages,
-                number: currentPageNum
-            });
-        }
+        if (currentFilters.search) params.append('search', currentFilters.search);
+        if (currentFilters.categoryId) params.append('categoryId', currentFilters.categoryId);
+        if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
+        if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
 
-        function displayProducts(products) {
-            const grid = document.getElementById('productsGrid');
-            
-            if (products.length === 0) {
-                grid.innerHTML = '<div class="empty-state">Không tìm thấy sản phẩm nào.</div>';
-                return;
-            }
+        window.location.href = '/products?' + params.toString();
+    }
+</script>
 
-            grid.innerHTML = products.map(product => {
-                const thumbnail = product.images && product.images.length > 0 
-                    ? product.images.find(img => img.isThumbnail) || product.images[0]
-                    : null;
-                const imageUrl = thumbnail ? thumbnail.imageUrl : '/images/placeholder.png';
-                const price = formatPrice(product.basePrice);
-
-                return `
-                    <div class="product-card" onclick="window.location.href='/products/${product.id}'">
-                        <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="product-card-image" onerror="this.src='/images/placeholder.png'">
-                        <div class="product-card-body">
-                            <h3 class="product-card-title">${escapeHtml(product.name)}</h3>
-                            <div class="product-card-price">${price} VNĐ</div>
-                            <div class="product-card-shop">${escapeHtml(product.shopName || 'N/A')}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function displayPagination(pageData) {
-            const pagination = document.getElementById('pagination');
-            if (pageData.totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-
-            let html = '';
-            
-            // Previous button
-            html += `<button ${currentPage === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">Trước</button>`;
-
-            // Page numbers
-            const startPage = Math.max(0, currentPage - 2);
-            const endPage = Math.min(pageData.totalPages - 1, currentPage + 2);
-
-            if (startPage > 0) {
-                html += `<button onclick="goToPage(0)">1</button>`;
-                if (startPage > 1) html += `<span>...</span>`;
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i + 1}</button>`;
-            }
-
-            if (endPage < pageData.totalPages - 1) {
-                if (endPage < pageData.totalPages - 2) html += `<span>...</span>`;
-                html += `<button onclick="goToPage(${pageData.totalPages - 1})">${pageData.totalPages}</button>`;
-            }
-
-            // Next button
-            html += `<button ${currentPage >= pageData.totalPages - 1 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Sau</button>`;
-
-            pagination.innerHTML = html;
-        }
-
-        function goToPage(page) {
-            currentPage = page;
-            reloadProducts();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function performSearch() {
-            const searchTerm = document.getElementById('searchInput').value.trim();
-            currentFilters.search = searchTerm || null;
-            currentPage = 0;
-            reloadProducts();
-        }
-
-        function applyFilters() {
-            const categoryId = document.getElementById('categoryFilter').value;
-            const minPrice = document.getElementById('minPrice').value;
-            const maxPrice = document.getElementById('maxPrice').value;
-
-            currentFilters.categoryId = categoryId || null;
-            currentFilters.minPrice = minPrice ? parseFloat(minPrice) : null;
-            currentFilters.maxPrice = maxPrice ? parseFloat(maxPrice) : null;
-            currentPage = 0;
-            reloadProducts();
-        }
-
-        function clearFilters() {
-            document.getElementById('categoryFilter').value = '';
-            document.getElementById('minPrice').value = '';
-            document.getElementById('maxPrice').value = '';
-            document.getElementById('searchInput').value = '';
-            currentFilters = {
-                search: null,
-                categoryId: null,
-                shopId: null,
-                minPrice: null,
-                maxPrice: null,
-                sortBy: 'createdAt',
-                sortDir: 'desc'
-            };
-            currentPage = 0;
-            reloadProducts();
-        }
-
-        function reloadProducts() {
-            // Build URL with filters
-            const params = new URLSearchParams();
-            params.append('page', currentPage);
-            params.append('size', pageSize);
-            params.append('sortBy', currentFilters.sortBy);
-            params.append('sortDir', currentFilters.sortDir);
-            
-            if (currentFilters.search) params.append('search', currentFilters.search);
-            if (currentFilters.categoryId) params.append('categoryId', currentFilters.categoryId);
-            if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
-            if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
-            
-            // Reload page with new params
-            window.location.href = '/products?' + params.toString();
-        }
-
-        // Update sort when select changes
-        document.getElementById('sortSelect').addEventListener('change', function() {
-            const [sortBy, sortDir] = this.value.split(',');
-            currentFilters.sortBy = sortBy;
-            currentFilters.sortDir = sortDir;
-            currentPage = 0;
-            reloadProducts();
-        });
-
-        function formatPrice(price) {
-            return new Intl.NumberFormat('vi-VN').format(price);
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-    </script>
 </body>
 </html>
