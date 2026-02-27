@@ -176,4 +176,16 @@ public class CommissionServiceImpl implements CommissionService {
                 .createdAt(c.getCreatedAt())
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalCommissionBySeller(UUID sellerId) {
+        return commissionRepository.getTotalCommissionBySeller(sellerId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalNetIncomeBySeller(UUID sellerId) {
+        return commissionRepository.getTotalNetIncomeBySeller(sellerId);
+    }
 }

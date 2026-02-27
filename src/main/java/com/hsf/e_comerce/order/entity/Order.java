@@ -125,4 +125,9 @@ public class Order {
         }
         total = subtotal.add(shippingFee);
     }
+
+    public void addItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+    }
 }

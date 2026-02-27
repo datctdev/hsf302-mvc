@@ -3,7 +3,6 @@ package com.hsf.e_comerce.common.resolver;
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.auth.service.UserService;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
-import com.hsf.e_comerce.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
@@ -32,20 +31,25 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory) {
-        
+
         Authentication authentication = (Authentication) webRequest.getUserPrincipal();
-        
-        if (authentication == null) {
-            throw new CustomException("Không thể xác định người dùng. Vui lòng đăng nhập.");
+
+        // Cho phép xem trang công khai (vd. chi tiết sản phẩm) khi chưa đăng nhập → trả null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
         }
-        
+
         if (!(authentication.getPrincipal() instanceof UserDetails)) {
-            throw new CustomException("Không thể xác định người dùng");
+            return null;
         }
-        
+
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String email = userDetails.getUsername();
-        
+        if (email == null || email.isEmpty() || "anonymousUser".equals(email)) {
+            return null;
+        }
+
+        // Đã đăng nhập thì bắt buộc resolve được user (tránh null → lỗi khi thêm giỏ, v.v.)
         return userService.findByEmail(email);
     }
 }
