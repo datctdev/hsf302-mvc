@@ -19,9 +19,15 @@
 
     <!-- HTMX add-to-cart response: badge + toast (both OOB) -->
     <th:block th:fragment="addToCartResponse">
-        <span id="cart-badge" th:replace="~{fragments/cart-fragments :: cartBadge(cartItemCount)}" hx-swap-oob="true"></span>
+        <span id="cart-badge" hx-swap-oob="true">
+            <span th:if="${cartItemCount != null and cartItemCount > 0}"
+                  class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
+                  th:text="${cartItemCount}"></span>
+        </span>
         <div id="toast-container" class="fixed top-20 right-4 z-50 max-w-sm" hx-swap-oob="true">
-            <div th:if="${toastMessage != null}" th:replace="~{fragments/cart-fragments :: toast(toastMessage, toastError)}"></div>
+            <div th:if="${toastMessage != null}" th:class="${toastError != null and toastError} ? 'rounded-lg p-4 border border-red-200 bg-red-50 text-red-800 text-sm shadow-lg' : 'rounded-lg p-4 border border-green-200 bg-green-50 text-green-800 text-sm shadow-lg'" role="alert">
+                <span th:text="${toastMessage}"></span>
+            </div>
         </div>
     </th:block>
 </body>
