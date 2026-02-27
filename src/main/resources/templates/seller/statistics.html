@@ -15,26 +15,26 @@
                 <div class="text-xs text-slate-500 mt-1">Tất cả đơn (trừ chờ thanh toán)</div>
             </div>
             <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-green-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Doanh Thu</h3>
+                <h3 class="text-sm font-medium text-slate-500 mb-1">Tổng Thanh Toán</h3>
                 <div class="text-2xl font-bold text-slate-900" th:text="${totalRevenue != null ? (#numbers.formatDecimal(totalRevenue, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
-                <div class="text-xs text-slate-500 mt-1">Đơn đã xác nhận → đã giao</div>
+                <div class="text-xs text-slate-500 mt-1">Đơn đã xác nhận → đã giao (bao gồm phí ship)</div>
             </div>
             <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-amber-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Hoa Hồng Nền Tảng</h3>
+                <h3 class="text-sm font-medium text-slate-500 mb-1">Doanh Thu Thực Nhận</h3>
                 <div class="text-2xl font-bold text-slate-900"
                      th:text="${totalNetIncome != null
                         ? (#numbers.formatDecimal(totalNetIncome, 0, 'POINT', 0, 'POINT') + ' đ')
                         : '0 đ'}">
                     0 đ
                 </div>
-                <div class="text-xs text-slate-500 mt-1">Trừ trên doanh thu đã ghi nhận</div>
+                <div class="text-xs text-slate-500 mt-1">Doanh thu sản phẩm sau khi trừ hoa hồng và phí ship</div>
             </div>
             <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-red-500 shadow-sm">
                 <h3 class="text-sm font-medium text-slate-500 mb-1">Bạn Nhận (ước tính)</h3>
                 <div class="text-2xl font-bold text-slate-900" th:text="${(estimatedRevenue != null and totalCommission != null)
                         ? (#numbers.formatDecimal(estimatedRevenue.subtract(totalCommission), 0, 'POINT', 0, 'POINT') + ' đ')
                         : '0 đ'}">0 đ</div>
-                <div class="text-xs text-slate-500 mt-1">Doanh thu − hoa hồng</div>
+                <div class="text-xs text-slate-500 mt-1">Doanh thu trừ trả hàng và hủy bỏ </div>
             </div>
         </div>
 
