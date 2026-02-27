@@ -10,6 +10,7 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderItemResponse;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
+import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.repository.OrderItemRepository;
@@ -743,5 +744,28 @@ public class OrderServiceImpl implements OrderService {
      */
     private String getShopWardCode(Shop shop) {
         return shop.getWardCode();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RevenueSummaryResponse getRevenueSummaryByShop(UUID shopId) {
+
+        BigDecimal revenue = orderRepository.getRevenueByShop(shopId);
+        List<OrderStatus> estimatedStatuses = List.of(
+                OrderStatus.CONFIRMED,
+                OrderStatus.PROCESSING,
+                OrderStatus.SHIPPING,
+                OrderStatus.DELIVERED,
+                OrderStatus.PENDING_PAYMENT,
+                OrderStatus.PENDING
+        );
+
+        BigDecimal estimatedRevenue =
+                orderRepository.getEstimatedRevenueByShop(shopId, estimatedStatuses);
+
+        return RevenueSummaryResponse.builder()
+                .revenue(revenue)
+                .estimatedRevenue(estimatedRevenue)
+                .build();
     }
 }
