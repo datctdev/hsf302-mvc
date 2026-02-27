@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,4 +65,21 @@ public interface CommissionRepository extends
     ORDER BY SUM(c.totalCommission) DESC
 """)
     List<Object[]> getTopSellerCommission(Pageable pageable);
+
+    @Query("""
+        SELECT COALESCE(SUM(c.totalCommission), 0)
+        FROM Commission c
+        WHERE c.sellerId = :sellerId
+    """)
+    BigDecimal getTotalCommissionBySeller(UUID sellerId);
+
+    @Query("""
+    SELECT COALESCE(SUM(
+        (ci.unitPrice * ci.quantity) - ci.commissionAmount
+    ), 0)
+    FROM CommissionItem ci
+    JOIN ci.commission c
+    WHERE c.sellerId = :sellerId
+""")
+    BigDecimal getTotalNetIncomeBySeller(UUID sellerId);
 }

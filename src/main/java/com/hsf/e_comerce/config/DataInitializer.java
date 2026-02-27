@@ -11,6 +11,7 @@ import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.platform.entity.PlatformSetting;
 import com.hsf.e_comerce.platform.repository.PlatformSettingRepository;
+import com.hsf.e_comerce.platform.service.CommissionService;
 import com.hsf.e_comerce.product.entity.Product;
 import com.hsf.e_comerce.product.entity.ProductCategory;
 import com.hsf.e_comerce.product.entity.ProductImage;
@@ -53,6 +54,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProductImageRepository productImageRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final CommissionService commissionService;
 
     @Override
     @Transactional
@@ -425,7 +427,7 @@ public class DataInitializer implements CommandLineRunner {
             createOrder(buyer, shop, "SEED-ORD-002", OrderStatus.DELIVERED, new BigDecimal("5990000"), new BigDecimal("30000"), 10.0, products[5], variants[5], 1, new BigDecimal("5990000"));
             createOrder(buyer, shop, "SEED-ORD-003", OrderStatus.CONFIRMED, new BigDecimal("690000"), new BigDecimal("22000"), 10.0, products[7], variants[7], 1, new BigDecimal("690000"));
             createOrder(buyer, shop, "SEED-ORD-004", OrderStatus.PROCESSING, new BigDecimal("3290000"), new BigDecimal("28000"), 10.0, products[6], variants[6], 1, new BigDecimal("3290000"));
-            createOrder(buyer, shop, "SEED-ORD-005", OrderStatus.SHIPPING, new BigDecimal("199000"), new BigDecimal("15000"), 10.0, products[8], variants[8], 2, new BigDecimal("199000"));
+            createOrder(buyer, shop, "SEED-ORD-005", OrderStatus.SHIPPING, new BigDecimal("398000"), new BigDecimal("15000"), 10.0, products[8], variants[8], 2, new BigDecimal("199000"));
             createOrder(buyer, shop, "SEED-ORD-006", OrderStatus.PENDING_PAYMENT, new BigDecimal("2490000"), new BigDecimal("25000"), 10.0, products[11], variants[11], 1, new BigDecimal("2490000"));
             createOrder(buyer, shop, "SEED-ORD-007", OrderStatus.CANCELLED, new BigDecimal("35990000"), new BigDecimal("50000"), 10.0, products[2], variants[2], 1, new BigDecimal("35990000"));
 
@@ -494,8 +496,6 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
         BigDecimal ship = shippingFee != null ? shippingFee : BigDecimal.ZERO;
-        BigDecimal base = subtotal != null ? subtotal : BigDecimal.ZERO; // tiền hàng (tổng tiền sản phẩm)
-        BigDecimal platformCommission = base.multiply(BigDecimal.valueOf(commissionRate / 100.0)).setScale(0, RoundingMode.HALF_UP);
 
         Order order = new Order();
         order.setOrderNumber(orderNumber);
@@ -508,8 +508,6 @@ public class DataInitializer implements CommandLineRunner {
         order.setShippingCity("TP. Hồ Chí Minh");
         order.setSubtotal(subtotal);
         order.setShippingFee(ship);
-        order.setPlatformCommission(platformCommission);
-        order.setCommissionRate(commissionRate);
         order.calculateTotal();
         if (status == OrderStatus.DELIVERED) {
             order.setReceivedByBuyer(true); // Mẫu đơn đã giao → cho phép đánh giá
@@ -526,7 +524,11 @@ public class DataInitializer implements CommandLineRunner {
         item.setQuantity(qty);
         item.setUnitPrice(unitPrice);
         item.calculateTotalPrice();
-        orderItemRepository.save(item);
+        order.addItem(item);
+        order = orderRepository.save(order);
+        if (status == OrderStatus.DELIVERED) {
+            commissionService.createCommission(order);
+        }
         log.info("✓ Created sample order: {} status={}", orderNumber, status);
     }
 }
