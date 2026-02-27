@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,4 +72,23 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByStatusAndReceivedByBuyerFalseAndDeliveredAtBefore(OrderStatus orderStatus, LocalDateTime threshold);
 
     List<Order> findByUserAndStatus(User user, OrderStatus orderStatus);
+
+    @Query("""
+    SELECT COALESCE(SUM(o.total), 0)
+    FROM Order o
+    WHERE o.shop.id = :shopId
+      AND o.status = com.hsf.e_comerce.order.valueobject.OrderStatus.DELIVERED
+""")
+    BigDecimal getRevenueByShop(@Param("shopId") UUID shopId);
+
+    @Query("""
+    SELECT COALESCE(SUM(o.total), 0)
+    FROM Order o
+    WHERE o.shop.id = :shopId
+      AND o.status IN :statuses
+    """)
+    BigDecimal getEstimatedRevenueByShop(
+            @Param("shopId") UUID shopId,
+            @Param("statuses") List<OrderStatus> statuses
+    );
 }

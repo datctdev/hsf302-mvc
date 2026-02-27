@@ -13,476 +13,476 @@
     </style>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <nav class="text-sm text-slate-500 mb-4"><a href="/" class="no-underline text-primary-600 hover:underline">Trang chủ</a> / <a href="/products" class="no-underline text-primary-600 hover:underline">Sản phẩm</a> / <span id="productBreadcrumb">Chi tiết</span></nav>
+<th:block th:fragment="content">
+    <nav class="text-sm text-slate-500 mb-4"><a href="/" class="no-underline text-primary-600 hover:underline">Trang chủ</a> / <a href="/products" class="no-underline text-primary-600 hover:underline">Sản phẩm</a> / <span id="productBreadcrumb">Chi tiết</span></nav>
 
-        <div th:if="${product != null}" class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-card p-6 mb-8" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
-            <div>
-                <img th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}" id="mainImage" class="w-full h-[400px] md:h-[500px] object-cover rounded-lg bg-slate-100 mb-4" onerror="this.src='/images/placeholder.png'">
-                <div class="flex gap-2 flex-wrap" th:if="${product.images != null and product.images.size() > 1}">
-                    <img th:each="img, iterStat : ${product.images}" th:src="${img.imageUrl}" th:alt="${product.name}" th:classappend="${iterStat.first} ? 'active' : ''" class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors product-thumbnail" th:data-url="${img.imageUrl}" onclick="changeMainImage(this.getAttribute('data-url'), this)">
-                </div>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 mt-0 mb-4" th:text="${product.name}">Product Name</h1>
-                <div class="text-2xl font-bold text-primary-600 mb-4" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                <div class="mb-4">Shop: <a th:href="@{'/shops/' + ${product.shopId}}" class="no-underline text-primary-600 hover:underline font-medium" th:text="${product.shopName}">Shop Name</a></div>
-                <div class="text-slate-600 leading-relaxed mb-6" th:utext="${product.description}">Description</div>
-                <div class="border-t border-slate-200 pt-6 space-y-1 text-sm text-slate-600">
-                    <div><strong class="text-slate-800">SKU:</strong> <span th:text="${product.sku}">SKU</span></div>
-                    <div th:if="${product.categoryName}"><strong class="text-slate-800">Danh mục:</strong> <span th:text="${product.categoryName}">Category</span></div>
-                </div>
-                <div th:if="${variantGroups != null and !variantGroups.empty}" class="mt-6">
-                    <h3 class="font-semibold text-slate-900 mb-3">Lựa chọn:</h3>
-                    <div th:each="variantGroup : ${variantGroups}" class="mb-4">
-                        <label class="block text-sm font-medium text-slate-700 mb-2" th:text="${variantGroup.key}">Variant Name</label>
-                        <div class="flex gap-2 flex-wrap">
-                            <div th:each="variant : ${variantGroup.value}" class="variant-option relative px-4 py-2 border border-slate-200 rounded cursor-pointer transition bg-white min-w-[80px] text-center hover:border-blue-500 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50" th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''" th:attr="data-variant-id=${variant.id}, data-variant-name=${variant.name}, data-variant-value=${variant.value}, data-stock-quantity=${variant.stockQuantity}" onclick="handleVariantClick(this)" th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">Variant Value</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}"
-                          hx-post="@{/cart/add}" hx-trigger="submit" hx-swap="none">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <input type="hidden" name="productId" th:value="${product.id}"/>
-                        <input type="hidden" id="variantIdInput" name="variantId" value="">
-                        <input type="hidden" name="quantity" value="1">
-                        <button type="button" class="w-full py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition" id="addToCartBtn" onclick="if(prepareAddToCart()) this.form.requestSubmit()">Thêm vào giỏ hàng</button>
-                    </form>
-                    <a th:if="${currentUser == null}" th:href="@{'/login?redirect=/products/' + ${product.id}}" class="block w-full py-3 text-center rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition no-underline">Đăng nhập để mua hàng</a>
-                </div>
+    <div th:if="${product != null}" class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-card p-6 mb-8" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
+        <div>
+            <img th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}" id="mainImage" class="w-full h-[400px] md:h-[500px] object-cover rounded-lg bg-slate-100 mb-4" onerror="this.src='/images/placeholder.png'">
+            <div class="flex gap-2 flex-wrap" th:if="${product.images != null and product.images.size() > 1}">
+                <img th:each="img, iterStat : ${product.images}" th:src="${img.imageUrl}" th:alt="${product.name}" th:classappend="${iterStat.first} ? 'active' : ''" class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors product-thumbnail" th:data-url="${img.imageUrl}" onclick="changeMainImage(this.getAttribute('data-url'), this)">
             </div>
         </div>
-
-        <div th:if="${product != null}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mt-8">
-            <h3 class="text-lg font-semibold text-slate-900 uppercase mb-6 mt-0">Đánh giá sản phẩm</h3>
-
-            <div class="flex flex-wrap items-center gap-4 sm:gap-6 p-6 bg-amber-50/80 border border-amber-200 rounded-lg mb-4">
-                <div class="text-center text-orange-500 mr-6">
-                    <div class="text-3xl sm:text-4xl font-semibold" th:text="${reviewSummary.averageRating}">0.0</div>
-                    <span class="text-lg text-slate-500 ml-1">/ 5</span>
-                    <div class="star-rating-precision">
-                        <div class="text-slate-300">★★★★★</div>
-                        <div class="stars-fill" th:style="'width: ' + ${(reviewSummary.averageRating / 5.0) * 100} + '%'">★★★★★</div>
-                    </div>
-                </div>
-
-                <div class="flex-1 flex flex-wrap gap-2">
-                    <a th:href="@{'/products/' + ${product.id}(reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == null and currentHasImages == null and currentHasComments == null} ? '!border-orange-500 !text-orange-500 font-medium' : ''">
-                        Tất Cả (<span th:text="${reviewSummary.totalReviews}"></span>)
-                    </a>
-                    <a th:href="@{'/products/' + ${product.id}(rating=5, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == 5} ? '!border-orange-500 !text-orange-500 font-medium' : ''">5 Sao (<span th:text="${reviewSummary.count5Star}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(rating=4, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == 4} ? '!border-orange-500 !text-orange-500 font-medium' : ''">4 Sao (<span th:text="${reviewSummary.count4Star}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(rating=3, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == 3} ? '!border-orange-500 !text-orange-500 font-medium' : ''">3 Sao (<span th:text="${reviewSummary.count3Star}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(rating=2, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == 2} ? '!border-orange-500 !text-orange-500 font-medium' : ''">2 Sao (<span th:text="${reviewSummary.count2Star}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(rating=1, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentRating == 1} ? '!border-orange-500 !text-orange-500 font-medium' : ''">1 Sao (<span th:text="${reviewSummary.count1Star}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(hasComments=true, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentHasComments == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Bình Luận (<span th:text="${reviewSummary.countWithComments}"></span>)</a>
-                    <a th:href="@{'/products/' + ${product.id}(hasImages=true, reviewPage=0, sortBy=${currentSort})}"
-                       class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
-                       th:classappend="${currentHasImages == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Hình Ảnh (<span th:text="${reviewSummary.countWithImages}"></span>)</a>
-                </div>
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 mt-0 mb-4" th:text="${product.name}">Product Name</h1>
+            <div class="text-2xl font-bold text-primary-600 mb-4" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
+            <div class="mb-4">Shop: <a th:href="@{'/shops/' + ${product.shopId}}" class="no-underline text-primary-600 hover:underline font-medium" th:text="${product.shopName}">Shop Name</a></div>
+            <div class="text-slate-600 leading-relaxed mb-6" th:utext="${product.description}">Description</div>
+            <div class="border-t border-slate-200 pt-6 space-y-1 text-sm text-slate-600">
+                <div><strong class="text-slate-800">SKU:</strong> <span th:text="${product.sku}">SKU</span></div>
+                <div th:if="${product.categoryName}"><strong class="text-slate-800">Danh mục:</strong> <span th:text="${product.categoryName}">Category</span></div>
             </div>
-
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-                <span class="font-medium text-slate-700">Sắp xếp theo:</span>
-                <select class="px-2 py-1 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-orange-400" onchange="window.location.href=this.value">
-                    <option th:value="@{'/products/' + ${product.id}(sortBy='newest', rating=${currentRating}, hasImages=${currentHasImages})}"
-                            th:selected="${currentSort == 'newest'}">Mới Nhất</option>
-                    <option th:value="@{'/products/' + ${product.id}(sortBy='oldest', rating=${currentRating}, hasImages=${currentHasImages})}"
-                            th:selected="${currentSort == 'oldest'}">Cũ Nhất</option>
-                </select>
-            </div>
-
-            <div>
-                <div th:if="${reviews == null or reviews.isEmpty()}" class="text-center text-slate-500 py-12">
-                    <span class="text-5xl block mb-4 text-slate-200">💬</span>
-                    <p>Chưa có đánh giá nào phù hợp với bộ lọc.</p>
-                </div>
-
-                <div th:each="review : ${reviews}" class="border-b border-slate-100 py-6">
-                    <div class="flex flex-wrap justify-between items-start gap-4">
-                        <div class="flex gap-4 flex-1 min-w-0">
-                            <img th:src="${review.userAvatarUrl != null ? review.userAvatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
-                                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-                                 class="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0">
-                            <div>
-                                <div class="text-sm font-semibold text-slate-800 mb-1" th:text="${review.userFullName}">User</div>
-                                <div class="text-orange-500 text-xs mb-1">
-                                    <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating} ? '★' : '☆'">★</span>
-                                </div>
-                                <div class="text-slate-500 text-xs">
-                                    <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
-                                    <span th:if="${review.isVerifiedPurchase}" class="text-green-600">✓ Đã mua hàng</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div th:if="${currentUser != null and currentUser.id != review.userId}" class="relative">
-                            <button th:if="${review.userReport == null}"
-                                    type="button"
-                                    class="w-8 h-8 rounded-full border border-transparent bg-transparent text-slate-300 text-sm flex items-center justify-center cursor-pointer hover:bg-red-50 hover:text-orange-500 hover:border-orange-500 transition btn-report-direct"
-                                    title="Báo cáo đánh giá này"
-                                    th:data-id="${review.id}"
-                                    onclick="openReportModal(this.getAttribute('data-id'), null, null, false)">
-                                🚩
-                            </button>
-                            <th:block th:if="${review.userReport != null}">
-                                <button th:if="${!review.userReport.edited and review.userReport.status.name() == 'PENDING'}"
-                                        type="button"
-                                        class="relative w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer text-orange-500 bg-orange-50 border-orange-500 hover:scale-110 hover:shadow btn-report-direct reported editable"
-                                        title="Chỉnh sửa báo cáo (Chỉ khi Admin chưa duyệt)"
-                                        th:data-id="${review.id}"
-                                        th:data-reason="${review.userReport.reason}"
-                                        th:data-note="${review.userReport.note}"
-                                        onclick="openReportModal(this.getAttribute('data-id'), this.getAttribute('data-reason'), this.getAttribute('data-note'), true)">
-                                    🚩
-                                </button>
-                                <button th:if="${review.userReport.edited or review.userReport.status.name() != 'PENDING'}"
-                                        type="button"
-                                        class="w-8 h-8 rounded-full flex items-center justify-center opacity-60 cursor-not-allowed bg-slate-100 text-slate-400 border border-transparent btn-report-direct reported locked"
-                                        th:title="${review.userReport.status.name() == 'PENDING' ? 'Bạn đã hết lượt chỉnh sửa' : 'Báo cáo đã được Admin xử lý'}"
-                                        disabled>🚩</button>
-                            </th:block>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 ml-14">
-                        <div class="text-slate-800 text-sm leading-relaxed whitespace-pre-line mb-2" th:text="${review.comment}">Nội dung...</div>
-                        <div th:if="${not #lists.isEmpty(review.imageUrls)}" class="flex gap-2 flex-wrap mb-2">
-                            <img th:each="img : ${review.imageUrls}" th:src="${img}" class="w-[72px] h-[72px] object-cover border border-slate-100 cursor-zoom-in" onclick="window.open(this.src)">
-                        </div>
-
-                        <div th:if="${review.sellerReply != null or review.sellerCanReply}" class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <div th:if="${review.sellerReply != null}">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-xs font-medium text-orange-600">Phản hồi từ Shop</span>
-                                    <span class="text-xs text-slate-500" th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></span>
-                                </div>
-                                <div th:id="'reply-content-' + ${review.id}" class="text-sm text-slate-700" th:text="${review.sellerReply.reply}"></div>
-                                <div th:if="${review.sellerCanReply}">
-                                    <a href="javascript:void(0)" class="text-xs text-primary-600 hover:underline" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Chỉnh sửa</a>
-                                </div>
-                            </div>
-                            <form th:if="${review.sellerReply == null and review.sellerCanReply}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}" method="post" class="mt-2">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Nhập phản hồi..."></textarea>
-                                <button type="submit" class="mt-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium">Gửi phản hồi</button>
-                            </form>
-                            <form th:if="${review.sellerReply != null and review.sellerCanReply}" th:id="'reply-form-' + ${review.id}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}" method="post" class="hidden mt-2">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" th:text="${review.sellerReply.reply}"></textarea>
-                                <div class="mt-2 text-right">
-                                    <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-sm" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Hủy</button>
-                                    <button type="submit" class="ml-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm">Lưu</button>
-                                </div>
-                            </form>
-                        </div>
+            <div th:if="${variantGroups != null and !variantGroups.empty}" class="mt-6">
+                <h3 class="font-semibold text-slate-900 mb-3">Lựa chọn:</h3>
+                <div th:each="variantGroup : ${variantGroups}" class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2" th:text="${variantGroup.key}">Variant Name</label>
+                    <div class="flex gap-2 flex-wrap">
+                        <div th:each="variant : ${variantGroup.value}" class="variant-option relative px-4 py-2 border border-slate-200 rounded cursor-pointer transition bg-white min-w-[80px] text-center hover:border-blue-500 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50" th:classappend="${variant.stockQuantity == 0} ? 'disabled' : ''" th:attr="data-variant-id=${variant.id}, data-variant-name=${variant.name}, data-variant-value=${variant.value}, data-stock-quantity=${variant.stockQuantity}" onclick="handleVariantClick(this)" th:text="${variant.value} + (${variant.stockQuantity == 0} ? ' (Hết hàng)' : '')">Variant Value</div>
                     </div>
                 </div>
             </div>
-
-            <div th:if="${reviews != null and reviews.totalPages > 1}" class="flex justify-center items-center gap-2 mt-8">
-                <a th:if="${reviews.hasPrevious()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Trước</a>
-                <span class="mx-2 text-slate-600 text-sm" th:text="'Trang ' + (${reviews.number + 1})"></span>
-                <a th:if="${reviews.hasNext()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number + 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Sau</a>
+            <div class="mt-6">
+                <form id="addToCartForm" th:action="@{/cart/add}" method="post" th:if="${currentUser != null}"
+                      hx-post="@{/cart/add}" hx-trigger="submit" hx-swap="none">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="productId" th:value="${product.id}"/>
+                    <input type="hidden" id="variantIdInput" name="variantId" value="">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="button" class="w-full py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition" id="addToCartBtn" onclick="if(prepareAddToCart()) this.form.requestSubmit()">Thêm vào giỏ hàng</button>
+                </form>
+                <a th:if="${currentUser == null}" th:href="@{'/login?redirect=/products/' + ${product.id}}" class="block w-full py-3 text-center rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition no-underline">Đăng nhập để mua hàng</a>
             </div>
-        </div>
-
-        <div th:if="${product == null}" class="rounded-lg bg-red-50 text-red-800 p-4">
-            Sản phẩm không tồn tại hoặc chưa được xuất bản.
-        </div>
-
-        <div class="modal fade fixed inset-0 z-[9999] hidden items-center justify-center p-4" id="reportModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog w-full max-w-md mx-auto">
-        <div class="modal-content bg-white rounded-xl shadow-xl border-0">
-            <div class="modal-header text-center pt-6 pb-0">
-                <h5 class="modal-title text-xl font-bold text-slate-900">Báo cáo đánh giá</h5>
-            </div>
-            <form id="reportForm" onsubmit="submitReport(event)">
-                <input type="hidden" id="csrf_token" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <div class="modal-body pt-4 px-6">
-                    <input type="hidden" id="reportReviewId" name="reviewId">
-                    <p class="text-slate-500 text-center mb-4 text-sm">Vui lòng chọn lý do bạn muốn báo cáo đánh giá này</p>
-                    <div class="flex flex-col gap-2">
-                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
-                            <span>Spam / Đánh giá ảo</span>
-                            <input type="radio" name="reason" value="SPAM" required class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
-                        </label>
-                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
-                            <span>Ngôn từ thô tục / Phản cảm</span>
-                            <input type="radio" name="reason" value="OFFENSIVE_LANGUAGE" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
-                        </label>
-                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
-                            <span>Công kích cá nhân</span>
-                            <input type="radio" name="reason" value="PERSONAL_ATTACK" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
-                        </label>
-                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
-                            <span>Nội dung không liên quan</span>
-                            <input type="radio" name="reason" value="IRRELEVANT_CONTENT" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
-                        </label>
-                        <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
-                            <span>Lý do khác</span>
-                            <input type="radio" name="reason" value="OTHER" id="reasonOther" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
-                        </label>
-                    </div>
-                    <div class="hidden mt-3" id="otherReasonGroup">
-                        <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm resize-none" id="otherNote" rows="3" placeholder="Mô tả chi tiết vi phạm..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer flex border-0 pt-4 pb-6 justify-center gap-3">
-                    <button type="button" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium min-w-[100px]" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="px-6 py-2 rounded-lg bg-orange-500 text-white font-medium min-w-[100px] border-0">Gửi</button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
-    </th:block>
-    <th:block th:fragment="scripts">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-    // --- LOGIC GIO HANG (Giữ nguyên) ---
-    let productId = /*[[${product != null ? product.id : null}]]*/ null;
-    let selectedVariants = {};
-    let selectedVariantIds = {};
-    let productData = /*[[${product}]]*/ null;
-    let isEditMode = false; // Biến toàn cục để xác định đang Thêm hay Sửa
+    <div th:if="${product != null}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mt-8">
+        <h3 class="text-lg font-semibold text-slate-900 uppercase mb-6 mt-0">Đánh giá sản phẩm</h3>
 
-    function changeMainImage(imageUrl, thumbnail) {
-        document.getElementById('mainImage').src = imageUrl;
-        document.querySelectorAll('.product-thumbnail').forEach(img => img.classList.remove('active'));
-        thumbnail.classList.add('active');
-    }
+        <div class="flex flex-wrap items-center gap-4 sm:gap-6 p-6 bg-amber-50/80 border border-amber-200 rounded-lg mb-4">
+            <div class="text-center text-orange-500 mr-6">
+                <div class="text-3xl sm:text-4xl font-semibold" th:text="${reviewSummary.averageRating}">0.0</div>
+                <span class="text-lg text-slate-500 ml-1">/ 5</span>
+                <div class="star-rating-precision">
+                    <div class="text-slate-300">★★★★★</div>
+                    <div class="stars-fill" th:style="'width: ' + ${(reviewSummary.averageRating / 5.0) * 100} + '%'">★★★★★</div>
+                </div>
+            </div>
 
-    function handleVariantClick(element) {
-        const stockQuantity = parseInt(element.dataset.stockQuantity || '0');
-        if (stockQuantity <= 0) return;
-        const name = element.dataset.variantName;
-        const value = element.dataset.variantValue;
-        const variantId = element.dataset.variantId;
-        selectVariant(name, value, variantId, true);
-    }
+            <div class="flex-1 flex flex-wrap gap-2">
+                <a th:href="@{'/products/' + ${product.id}(reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == null and currentHasImages == null and currentHasComments == null} ? '!border-orange-500 !text-orange-500 font-medium' : ''">
+                    Tất Cả (<span th:text="${reviewSummary.totalReviews}"></span>)
+                </a>
+                <a th:href="@{'/products/' + ${product.id}(rating=5, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == 5} ? '!border-orange-500 !text-orange-500 font-medium' : ''">5 Sao (<span th:text="${reviewSummary.count5Star}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(rating=4, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == 4} ? '!border-orange-500 !text-orange-500 font-medium' : ''">4 Sao (<span th:text="${reviewSummary.count4Star}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(rating=3, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == 3} ? '!border-orange-500 !text-orange-500 font-medium' : ''">3 Sao (<span th:text="${reviewSummary.count3Star}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(rating=2, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == 2} ? '!border-orange-500 !text-orange-500 font-medium' : ''">2 Sao (<span th:text="${reviewSummary.count2Star}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(rating=1, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentRating == 1} ? '!border-orange-500 !text-orange-500 font-medium' : ''">1 Sao (<span th:text="${reviewSummary.count1Star}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(hasComments=true, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentHasComments == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Bình Luận (<span th:text="${reviewSummary.countWithComments}"></span>)</a>
+                <a th:href="@{'/products/' + ${product.id}(hasImages=true, reviewPage=0, sortBy=${currentSort})}"
+                   class="inline-flex items-center h-8 min-w-[6.25rem] px-2.5 rounded border border-slate-200 bg-white text-slate-700 text-sm no-underline hover:border-orange-500 hover:text-orange-500 transition"
+                   th:classappend="${currentHasImages == true} ? '!border-orange-500 !text-orange-500 font-medium' : ''">Có Hình Ảnh (<span th:text="${reviewSummary.countWithImages}"></span>)</a>
+            </div>
+        </div>
 
-    function selectVariant(name, value, variantId, available) {
-        if (!available) return;
-        const options = document.querySelectorAll(`[data-variant-name="${name}"]`);
-        options.forEach(opt => opt.classList.remove('selected'));
-        const selectedOption = Array.from(options).find(opt => opt.dataset.variantValue === value);
-        if (selectedOption) selectedOption.classList.add('selected');
-        selectedVariants[name] = value;
-        selectedVariantIds[name] = variantId;
-        updateAddToCartButton();
-    }
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <span class="font-medium text-slate-700">Sắp xếp theo:</span>
+            <select class="px-2 py-1 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-orange-400" onchange="window.location.href=this.value">
+                <option th:value="@{'/products/' + ${product.id}(sortBy='newest', rating=${currentRating}, hasImages=${currentHasImages})}"
+                        th:selected="${currentSort == 'newest'}">Mới Nhất</option>
+                <option th:value="@{'/products/' + ${product.id}(sortBy='oldest', rating=${currentRating}, hasImages=${currentHasImages})}"
+                        th:selected="${currentSort == 'oldest'}">Cũ Nhất</option>
+            </select>
+        </div>
 
-    function updateAddToCartButton() {
-        const btn = document.getElementById('addToCartBtn');
-        if (!btn) return;
-        if (productData && productData.variants && productData.variants.length > 0) {
-            const variantGroups = {};
-            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
-            const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
-            if (!allSelected) { btn.textContent = 'Vui lòng chọn thuộc tính'; btn.disabled = true; return; }
+        <div>
+            <div th:if="${reviews == null or reviews.isEmpty()}" class="text-center text-slate-500 py-12">
+                <span class="text-5xl block mb-4 text-slate-200">💬</span>
+                <p>Chưa có đánh giá nào phù hợp với bộ lọc.</p>
+            </div>
+
+            <div th:each="review : ${reviews}" class="border-b border-slate-100 py-6">
+                <div class="flex flex-wrap justify-between items-start gap-4">
+                    <div class="flex gap-4 flex-1 min-w-0">
+                        <img th:src="${review.userAvatarUrl != null ? review.userAvatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                             onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                             class="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800 mb-1" th:text="${review.userFullName}">User</div>
+                            <div class="text-orange-500 text-xs mb-1">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating} ? '★' : '☆'">★</span>
+                            </div>
+                            <div class="text-slate-500 text-xs">
+                                <span th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy HH:mm')}"></span> |
+                                <span th:if="${review.isVerifiedPurchase}" class="text-green-600">✓ Đã mua hàng</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${currentUser != null and currentUser.id != review.userId}" class="relative">
+                        <button th:if="${review.userReport == null}"
+                                type="button"
+                                class="w-8 h-8 rounded-full border border-transparent bg-transparent text-slate-300 text-sm flex items-center justify-center cursor-pointer hover:bg-red-50 hover:text-orange-500 hover:border-orange-500 transition btn-report-direct"
+                                title="Báo cáo đánh giá này"
+                                th:data-id="${review.id}"
+                                onclick="openReportModal(this.getAttribute('data-id'), null, null, false)">
+                            🚩
+                        </button>
+                        <th:block th:if="${review.userReport != null}">
+                            <button th:if="${!review.userReport.edited and review.userReport.status.name() == 'PENDING'}"
+                                    type="button"
+                                    class="relative w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer text-orange-500 bg-orange-50 border-orange-500 hover:scale-110 hover:shadow btn-report-direct reported editable"
+                                    title="Chỉnh sửa báo cáo (Chỉ khi Admin chưa duyệt)"
+                                    th:data-id="${review.id}"
+                                    th:data-reason="${review.userReport.reason}"
+                                    th:data-note="${review.userReport.note}"
+                                    onclick="openReportModal(this.getAttribute('data-id'), this.getAttribute('data-reason'), this.getAttribute('data-note'), true)">
+                                🚩
+                            </button>
+                            <button th:if="${review.userReport.edited or review.userReport.status.name() != 'PENDING'}"
+                                    type="button"
+                                    class="w-8 h-8 rounded-full flex items-center justify-center opacity-60 cursor-not-allowed bg-slate-100 text-slate-400 border border-transparent btn-report-direct reported locked"
+                                    th:title="${review.userReport.status.name() == 'PENDING' ? 'Bạn đã hết lượt chỉnh sửa' : 'Báo cáo đã được Admin xử lý'}"
+                                    disabled>🚩</button>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="mt-4 ml-14">
+                    <div class="text-slate-800 text-sm leading-relaxed whitespace-pre-line mb-2" th:text="${review.comment}">Nội dung...</div>
+                    <div th:if="${not #lists.isEmpty(review.imageUrls)}" class="flex gap-2 flex-wrap mb-2">
+                        <img th:each="img : ${review.imageUrls}" th:src="${img}" class="w-[72px] h-[72px] object-cover border border-slate-100 cursor-zoom-in" onclick="window.open(this.src)">
+                    </div>
+
+                    <div th:if="${review.sellerReply != null or review.sellerCanReply}" class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <div th:if="${review.sellerReply != null}">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-medium text-orange-600">Phản hồi từ Shop</span>
+                                <span class="text-xs text-slate-500" th:text="${#temporals.format(review.sellerReply.repliedAt,'dd-MM-yyyy HH:mm')}"></span>
+                            </div>
+                            <div th:id="'reply-content-' + ${review.id}" class="text-sm text-slate-700" th:text="${review.sellerReply.reply}"></div>
+                            <div th:if="${review.sellerCanReply}">
+                                <a href="javascript:void(0)" class="text-xs text-primary-600 hover:underline" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Chỉnh sửa</a>
+                            </div>
+                        </div>
+                        <form th:if="${review.sellerReply == null and review.sellerCanReply}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply'}" method="post" class="mt-2">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Nhập phản hồi..."></textarea>
+                            <button type="submit" class="mt-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium">Gửi phản hồi</button>
+                        </form>
+                        <form th:if="${review.sellerReply != null and review.sellerCanReply}" th:id="'reply-form-' + ${review.id}" th:action="@{'/seller/reviews/' + ${review.id} + '/reply/edit'}" method="post" class="hidden mt-2">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <textarea name="reply" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" th:text="${review.sellerReply.reply}"></textarea>
+                            <div class="mt-2 text-right">
+                                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-sm" th:attr="data-review-id=${review.id}" onclick="toggleEditReply(this.getAttribute('data-review-id'))">Hủy</button>
+                                <button type="submit" class="ml-2 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${reviews != null and reviews.totalPages > 1}" class="flex justify-center items-center gap-2 mt-8">
+            <a th:if="${reviews.hasPrevious()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number - 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Trước</a>
+            <span class="mx-2 text-slate-600 text-sm" th:text="'Trang ' + (${reviews.number + 1})"></span>
+            <a th:if="${reviews.hasNext()}" th:href="@{'/products/' + ${product.id}(reviewPage=${reviews.number + 1}, rating=${currentRating}, hasImages=${currentHasImages}, sortBy=${currentSort})}" class="no-underline px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">Sau</a>
+        </div>
+    </div>
+
+    <div th:if="${product == null}" class="rounded-lg bg-red-50 text-red-800 p-4">
+        Sản phẩm không tồn tại hoặc chưa được xuất bản.
+    </div>
+
+    <div class="modal fade fixed inset-0 z-[9999] hidden items-center justify-center p-4" id="reportModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog w-full max-w-md mx-auto">
+            <div class="modal-content bg-white rounded-xl shadow-xl border-0">
+                <div class="modal-header text-center pt-6 pb-0">
+                    <h5 class="modal-title text-xl font-bold text-slate-900">Báo cáo đánh giá</h5>
+                </div>
+                <form id="reportForm" onsubmit="submitReport(event)">
+                    <input type="hidden" id="csrf_token" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="modal-body pt-4 px-6">
+                        <input type="hidden" id="reportReviewId" name="reviewId">
+                        <p class="text-slate-500 text-center mb-4 text-sm">Vui lòng chọn lý do bạn muốn báo cáo đánh giá này</p>
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                                <span>Spam / Đánh giá ảo</span>
+                                <input type="radio" name="reason" value="SPAM" required class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                            </label>
+                            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                                <span>Ngôn từ thô tục / Phản cảm</span>
+                                <input type="radio" name="reason" value="OFFENSIVE_LANGUAGE" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                            </label>
+                            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                                <span>Công kích cá nhân</span>
+                                <input type="radio" name="reason" value="PERSONAL_ATTACK" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                            </label>
+                            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                                <span>Nội dung không liên quan</span>
+                                <input type="radio" name="reason" value="IRRELEVANT_CONTENT" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                            </label>
+                            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50/50 transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50">
+                                <span>Lý do khác</span>
+                                <input type="radio" name="reason" value="OTHER" id="reasonOther" class="sr-only peer"><span class="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-orange-500 peer-checked:bg-orange-500"></span>
+                            </label>
+                        </div>
+                        <div class="hidden mt-3" id="otherReasonGroup">
+                            <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm resize-none" id="otherNote" rows="3" placeholder="Mô tả chi tiết vi phạm..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer flex border-0 pt-4 pb-6 justify-center gap-3">
+                        <button type="button" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium min-w-[100px]" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="px-6 py-2 rounded-lg bg-orange-500 text-white font-medium min-w-[100px] border-0">Gửi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- LOGIC GIO HANG (Giữ nguyên) ---
+        let productId = /*[[${product != null ? product.id : null}]]*/ null;
+        let selectedVariants = {};
+        let selectedVariantIds = {};
+        let productData = /*[[${product}]]*/ null;
+        let isEditMode = false; // Biến toàn cục để xác định đang Thêm hay Sửa
+
+        function changeMainImage(imageUrl, thumbnail) {
+            document.getElementById('mainImage').src = imageUrl;
+            document.querySelectorAll('.product-thumbnail').forEach(img => img.classList.remove('active'));
+            thumbnail.classList.add('active');
         }
-        btn.textContent = 'Thêm vào giỏ hàng';
-        btn.disabled = false;
-    }
 
-    /** Prepare form for add-to-cart (set variantId). Returns true if valid so HTMX can submit. */
-    function prepareAddToCart() {
-        const form = document.getElementById('addToCartForm');
-        if (!form) return false;
-        if (productData && productData.variants && productData.variants.length > 0) {
-            const variantGroups = {};
-            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
-            const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
-            if (!allSelected) { alert('Vui lòng chọn đầy đủ thuộc tính.'); return false; }
-            const firstVariantId = Object.values(selectedVariantIds)[0];
-            if (firstVariantId) { document.getElementById('variantIdInput').value = firstVariantId; }
-            else {
-                const matchingVariant = productData.variants.find(v => selectedVariants[v.name] === v.value);
-                if (matchingVariant) document.getElementById('variantIdInput').value = matchingVariant.id;
-                else { alert('Lỗi biến thể.'); return false; }
+        function handleVariantClick(element) {
+            const stockQuantity = parseInt(element.dataset.stockQuantity || '0');
+            if (stockQuantity <= 0) return;
+            const name = element.dataset.variantName;
+            const value = element.dataset.variantValue;
+            const variantId = element.dataset.variantId;
+            selectVariant(name, value, variantId, true);
+        }
+
+        function selectVariant(name, value, variantId, available) {
+            if (!available) return;
+            const options = document.querySelectorAll(`[data-variant-name="${name}"]`);
+            options.forEach(opt => opt.classList.remove('selected'));
+            const selectedOption = Array.from(options).find(opt => opt.dataset.variantValue === value);
+            if (selectedOption) selectedOption.classList.add('selected');
+            selectedVariants[name] = value;
+            selectedVariantIds[name] = variantId;
+            updateAddToCartButton();
+        }
+
+        function updateAddToCartButton() {
+            const btn = document.getElementById('addToCartBtn');
+            if (!btn) return;
+            if (productData && productData.variants && productData.variants.length > 0) {
+                const variantGroups = {};
+                productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
+                const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
+                if (!allSelected) { btn.textContent = 'Vui lòng chọn thuộc tính'; btn.disabled = true; return; }
             }
-        } else { document.getElementById('variantIdInput').value = ''; }
-        return true;
-    }
-
-    function addToCart() {
-        const form = document.getElementById('addToCartForm');
-        if (!form) {
-            if (confirm('Bạn cần đăng nhập để mua hàng. Đi đến trang đăng nhập?')) window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-            return;
+            btn.textContent = 'Thêm vào giỏ hàng';
+            btn.disabled = false;
         }
-        if (prepareAddToCart()) form.requestSubmit();
-    }
 
-    function viewShop(shopId) { if (shopId) window.location.href = '/shops/' + shopId; }
-    function formatPrice(price) { return new Intl.NumberFormat('vi-VN').format(price); }
-    function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-
-    function toggleEditReply(reviewId) {
-        const form = document.getElementById('reply-form-' + reviewId);
-        const content = document.getElementById('reply-content-' + reviewId);
-        if (!form) return;
-        const isHidden = form.classList.contains('hidden');
-        form.classList.toggle('hidden');
-        if (content) content.classList.toggle('hidden');
-        if (isHidden) { const textarea = form.querySelector('textarea'); if (textarea) textarea.focus(); }
-    }
-
-    // --- REPORT LOGIC - MỞ MODAL ---
-    function openReportModal(reviewId, currentReason, currentNote, editMode) {
-        // Reset form về trạng thái sạch
-        document.getElementById('reportForm').reset();
-        document.getElementById('otherReasonGroup').classList.add('hidden');
-        document.getElementById('otherNote').removeAttribute('required');
-
-        // Gán ID Review
-        document.getElementById('reportReviewId').value = reviewId;
-
-        // Lưu trạng thái
-        isEditMode = editMode;
-
-        // Lấy các element giao diện
-        const modalTitle = document.querySelector('#reportModal .modal-title');
-        const submitBtn = document.querySelector('#reportModal button[type="submit"]');
-        const alertMsg = document.getElementById('edit-warning-msg');
-
-        if (isEditMode) {
-            // --- CHẾ ĐỘ SỬA ---
-            modalTitle.textContent = "Chỉnh sửa báo cáo";
-            submitBtn.textContent = "Cập nhật thay đổi";
-            submitBtn.classList.remove('bg-orange-500');
-            submitBtn.classList.add('bg-amber-500');
-
-            // 1. Fill Lý do cũ (Radio button)
-            if (currentReason) {
-                // Selector tìm input radio có value trùng với lý do cũ
-                const radio = document.querySelector(`input[name="reason"][value="${currentReason}"]`);
-                if (radio) {
-                    radio.checked = true;
-                    // Trigger sự kiện change thủ công để code xử lý ẩn/hiện ô Note chạy
-                    radio.dispatchEvent(new Event('change'));
+        /** Prepare form for add-to-cart (set variantId). Returns true if valid so HTMX can submit. */
+        function prepareAddToCart() {
+            const form = document.getElementById('addToCartForm');
+            if (!form) return false;
+            if (productData && productData.variants && productData.variants.length > 0) {
+                const variantGroups = {};
+                productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = true; });
+                const allSelected = Object.keys(variantGroups).every(name => selectedVariants[name]);
+                if (!allSelected) { alert('Vui lòng chọn đầy đủ thuộc tính.'); return false; }
+                const firstVariantId = Object.values(selectedVariantIds)[0];
+                if (firstVariantId) { document.getElementById('variantIdInput').value = firstVariantId; }
+                else {
+                    const matchingVariant = productData.variants.find(v => selectedVariants[v.name] === v.value);
+                    if (matchingVariant) document.getElementById('variantIdInput').value = matchingVariant.id;
+                    else { alert('Lỗi biến thể.'); return false; }
                 }
-            }
-
-            // 2. Fill Ghi chú cũ (Textarea)
-            if (currentNote && currentNote !== 'null') {
-                document.getElementById('otherNote').value = currentNote;
-            }
-
-        } else {
-            // --- CHẾ ĐỘ TẠO MỚI ---
-            modalTitle.textContent = "Báo cáo đánh giá";
-            submitBtn.textContent = "Gửi báo cáo";
-            submitBtn.classList.remove('bg-amber-500');
-            submitBtn.classList.add('bg-orange-500');
+            } else { document.getElementById('variantIdInput').value = ''; }
+            return true;
         }
 
-        // Mở Modal
-        const modalEl = document.getElementById('reportModal');
-        if(typeof bootstrap !== 'undefined') {
-            const myModal = new bootstrap.Modal(modalEl);
-            myModal.show();
-        } else {
-            alert('Lỗi thư viện Bootstrap JS');
+        function addToCart() {
+            const form = document.getElementById('addToCartForm');
+            if (!form) {
+                if (confirm('Bạn cần đăng nhập để mua hàng. Đi đến trang đăng nhập?')) window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+            if (prepareAddToCart()) form.requestSubmit();
         }
-    }
 
-    document.querySelectorAll('input[name="reason"]').forEach((elem) => {
-        elem.addEventListener("change", function(event) {
-            var otherBox = document.getElementById('otherReasonGroup');
-            var otherInput = document.getElementById('otherNote');
-            if (event.target.value === "OTHER") { otherBox.classList.remove('hidden'); otherInput.setAttribute('required', 'true'); }
-            else { otherBox.classList.add('hidden'); otherInput.removeAttribute('required'); }
+        function viewShop(shopId) { if (shopId) window.location.href = '/shops/' + shopId; }
+        function formatPrice(price) { return new Intl.NumberFormat('vi-VN').format(price); }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        function toggleEditReply(reviewId) {
+            const form = document.getElementById('reply-form-' + reviewId);
+            const content = document.getElementById('reply-content-' + reviewId);
+            if (!form) return;
+            const isHidden = form.classList.contains('hidden');
+            form.classList.toggle('hidden');
+            if (content) content.classList.toggle('hidden');
+            if (isHidden) { const textarea = form.querySelector('textarea'); if (textarea) textarea.focus(); }
+        }
+
+        // --- REPORT LOGIC - MỞ MODAL ---
+        function openReportModal(reviewId, currentReason, currentNote, editMode) {
+            // Reset form về trạng thái sạch
+            document.getElementById('reportForm').reset();
+            document.getElementById('otherReasonGroup').classList.add('hidden');
+            document.getElementById('otherNote').removeAttribute('required');
+
+            // Gán ID Review
+            document.getElementById('reportReviewId').value = reviewId;
+
+            // Lưu trạng thái
+            isEditMode = editMode;
+
+            // Lấy các element giao diện
+            const modalTitle = document.querySelector('#reportModal .modal-title');
+            const submitBtn = document.querySelector('#reportModal button[type="submit"]');
+            const alertMsg = document.getElementById('edit-warning-msg');
+
+            if (isEditMode) {
+                // --- CHẾ ĐỘ SỬA ---
+                modalTitle.textContent = "Chỉnh sửa báo cáo";
+                submitBtn.textContent = "Cập nhật thay đổi";
+                submitBtn.classList.remove('bg-orange-500');
+                submitBtn.classList.add('bg-amber-500');
+
+                // 1. Fill Lý do cũ (Radio button)
+                if (currentReason) {
+                    // Selector tìm input radio có value trùng với lý do cũ
+                    const radio = document.querySelector(`input[name="reason"][value="${currentReason}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        // Trigger sự kiện change thủ công để code xử lý ẩn/hiện ô Note chạy
+                        radio.dispatchEvent(new Event('change'));
+                    }
+                }
+
+                // 2. Fill Ghi chú cũ (Textarea)
+                if (currentNote && currentNote !== 'null') {
+                    document.getElementById('otherNote').value = currentNote;
+                }
+
+            } else {
+                // --- CHẾ ĐỘ TẠO MỚI ---
+                modalTitle.textContent = "Báo cáo đánh giá";
+                submitBtn.textContent = "Gửi báo cáo";
+                submitBtn.classList.remove('bg-amber-500');
+                submitBtn.classList.add('bg-orange-500');
+            }
+
+            // Mở Modal
+            const modalEl = document.getElementById('reportModal');
+            if(typeof bootstrap !== 'undefined') {
+                const myModal = new bootstrap.Modal(modalEl);
+                myModal.show();
+            } else {
+                alert('Lỗi thư viện Bootstrap JS');
+            }
+        }
+
+        document.querySelectorAll('input[name="reason"]').forEach((elem) => {
+            elem.addEventListener("change", function(event) {
+                var otherBox = document.getElementById('otherReasonGroup');
+                var otherInput = document.getElementById('otherNote');
+                if (event.target.value === "OTHER") { otherBox.classList.remove('hidden'); otherInput.setAttribute('required', 'true'); }
+                else { otherBox.classList.add('hidden'); otherInput.removeAttribute('required'); }
+            });
         });
-    });
 
-    // --- 2. GỬI FORM ---
-    function submitReport(e) {
-        e.preventDefault();
+        // --- 2. GỬI FORM ---
+        function submitReport(e) {
+            e.preventDefault();
 
-        const reviewId = document.getElementById('reportReviewId').value;
-        const reason = document.querySelector('input[name="reason"]:checked').value;
-        const note = document.getElementById('otherNote').value;
-        const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
+            const reviewId = document.getElementById('reportReviewId').value;
+            const reason = document.querySelector('input[name="reason"]:checked').value;
+            const note = document.getElementById('otherNote').value;
+            const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
 
-        // Đóng modal ngay cho mượt
-        const modalEl = document.getElementById('reportModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-        modalInstance.hide();
+            // Đóng modal ngay cho mượt
+            const modalEl = document.getElementById('reportModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
 
-        // QUAN TRỌNG: Chọn Method (POST = Tạo mới, PUT = Cập nhật)
-        const method = isEditMode ? 'PUT' : 'POST';
+            // QUAN TRỌNG: Chọn Method (POST = Tạo mới, PUT = Cập nhật)
+            const method = isEditMode ? 'PUT' : 'POST';
 
-        fetch(`/reviews/${reviewId}/report`, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: new URLSearchParams({
-                'reason': reason,
-                'note': note
+            fetch(`/reviews/${reviewId}/report`, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: new URLSearchParams({
+                    'reason': reason,
+                    'note': note
+                })
             })
-        })
-            .then(async response => {
-                const message = await response.text();
+                .then(async response => {
+                    const message = await response.text();
 
-                if (response.ok) {
-                    // Thành công
-                    const successMsg = isEditMode ? "Đã cập nhật báo cáo thành công!" : "Đã gửi báo cáo thành công!";
-                    showToastSuccess(successMsg);
+                    if (response.ok) {
+                        // Thành công
+                        const successMsg = isEditMode ? "Đã cập nhật báo cáo thành công!" : "Đã gửi báo cáo thành công!";
+                        showToastSuccess(successMsg);
 
-                    // Reload sau 1.5s để cập nhật giao diện (Nút chuyển trạng thái)
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    // Thất bại (Lỗi logic từ Backend: Đã sửa rồi, Admin đã duyệt...)
-                    alert("Lỗi: " + message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Đã xảy ra lỗi kết nối.");
-            });
-    }
-
-    function showToastSuccess(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-lg z-[9999] text-sm flex items-center gap-2';
-        toast.innerHTML = `✓ ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    // Auto select first variant if exists
-    document.addEventListener('DOMContentLoaded', function() {
-        if (productData && productData.variants && productData.variants.length > 0) {
-            const variantGroups = {};
-            productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = []; variantGroups[v.name].push(v); });
-            Object.keys(variantGroups).forEach(name => {
-                const firstAvailable = variantGroups[name].find(v => v.stockQuantity > 0);
-                if (firstAvailable) selectVariant(name, firstAvailable.value, firstAvailable.id, true);
-            });
+                        // Reload sau 1.5s để cập nhật giao diện (Nút chuyển trạng thái)
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        // Thất bại (Lỗi logic từ Backend: Đã sửa rồi, Admin đã duyệt...)
+                        alert("Lỗi: " + message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Đã xảy ra lỗi kết nối.");
+                });
         }
-    });
-        </script>
-    </th:block>
+
+        function showToastSuccess(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-lg z-[9999] text-sm flex items-center gap-2';
+            toast.innerHTML = `✓ ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Auto select first variant if exists
+        document.addEventListener('DOMContentLoaded', function() {
+            if (productData && productData.variants && productData.variants.length > 0) {
+                const variantGroups = {};
+                productData.variants.forEach(v => { if (!variantGroups[v.name]) variantGroups[v.name] = []; variantGroups[v.name].push(v); });
+                Object.keys(variantGroups).forEach(name => {
+                    const firstAvailable = variantGroups[name].find(v => v.stockQuantity > 0);
+                    if (firstAvailable) selectVariant(name, firstAvailable.value, firstAvailable.id, true);
+                });
+            }
+        });
+    </script>
+</th:block>
 </body>
 </html>
