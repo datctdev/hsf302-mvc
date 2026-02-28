@@ -100,6 +100,100 @@
             <canvas id="trendChart" height="100"></canvas>
         </div>
 
+        <h2 class="text-xl font-bold text-base-content mb-4 mt-10">
+            Shop Tăng Trưởng Nhanh Nhất
+        </h2>
+
+        <div th:if="${fastestGrowthShop != null}"
+             class="card bg-base-100 border border-base-200 shadow-sm mb-8">
+            <div class="card-body">
+                <h3 class="text-lg font-semibold"
+                    th:text="${fastestGrowthShop.shopName}">
+                    Shop Name
+                </h3>
+
+                <div class="flex flex-wrap gap-6 mt-4 text-sm">
+                    <div>
+                        <p class="text-base-content/60">Doanh thu tháng này</p>
+                        <p class="font-bold text-success"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-base-content/60">Tháng trước</p>
+                        <p class="font-bold"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueLastMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-base-content/60">Tăng trưởng</p>
+                        <p class="font-bold"
+                           th:classappend="${fastestGrowthShop.growthPercent >= 0} ? 'text-success' : 'text-error'"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.growthPercent,1,1)} + '%'">
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p th:if="${fastestGrowthShop == null}"
+           class="text-base-content/60 mb-8">
+            Chưa có dữ liệu tăng trưởng.
+        </p>
+
+        <h2 class="text-xl font-bold text-base-content mb-4">
+            Top 5 Shop Tháng Này
+        </h2>
+
+        <div class="card bg-base-100 border border-base-200 shadow-sm mb-10">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Shop</th>
+                            <th>Doanh thu</th>
+                            <th>Số đơn</th>
+                            <th>Tăng trưởng</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s, stat : ${top5Shops}">
+                            <td th:text="${stat.count}">1</td>
+
+                            <td class="font-medium"
+                                th:text="${s.shopName}">
+                                Shop Name
+                            </td>
+
+                            <td class="text-success font-semibold"
+                                th:text="${#numbers.formatDecimal(s.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                            </td>
+
+                            <td th:text="${s.ordersThisMonth}">
+                            </td>
+
+                            <td>
+                        <span th:classappend="${s.growthPercent >= 0} ? 'text-success' : 'text-error'"
+                              th:text="${#numbers.formatDecimal(s.growthPercent,1,1)} + '%'">
+                        </span>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${top5Shops == null or top5Shops.empty}">
+                            <td colspan="5" class="text-center text-base-content/60 py-4">
+                                Chưa có dữ liệu
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
                 <div class="card-body py-5">

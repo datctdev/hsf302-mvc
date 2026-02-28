@@ -1,6 +1,7 @@
 package com.hsf.e_comerce.common.controller;
 
 import com.hsf.e_comerce.auth.service.UserService;
+import com.hsf.e_comerce.common.dto.response.TopShopDashboardItem;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
@@ -279,6 +280,94 @@ public class HomeController {
             model.addAttribute("trendCommission", List.of());
             model.addAttribute("trendOrders", List.of());
         }
+        // ================= TOP SHOP DASHBOARD =================
+        try {
+
+            Map<String, BigDecimal> revenueThisMonthByShop = new HashMap<>();
+            Map<String, BigDecimal> revenueLastMonthByShop = new HashMap<>();
+            Map<String, Long> ordersThisMonthByShop = new HashMap<>();
+
+            List<OrderResponse> orders = orderService.getAllOrders();
+
+            for (OrderResponse o : orders) {
+
+                if (o.getStatus() != OrderStatus.DELIVERED) continue;
+                if (o.getDeliveredAt() == null) continue;
+                if (o.getShopName() == null) continue;
+
+                String shop = o.getShopName();
+                LocalDate d = o.getDeliveredAt().toLocalDate();
+
+                BigDecimal tot = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
+                BigDecimal ship = o.getShippingFee() != null ? o.getShippingFee() : BigDecimal.ZERO;
+                BigDecimal net = tot.subtract(ship);
+
+                // Tháng này
+                if (!d.isBefore(firstDayThisMonth) && d.isBefore(firstDayNextMonth)) {
+                    revenueThisMonthByShop.put(
+                            shop,
+                            revenueThisMonthByShop.getOrDefault(shop, BigDecimal.ZERO).add(net)
+                    );
+
+                    ordersThisMonthByShop.put(
+                            shop,
+                            ordersThisMonthByShop.getOrDefault(shop, 0L) + 1
+                    );
+                }
+
+                // Tháng trước
+                if (!d.isBefore(firstDayLastMonth) && d.isBefore(firstDayThisMonth)) {
+                    revenueLastMonthByShop.put(
+                            shop,
+                            revenueLastMonthByShop.getOrDefault(shop, BigDecimal.ZERO).add(net)
+                    );
+                }
+            }
+
+            List<TopShopDashboardItem> topShops = new ArrayList<>();
+
+            for (String shop : revenueThisMonthByShop.keySet()) {
+
+                BigDecimal thisMonth = revenueThisMonthByShop.getOrDefault(shop, BigDecimal.ZERO);
+                BigDecimal lastMonth = revenueLastMonthByShop.getOrDefault(shop, BigDecimal.ZERO);
+
+                BigDecimal growth = BigDecimal.ZERO;
+
+                if (lastMonth.compareTo(BigDecimal.ZERO) > 0) {
+                    growth = thisMonth
+                            .subtract(lastMonth)
+                            .divide(lastMonth, 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100));
+                }
+
+                topShops.add(new TopShopDashboardItem(
+                        shop,
+                        thisMonth,
+                        lastMonth,
+                        growth,
+                        ordersThisMonthByShop.getOrDefault(shop, 0L)
+                ));
+            }
+
+            // 🔥 Top 5 doanh thu cao nhất tháng này
+            List<TopShopDashboardItem> top5Shops = topShops.stream()
+                    .sorted(Comparator.comparing(TopShopDashboardItem::getRevenueThisMonth).reversed())
+                    .limit(5)
+                    .collect(Collectors.toList());
+
+            // 🚀 Shop tăng trưởng nhanh nhất
+            TopShopDashboardItem fastestGrowthShop = topShops.stream()
+                    .max(Comparator.comparing(TopShopDashboardItem::getGrowthPercent))
+                    .orElse(null);
+
+            model.addAttribute("top5Shops", top5Shops);
+            model.addAttribute("fastestGrowthShop", fastestGrowthShop);
+
+        } catch (Exception e) {
+            model.addAttribute("top5Shops", List.of());
+            model.addAttribute("fastestGrowthShop", null);
+        }
+
         model.addAttribute("revenueThisMonth", revenueThisMonth);
         model.addAttribute("revenueLastMonth", revenueLastMonth);
         model.addAttribute("revenueGrowth", revenueGrowth);
