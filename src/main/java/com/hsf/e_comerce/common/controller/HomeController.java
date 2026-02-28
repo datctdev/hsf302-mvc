@@ -29,12 +29,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -116,7 +113,7 @@ public class HomeController {
         }
 
         // Thống kê theo thời gian: doanh thu các shop, hoa hồng (chỉ đơn CONFIRMED→DELIVERED, lọc theo fromDate/toDate)
-        LocalDate baseDate = (toDate != null) ? toDate : LocalDate.now();
+        LocalDate baseDate = LocalDate.now();
         LocalDate firstDayThisMonth = baseDate.withDayOfMonth(1);
         LocalDate firstDayNextMonth = firstDayThisMonth.plusMonths(1);
 
@@ -201,6 +198,86 @@ public class HomeController {
                     .subtract(commissionLastMonth)
                     .divide(commissionLastMonth, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
+        }
+        // ================= TREND LINE =================
+        try {
+
+            LocalDate startDate = fromDate != null ? fromDate : baseDate.minusDays(6);
+            LocalDate endDate = toDate != null ? toDate : baseDate;
+
+            Map<LocalDate, BigDecimal> revenueMap = new LinkedHashMap<>();
+            Map<LocalDate, BigDecimal> commissionMap = new LinkedHashMap<>();
+            Map<LocalDate, Long> ordersMap = new LinkedHashMap<>();
+
+            // Khởi tạo đủ ngày để không bị thiếu điểm trên chart
+            LocalDate cursor = startDate;
+            while (!cursor.isAfter(endDate)) {
+                revenueMap.put(cursor, BigDecimal.ZERO);
+                commissionMap.put(cursor, BigDecimal.ZERO);
+                ordersMap.put(cursor, 0L);
+                cursor = cursor.plusDays(1);
+            }
+
+            // ===== ORDERS (Revenue + Count) =====
+            List<OrderResponse> orders = orderService.getAllOrders();
+
+            for (OrderResponse o : orders) {
+
+                if (o.getStatus() != OrderStatus.DELIVERED) continue;
+                if (o.getDeliveredAt() == null) continue;
+
+                LocalDate d = o.getDeliveredAt().toLocalDate();
+                if (d.isBefore(startDate) || d.isAfter(endDate)) continue;
+
+                BigDecimal tot = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
+                BigDecimal ship = o.getShippingFee() != null ? o.getShippingFee() : BigDecimal.ZERO;
+                BigDecimal net = tot.subtract(ship);
+
+                revenueMap.put(d, revenueMap.get(d).add(net));
+                ordersMap.put(d, ordersMap.get(d) + 1);
+            }
+
+            // ===== COMMISSION =====
+            List<CommissionResponse> commissions =
+                    commissionService.getCommissions(new CommissionFilterRequest());
+
+            for (CommissionResponse c : commissions) {
+
+                if (c.getCreatedAt() == null) continue;
+
+                LocalDate d = c.getCreatedAt().toLocalDate();
+                if (d.isBefore(startDate) || d.isAfter(endDate)) continue;
+
+                BigDecimal amount = c.getCommissionAmount() != null
+                        ? c.getCommissionAmount()
+                        : BigDecimal.ZERO;
+
+                commissionMap.put(d, commissionMap.get(d).add(amount));
+            }
+
+            // Convert sang list cho Thymeleaf
+            List<String> trendLabels = new ArrayList<>();
+            List<BigDecimal> trendRevenue = new ArrayList<>();
+            List<BigDecimal> trendCommission = new ArrayList<>();
+            List<Long> trendOrders = new ArrayList<>();
+
+            for (LocalDate d : revenueMap.keySet()) {
+                trendLabels.add(d.toString());
+                trendRevenue.add(revenueMap.get(d));
+                trendCommission.add(commissionMap.get(d));
+                trendOrders.add(ordersMap.get(d));
+            }
+
+            model.addAttribute("trendLabels", trendLabels);
+            model.addAttribute("trendRevenue", trendRevenue);
+            model.addAttribute("trendCommission", trendCommission);
+            model.addAttribute("trendOrders", trendOrders);
+
+        } catch (Exception e) {
+            model.addAttribute("trendLabels", List.of());
+            model.addAttribute("trendRevenue", List.of());
+            model.addAttribute("trendCommission", List.of());
+            model.addAttribute("trendOrders", List.of());
         }
         model.addAttribute("revenueThisMonth", revenueThisMonth);
         model.addAttribute("revenueLastMonth", revenueLastMonth);
