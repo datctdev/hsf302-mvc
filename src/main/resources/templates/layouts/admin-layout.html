@@ -19,6 +19,6 @@
     <th:block th:replace="~{fragments/htmx-tailwind :: scripts}"></th:block>
     <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/admin.js}"></script>
-    <th:block th:fragment="scripts"></th:block>
+    <th:block th:replace="~{::scripts}"></th:block>
 </body>
 </html>
