@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -115,12 +116,107 @@ public class HomeController {
         }
 
         // Thống kê theo thời gian: doanh thu các shop, hoa hồng (chỉ đơn CONFIRMED→DELIVERED, lọc theo fromDate/toDate)
-        LocalDate today = LocalDate.now();
+        LocalDate baseDate = (toDate != null) ? toDate : LocalDate.now();
+        LocalDate firstDayThisMonth = baseDate.withDayOfMonth(1);
+        LocalDate firstDayNextMonth = firstDayThisMonth.plusMonths(1);
+
+        LocalDate firstDayLastMonth = firstDayThisMonth.minusMonths(1);
+        LocalDate firstDayOfThisMonth = firstDayThisMonth;
+        BigDecimal revenueThisMonth = BigDecimal.ZERO;
+        BigDecimal revenueLastMonth = BigDecimal.ZERO;
+
+        long ordersThisMonth = 0;
+        long ordersLastMonth = 0;
+
+        try {
+            List<OrderResponse> orders = orderService.getAllOrders();
+
+            for (OrderResponse o : orders) {
+
+                if (o.getStatus() != OrderStatus.DELIVERED) continue;
+                if (o.getDeliveredAt() == null) continue;
+
+                LocalDate orderDate = o.getDeliveredAt().toLocalDate();
+
+                BigDecimal tot = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
+                BigDecimal ship = o.getShippingFee() != null ? o.getShippingFee() : BigDecimal.ZERO;
+                BigDecimal net = tot.subtract(ship);
+
+                // Tháng này
+                if (!orderDate.isBefore(firstDayThisMonth) && orderDate.isBefore(firstDayNextMonth)) {
+                    revenueThisMonth = revenueThisMonth.add(net);
+                    ordersThisMonth++;
+                }
+
+                // Tháng trước
+                if (!orderDate.isBefore(firstDayLastMonth) && orderDate.isBefore(firstDayOfThisMonth)) {
+                    revenueLastMonth = revenueLastMonth.add(net);
+                    ordersLastMonth++;
+                }
+            }
+        } catch (Exception e) {
+            revenueThisMonth = BigDecimal.ZERO;
+            revenueLastMonth = BigDecimal.ZERO;
+        }
+        BigDecimal revenueGrowth = BigDecimal.ZERO;
+
+        if (revenueLastMonth.compareTo(BigDecimal.ZERO) > 0) {
+            revenueGrowth = revenueThisMonth
+                    .subtract(revenueLastMonth)
+                    .divide(revenueLastMonth, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+        BigDecimal commissionThisMonth = BigDecimal.ZERO;
+        BigDecimal commissionLastMonth = BigDecimal.ZERO;
+
+        try {
+            List<CommissionResponse> commissions =
+                    commissionService.getCommissions(new CommissionFilterRequest());
+
+            for (CommissionResponse c : commissions) {
+
+                if (c.getCreatedAt() == null) continue;
+
+                LocalDate d = c.getCreatedAt().toLocalDate();
+                BigDecimal amount = c.getCommissionAmount() != null
+                        ? c.getCommissionAmount()
+                        : BigDecimal.ZERO;
+
+                if (!d.isBefore(firstDayThisMonth) && d.isBefore(firstDayNextMonth)) {
+                    commissionThisMonth = commissionThisMonth.add(amount);
+                }
+
+                if (!d.isBefore(firstDayLastMonth) && d.isBefore(firstDayOfThisMonth)) {
+                    commissionLastMonth = commissionLastMonth.add(amount);
+                }
+            }
+        } catch (Exception e) {
+            commissionThisMonth = BigDecimal.ZERO;
+            commissionLastMonth = BigDecimal.ZERO;
+        }
+        BigDecimal commissionGrowth = BigDecimal.ZERO;
+
+        if (commissionLastMonth.compareTo(BigDecimal.ZERO) > 0) {
+            commissionGrowth = commissionThisMonth
+                    .subtract(commissionLastMonth)
+                    .divide(commissionLastMonth, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+        model.addAttribute("revenueThisMonth", revenueThisMonth);
+        model.addAttribute("revenueLastMonth", revenueLastMonth);
+        model.addAttribute("revenueGrowth", revenueGrowth);
+
+        model.addAttribute("ordersThisMonth", ordersThisMonth);
+        model.addAttribute("ordersLastMonth", ordersLastMonth);
+
+        model.addAttribute("commissionThisMonth", commissionThisMonth);
+        model.addAttribute("commissionLastMonth", commissionLastMonth);
+        model.addAttribute("commissionGrowth", commissionGrowth);
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", toDate);
-        model.addAttribute("urlLast7", "/admin/dashboard?fromDate=" + today.minusDays(7) + "&toDate=" + today);
-        model.addAttribute("urlLast30", "/admin/dashboard?fromDate=" + today.minusDays(30) + "&toDate=" + today);
-        model.addAttribute("urlLast90", "/admin/dashboard?fromDate=" + today.minusDays(90) + "&toDate=" + today);
+        model.addAttribute("urlLast7", "/admin/dashboard?fromDate=" + baseDate.minusDays(7) + "&toDate=" + baseDate);
+        model.addAttribute("urlLast30", "/admin/dashboard?fromDate=" + baseDate.minusDays(30) + "&toDate=" + baseDate);
+        model.addAttribute("urlLast90", "/admin/dashboard?fromDate=" + baseDate.minusDays(90) + "&toDate=" + baseDate);
         model.addAttribute("urlAll", "/admin/dashboard");
         model.addAttribute(
                 "reportedReviewCount",
@@ -157,16 +253,16 @@ public class HomeController {
         }
 
         model.addAttribute("totalCommission", totalCommission);
-        model.addAttribute("totalOrders", totalCommissionOrders);
+        model.addAttribute("totalCommissionOrders", totalCommissionOrders);
 
         try {
             List<OrderResponse> orders = orderService.getAllOrders();
             BigDecimal totalRevenueShops = BigDecimal.ZERO;
             for (OrderResponse o : orders) {
                 if (o.getStatus() != OrderStatus.DELIVERED) continue;
-                LocalDateTime createdAt = o.getCreatedAt();
-                if (createdAt != null) {
-                    LocalDate d = createdAt.toLocalDate();
+                LocalDateTime deliveredAt = o.getDeliveredAt();
+                if (deliveredAt != null) {
+                    LocalDate d = deliveredAt.toLocalDate();
                     if (fromDate != null && d.isBefore(fromDate)) continue;
                     if (toDate != null && d.isAfter(toDate)) continue;
                 }

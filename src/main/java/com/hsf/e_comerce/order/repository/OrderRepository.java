@@ -78,6 +78,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     FROM Order o
     WHERE o.shop.id = :shopId
       AND o.status = com.hsf.e_comerce.order.valueobject.OrderStatus.DELIVERED
+      AND o.deliveredAt IS NOT NULL
 """)
     BigDecimal getRevenueByShop(@Param("shopId") UUID shopId);
 
@@ -90,5 +91,16 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     BigDecimal getEstimatedRevenueByShop(
             @Param("shopId") UUID shopId,
             @Param("statuses") List<OrderStatus> statuses
+    );
+
+    @Query("""
+    SELECT COALESCE(SUM(o.total), 0)
+    FROM Order o
+    WHERE o.status = com.hsf.e_comerce.order.valueobject.OrderStatus.DELIVERED
+      AND o.deliveredAt BETWEEN :start AND :end
+""")
+    BigDecimal getRevenueBetween(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
 }

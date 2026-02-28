@@ -334,6 +334,9 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(newStatus);
+        if (newStatus == OrderStatus.DELIVERED) {
+            order.setDeliveredAt(LocalDateTime.now());
+        }
         order = orderRepository.save(order);
 
         // 🔥 TẠO COMMISSION KHI GIAO HÀNG THÀNH CÔNG
@@ -640,6 +643,7 @@ public class OrderServiceImpl implements OrderService {
                 .receivedAt(order.getReceivedAt())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .deliveredAt(order.getDeliveredAt())
                 .build();
     }
 

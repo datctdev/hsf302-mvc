@@ -27,7 +27,70 @@
             Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
         </p>
         <p class="text-sm text-base-content/60 mb-6" th:if="${fromDate == null and toDate == null}">Đang xem: Tất cả thời gian</p>
+        <h2 class="text-xl font-bold text-base-content mb-4">
+            So sánh tháng này vs tháng trước
+        </h2>
 
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+
+            <!-- Doanh thu -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Doanh thu tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${#numbers.formatDecimal(revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        0 đ
+                    </p>
+
+                    <div class="text-sm mt-2">
+                <span th:if="${revenueGrowth >= 0}" class="text-success font-semibold">
+                    ▲ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
+                </span>
+                        <span th:if="${revenueGrowth < 0}" class="text-error font-semibold">
+                    ▼ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
+                </span>
+                        so với tháng trước
+                    </div>
+                </div>
+            </div>
+
+            <!-- Số đơn -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Số đơn tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${ordersThisMonth}">
+                        0
+                    </p>
+
+                    <p class="text-sm text-base-content/60 mt-2">
+                        Tháng trước: <span th:text="${ordersLastMonth}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Hoa hồng -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Hoa hồng tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${#numbers.formatDecimal(commissionThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        0 đ
+                    </p>
+
+                    <div class="text-sm mt-2">
+                <span th:if="${commissionGrowth >= 0}" class="text-success font-semibold">
+                    ▲ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
+                </span>
+                        <span th:if="${commissionGrowth < 0}" class="text-error font-semibold">
+                    ▼ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
+                </span>
+                        so với tháng trước
+                    </div>
+                </div>
+            </div>
+
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
                 <div class="card-body py-5">
