@@ -44,4 +44,5 @@ public class OrderResponse {
     private LocalDateTime receivedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deliveredAt;
 }

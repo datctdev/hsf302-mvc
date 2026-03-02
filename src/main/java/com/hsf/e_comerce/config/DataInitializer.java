@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -509,6 +510,8 @@ public class DataInitializer implements CommandLineRunner {
         order.setSubtotal(subtotal);
         order.setShippingFee(ship);
         order.calculateTotal();
+        order.setCreatedAt(LocalDateTime.now().minusMonths(1));
+        order.setDeliveredAt(LocalDateTime.now().minusMonths(1));
         if (status == OrderStatus.DELIVERED) {
             order.setReceivedByBuyer(true); // Mẫu đơn đã giao → cho phép đánh giá
         }

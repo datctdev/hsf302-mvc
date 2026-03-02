@@ -27,6 +27,172 @@
             Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
         </p>
         <p class="text-sm text-base-content/60 mb-6" th:if="${fromDate == null and toDate == null}">Đang xem: Tất cả thời gian</p>
+        <h2 class="text-xl font-bold text-base-content mb-4">
+            So sánh tháng này vs tháng trước
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+
+            <!-- Doanh thu -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Doanh thu tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${#numbers.formatDecimal(revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        0 đ
+                    </p>
+
+                    <div class="text-sm mt-2">
+                <span th:if="${revenueGrowth >= 0}" class="text-success font-semibold">
+                    ▲ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
+                </span>
+                        <span th:if="${revenueGrowth < 0}" class="text-error font-semibold">
+                    ▼ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
+                </span>
+                        so với tháng trước
+                    </div>
+                </div>
+            </div>
+
+            <!-- Số đơn -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Số đơn tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${ordersThisMonth}">
+                        0
+                    </p>
+
+                    <p class="text-sm text-base-content/60 mt-2">
+                        Tháng trước: <span th:text="${ordersLastMonth}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Hoa hồng -->
+            <div class="card bg-base-100 border border-base-200 shadow-sm">
+                <div class="card-body">
+                    <p class="text-sm text-base-content/60">Hoa hồng tháng này</p>
+                    <p class="text-2xl font-bold"
+                       th:text="${#numbers.formatDecimal(commissionThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        0 đ
+                    </p>
+
+                    <div class="text-sm mt-2">
+                <span th:if="${commissionGrowth >= 0}" class="text-success font-semibold">
+                    ▲ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
+                </span>
+                        <span th:if="${commissionGrowth < 0}" class="text-error font-semibold">
+                    ▼ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
+                </span>
+                        so với tháng trước
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TREND CHART ================= -->
+        <h2 class="text-xl font-bold text-base-content mb-4 mt-10">
+            Biểu đồ xu hướng
+        </h2>
+
+        <div class="card bg-base-100 border border-base-200 shadow-sm p-6 mb-10">
+            <canvas id="trendChart" height="100"></canvas>
+        </div>
+
+        <h2 class="text-xl font-bold text-base-content mb-4 mt-10">
+            Shop Tăng Trưởng Nhanh Nhất
+        </h2>
+
+        <div th:if="${fastestGrowthShop != null}"
+             class="card bg-base-100 border border-base-200 shadow-sm mb-8">
+            <div class="card-body">
+                <h3 class="text-lg font-semibold"
+                    th:text="${fastestGrowthShop.shopName}">
+                    Shop Name
+                </h3>
+
+                <div class="flex flex-wrap gap-6 mt-4 text-sm">
+                    <div>
+                        <p class="text-base-content/60">Doanh thu tháng này</p>
+                        <p class="font-bold text-success"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-base-content/60">Tháng trước</p>
+                        <p class="font-bold"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueLastMonth,0,'POINT',0,'POINT')} + ' đ'">
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-base-content/60">Tăng trưởng</p>
+                        <p class="font-bold"
+                           th:classappend="${fastestGrowthShop.growthPercent >= 0} ? 'text-success' : 'text-error'"
+                           th:text="${#numbers.formatDecimal(fastestGrowthShop.growthPercent,1,1)} + '%'">
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p th:if="${fastestGrowthShop == null}"
+           class="text-base-content/60 mb-8">
+            Chưa có dữ liệu tăng trưởng.
+        </p>
+
+        <h2 class="text-xl font-bold text-base-content mb-4">
+            Top 5 Shop Tháng Này
+        </h2>
+
+        <div class="card bg-base-100 border border-base-200 shadow-sm mb-10">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Shop</th>
+                            <th>Doanh thu</th>
+                            <th>Số đơn</th>
+                            <th>Tăng trưởng</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s, stat : ${top5Shops}">
+                            <td th:text="${stat.count}">1</td>
+
+                            <td class="font-medium"
+                                th:text="${s.shopName}">
+                                Shop Name
+                            </td>
+
+                            <td class="text-success font-semibold"
+                                th:text="${#numbers.formatDecimal(s.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+                            </td>
+
+                            <td th:text="${s.ordersThisMonth}">
+                            </td>
+
+                            <td>
+                        <span th:classappend="${s.growthPercent >= 0} ? 'text-success' : 'text-error'"
+                              th:text="${#numbers.formatDecimal(s.growthPercent,1,1)} + '%'">
+                        </span>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${top5Shops == null or top5Shops.empty}">
+                            <td colspan="5" class="text-center text-base-content/60 py-4">
+                                Chưa có dữ liệu
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
@@ -119,6 +285,77 @@
                 </a>
             </li>
         </ul>
+    </th:block>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <th:block th:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script th:inline="javascript">
+            const labels = [[${trendLabels}]];
+            const revenueData = [[${trendRevenue}]];
+            const commissionData = [[${trendCommission}]];
+            const ordersData = [[${trendOrders}]];
+
+            const ctx = document.getElementById('trendChart');
+
+            if (ctx && labels && labels.length > 0) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Revenue',
+                                data: revenueData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59,130,246,0.1)',
+                                borderWidth: 2,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Commission',
+                                data: commissionData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16,185,129,0.1)',
+                                borderWidth: 2,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Orders',
+                                data: ordersData,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245,158,11,0.1)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        stacked: false,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left'
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
     </th:block>
 </body>
 </html>
