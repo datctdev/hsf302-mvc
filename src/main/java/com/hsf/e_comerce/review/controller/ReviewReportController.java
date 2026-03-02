@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.UUID;
 
@@ -31,6 +30,9 @@ public class ReviewReportController {
             @CurrentUser User user,
             HttpServletRequest request
     ) {
+        if (user == null) {
+            return ResponseEntity.status(401).body("Vui lòng đăng nhập để báo cáo đánh giá.");
+        }
         try {
             reportService.reportReview(
                     reviewId,
@@ -60,6 +62,9 @@ public class ReviewReportController {
             @ModelAttribute UpdateReportReviewRequest request,
             @CurrentUser User user
     ) {
+        if (user == null) {
+            return ResponseEntity.status(401).body("Vui lòng đăng nhập để cập nhật báo cáo.");
+        }
         try {
             reportService.updateReport(reviewId, user, request);
             return ResponseEntity.ok("Cập nhật báo cáo thành công!");

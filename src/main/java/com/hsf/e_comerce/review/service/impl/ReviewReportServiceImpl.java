@@ -35,9 +35,15 @@ public class ReviewReportServiceImpl implements ReviewReportService {
             String ip,
             ReportReviewRequest request
     ) {
+        if (reporter == null) {
+            throw new IllegalArgumentException("Vui lòng đăng nhập để báo cáo đánh giá.");
+        }
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
 
+        if (review.getUser().getId().equals(reporter.getId())) {
+            throw new IllegalArgumentException("Bạn không thể báo cáo đánh giá của chính mình.");
+        }
         if (request.getReason() == ReviewReportReason.OTHER &&
                 (request.getNote() == null || request.getNote().isBlank())) {
             throw new IllegalArgumentException("Vui lòng nhập lý do cụ thể");

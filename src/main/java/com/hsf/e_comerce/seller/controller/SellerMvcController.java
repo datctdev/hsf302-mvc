@@ -284,11 +284,57 @@ public class SellerMvcController {
     public String updateShop(
             @CurrentUser User user,
             @Valid @ModelAttribute("updateShopRequest") UpdateShopRequest request,
+            @RequestParam(value = "logoFile", required = false) MultipartFile logoFile,
+            @RequestParam(value = "coverImageFile", required = false) MultipartFile coverImageFile,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
         
         if (user == null) {
             return "redirect:/login";
+        }
+
+        try {
+            ShopResponse currentShop = shopService.getShopByUserId(user.getId());
+
+            if (logoFile != null && !logoFile.isEmpty()) {
+                String contentType = logoFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    redirectAttributes.addFlashAttribute("error", "Logo phải là file ảnh (PNG, JPG, ...)");
+                    redirectAttributes.addFlashAttribute("updateShopRequest", request);
+                    return "redirect:/seller/shop";
+                }
+                if (logoFile.getSize() > 25 * 1024 * 1024) {
+                    redirectAttributes.addFlashAttribute("error", "Kích thước logo không được vượt quá 25MB");
+                    redirectAttributes.addFlashAttribute("updateShopRequest", request);
+                    return "redirect:/seller/shop";
+                }
+                String fileName = fileService.uploadFile(logoFile, "shop-logos");
+                request.setLogoUrl(fileService.getFileUrl(fileName));
+            } else {
+                request.setLogoUrl(currentShop.getLogoUrl());
+            }
+
+            if (coverImageFile != null && !coverImageFile.isEmpty()) {
+                String contentType = coverImageFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    redirectAttributes.addFlashAttribute("error", "Ảnh bìa phải là file ảnh (PNG, JPG, ...)");
+                    redirectAttributes.addFlashAttribute("updateShopRequest", request);
+                    return "redirect:/seller/shop";
+                }
+                if (coverImageFile.getSize() > 25 * 1024 * 1024) {
+                    redirectAttributes.addFlashAttribute("error", "Kích thước ảnh bìa không được vượt quá 25MB");
+                    redirectAttributes.addFlashAttribute("updateShopRequest", request);
+                    return "redirect:/seller/shop";
+                }
+                String fileName = fileService.uploadFile(coverImageFile, "shop-covers");
+                request.setCoverImageUrl(fileService.getFileUrl(fileName));
+            } else {
+                request.setCoverImageUrl(currentShop.getCoverImageUrl());
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi xử lý ảnh: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("updateShopRequest", request);
+            return "redirect:/seller/shop";
         }
 
         if (bindingResult.hasErrors()) {

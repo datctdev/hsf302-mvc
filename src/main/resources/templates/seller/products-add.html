@@ -110,7 +110,6 @@
         </div>
 
         <script>
-    <script>
         let currentStep = 1;
         const totalSteps = 3;
         let productData = {
@@ -138,24 +137,24 @@
         function autoGenerateSku() {
             const nameInput = document.getElementById('productName');
             const skuInput = document.getElementById('productSku');
+            if (!nameInput || !skuInput) return;
             const productName = nameInput.value.trim();
-            
-            if (productName) {
-                // Convert Vietnamese to ASCII, remove special chars, uppercase
-                let sku = productName
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-                    .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special chars
-                    .replace(/\s+/g, '-') // Replace spaces with hyphens
-                    .toUpperCase()
-                    .substring(0, 50); // Limit length
-                
-                // Add timestamp suffix to make it unique
-                const timestamp = Date.now().toString().slice(-6);
-                sku = sku + '-' + timestamp;
-                
-                skuInput.value = sku;
+            if (!productName) {
+                alert('Vui lòng nhập tên sản phẩm trước khi tạo SKU.');
+                return;
             }
+            // Convert Vietnamese to ASCII, remove special chars, uppercase
+            let sku = productName
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special chars
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .toUpperCase()
+                .substring(0, 50); // Limit length
+            if (!sku) sku = 'SP';
+            // Add timestamp suffix to make it unique
+            const timestamp = Date.now().toString().slice(-6);
+            skuInput.value = sku + '-' + timestamp;
         }
 
         function setupImageUpload() {
