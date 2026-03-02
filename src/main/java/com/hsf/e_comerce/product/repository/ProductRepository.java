@@ -43,14 +43,28 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "AND p.deleted = false")
     Page<Product> findPublishedProducts(Pageable pageable);
     
-    @Query("SELECT p FROM Product p WHERE p.status = 'PUBLISHED' " +
-           "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true " +
-           "AND p.deleted = false " +
-           "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    /**
+     * Full-text search (PostgreSQL): tìm trong name, description, sku.
+     * plainto_tsquery tách từ khóa theo khoảng trắng và match tài liệu chứa TẤT CẢ các từ (AND).
+     * Config 'simple' phù hợp tiếng Việt (không stem).
+     */
+    @Query(value = "SELECT p.* FROM products p " +
+           "INNER JOIN shops s ON p.shop_id = s.id " +
+           "INNER JOIN users u ON s.user_id = u.id " +
+           "WHERE p.status = 'PUBLISHED' AND s.status = 'ACTIVE' AND u.is_active = true AND p.deleted = false " +
+           "AND to_tsvector('simple', coalesce(p.name,'') || ' ' || coalesce(p.description,'') || ' ' || coalesce(p.sku,'')) " +
+           "@@ plainto_tsquery('simple', :keyword) " +
+           "ORDER BY p.created_at DESC",
+           countQuery = "SELECT COUNT(p.id) FROM products p " +
+           "INNER JOIN shops s ON p.shop_id = s.id " +
+           "INNER JOIN users u ON s.user_id = u.id " +
+           "WHERE p.status = 'PUBLISHED' AND s.status = 'ACTIVE' AND u.is_active = true AND p.deleted = false " +
+           "AND to_tsvector('simple', coalesce(p.name,'') || ' ' || coalesce(p.description,'') || ' ' || coalesce(p.sku,'')) " +
+           "@@ plainto_tsquery('simple', :keyword)",
+           nativeQuery = true)
     Page<Product> searchPublishedProducts(@Param("keyword") String keyword, Pageable pageable);
     
+    /* Thứ tự điều kiện :search: dùng :search trong CONCAT trước để Hibernate suy ra type string (tránh lỗi lower(bytea) trên PostgreSQL). */
     @Query("SELECT DISTINCT p FROM Product p " +
            "WHERE p.status = 'PUBLISHED' " +
            "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true " +
@@ -59,8 +73,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "AND (:shopId IS NULL OR p.shop.id = :shopId) " +
            "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) " +
            "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice) " +
-           "AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')) OR :search IS NULL OR :search = '')")
     Page<Product> findPublishedProductsWithFilters(
         @Param("categoryId") UUID categoryId,
         @Param("shopId") UUID shopId,

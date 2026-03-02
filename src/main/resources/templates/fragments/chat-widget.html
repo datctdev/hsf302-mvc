@@ -107,36 +107,133 @@
                     }
                 }
 
-                sendBtn.addEventListener('click', function() {
+                /** Trả về wrap + bubble (chưa gắn vào DOM) để có thể append chunk vào bubble. */
+                function createAssistantBubble() {
+                    var wrap = document.createElement('div');
+                    wrap.className = 'flex justify-start';
+                    var inner = document.createElement('div');
+                    inner.className = 'max-w-[85%] space-y-2';
+                    var bubble = document.createElement('div');
+                    bubble.className = 'rounded-2xl rounded-tl-sm bg-slate-100 text-slate-800 px-4 py-2.5 text-sm';
+                    bubble.textContent = '';
+                    inner.appendChild(bubble);
+                    wrap.appendChild(inner);
+                    return { wrap: wrap, bubble: bubble, inner: inner };
+                }
+
+                function sendMessage() {
                     var msg = (input.value || '').trim();
                     if (!msg) return;
                     input.value = '';
                     appendMessage(msg, true);
                     setLoading(true);
 
-                    var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+                    var headers = { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' };
                     var csrfMeta = document.querySelector('meta[name="_csrf"]');
                     var csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
                     if (csrfMeta && csrfHeaderMeta) {
                         headers[csrfHeaderMeta.getAttribute('content')] = csrfMeta.getAttribute('content');
                     }
 
-                    fetch([[@{/api/chat}]], {
+                    fetch([[@{/api/chat/stream}]], {
                         method: 'POST',
                         headers: headers,
                         body: JSON.stringify({ message: msg })
-                    })
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        setLoading(false);
-                        var list = (data && data.productSuggestions && Array.isArray(data.productSuggestions)) ? data.productSuggestions : [];
-                        if (data.reply) appendMessage(data.reply, false, list);
-                    })
-                    .catch(function() {
+                    }).then(function(response) {
+                        if (!response.ok) throw new Error('Network error');
+                        var reader = response.body.getReader();
+                        var decoder = new TextDecoder();
+                        var buffer = '';
+                        var currentEvent = '';
+                        var assistantEl = null;
+                        function processLine(line) {
+                            if (line.indexOf('event:') === 0) {
+                                currentEvent = line.replace(/^event:\s*/, '').trim();
+                                return;
+                            }
+                            if (line.indexOf('data:') === 0) {
+                                var data = line.replace(/^data:\s*/, '');
+                                if (currentEvent === 'chunk') {
+                                    if (!assistantEl) {
+                                        setLoading(false);
+                                        assistantEl = createAssistantBubble();
+                                        messagesEl.appendChild(assistantEl.wrap);
+                                    }
+                                    assistantEl.bubble.textContent += data;
+                                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                                } else if (currentEvent === 'done') {
+                                    try {
+                                        var payload = JSON.parse(data);
+                                        var replyText = (payload.reply && payload.reply.trim()) ? payload.reply.trim() : 'Dạ em là trợ lý mua sắm, em có thể giúp anh/chị tìm sản phẩm khi cần ạ.';
+                                        if (!assistantEl) {
+                                            setLoading(false);
+                                            assistantEl = createAssistantBubble();
+                                            assistantEl.bubble.textContent = replyText;
+                                            messagesEl.appendChild(assistantEl.wrap);
+                                        } else {
+                                            assistantEl.bubble.textContent = replyText;
+                                        }
+                                        var list = (payload.productSuggestions && Array.isArray(payload.productSuggestions)) ? payload.productSuggestions : [];
+                                        if (list.length > 0) {
+                                            var sugg = document.createElement('div');
+                                            sugg.className = 'mt-1 flex flex-col gap-1.5';
+                                            var label = document.createElement('p');
+                                            label.className = 'text-xs font-medium text-slate-500';
+                                            label.textContent = 'Gợi ý sản phẩm (bấm để xem):';
+                                            sugg.appendChild(label);
+                                            var grid = document.createElement('div');
+                                            grid.className = 'grid grid-cols-2 gap-1.5';
+                                            list.forEach(function(p) {
+                                                var a = document.createElement('a');
+                                                a.href = p.productUrl;
+                                                a.target = '_blank';
+                                                a.rel = 'noopener';
+                                                a.className = 'flex gap-2 rounded-lg border border-slate-200 bg-white p-1.5 hover:shadow hover:border-slate-300 transition text-left';
+                                                var imgPart = p.thumbnailUrl
+                                                    ? '<img src="' + p.thumbnailUrl + '" alt="" class="w-10 h-10 rounded object-cover bg-slate-100 flex-shrink-0"/>'
+                                                    : '<div class="w-10 h-10 rounded bg-slate-200 flex-shrink-0 flex items-center justify-center"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/></svg></div>';
+                                                a.innerHTML = imgPart + '<div class="flex-1 min-w-0"><span class="text-xs text-slate-700 line-clamp-2 block">' + (p.name || '') + '</span><span class="text-[11px] text-slate-500">' + priceFmt(p.basePrice) + '</span></div>';
+                                                grid.appendChild(a);
+                                            });
+                                            sugg.appendChild(grid);
+                                            assistantEl.inner.appendChild(sugg);
+                                        }
+                                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                                    } catch (e) { /* ignore parse */ }
+                                    setLoading(false);
+                                } else if (currentEvent === 'error') {
+                                    if (!assistantEl) {
+                                        setLoading(false);
+                                        appendMessage(data || 'Đã xảy ra lỗi. Bạn thử lại sau.', false);
+                                    }
+                                    setLoading(false);
+                                }
+                                currentEvent = '';
+                                return;
+                            }
+                        }
+                        function read() {
+                            return reader.read().then(function(result) {
+                                if (result.done) { setLoading(false); return; }
+                                buffer += decoder.decode(result.value, { stream: true });
+                                var parts = buffer.split('\n');
+                                buffer = parts.pop() || '';
+                                for (var i = 0; i < parts.length; i++) {
+                                    var line = parts[i];
+                                    if (line === '') continue;
+                                    processLine(line);
+                                }
+                                return read();
+                            });
+                        }
+                        return read();
+                    }).catch(function() {
                         setLoading(false);
                         appendMessage('Không thể kết nối trợ lý. Bạn thử lại sau hoặc dùng ô tìm kiếm trên trang Sản phẩm.', false);
                     });
-                });
+                }
+
+                sendBtn.addEventListener('click', sendMessage);
 
                 input.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendBtn.click(); });
             })();

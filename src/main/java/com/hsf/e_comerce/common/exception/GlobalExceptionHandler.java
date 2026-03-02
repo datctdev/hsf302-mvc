@@ -6,6 +6,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -40,8 +43,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public String handleValidationExceptions(
-            MethodArgumentNotValidException ex, 
+    public Object handleValidationExceptions(
+            MethodArgumentNotValidException ex,
             RedirectAttributes redirectAttributes,
             HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
@@ -50,11 +53,13 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+        if (request.getRequestURI() != null && request.getRequestURI().startsWith("/api/")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(errors);
+        }
         redirectAttributes.addFlashAttribute("errors", errors);
         redirectAttributes.addFlashAttribute("error", "Dữ liệu đầu vào không hợp lệ");
-        
-        // Redirect về trang trước đó hoặc trang chủ
         String referer = request.getHeader("Referer");
         return "redirect:" + (referer != null && !referer.isEmpty() ? referer : "/");
     }

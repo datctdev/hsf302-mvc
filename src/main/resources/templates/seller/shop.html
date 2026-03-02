@@ -38,7 +38,7 @@
             <div id="updateShopSection" class="card bg-base-100 border border-base-200">
                 <div class="card-body">
                     <h3 class="card-title text-lg">Cập Nhật Thông Tin Shop</h3>
-                    <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}" class="space-y-4 max-w-2xl">
+                    <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}" enctype="multipart/form-data" class="space-y-4 max-w-2xl">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div class="form-control">
                             <label for="name" class="label"><span class="label-text">Tên Shop *</span></label>
@@ -83,16 +83,32 @@
                         <input type="hidden" id="districtId" name="districtId">
                         <input type="hidden" id="wardCode" name="wardCode">
                         <div class="form-control">
-                            <label for="logoUrl" class="label"><span class="label-text">URL Logo Shop</span></label>
-                            <input type="text" id="logoUrl" th:field="*{logoUrl}" placeholder="Nhập URL logo sau khi upload" class="input input-bordered w-full">
-                            <label class="label"><span class="label-text-alt">Upload ảnh và nhập URL vào đây</span></label>
-                            <span th:if="${#fields.hasErrors('logoUrl')}" class="label text-error text-sm" th:errors="*{logoUrl}"></span>
+                            <label for="logoFile" class="label"><span class="label-text">Logo Shop</span></label>
+                            <input type="file" id="logoFile" name="logoFile" accept="image/*" class="file-input file-input-bordered w-full max-w-xs">
+                            <label class="label"><span class="label-text-alt">Chọn ảnh từ máy (PNG, JPG). Tối đa 25MB. Để trống nếu giữ logo hiện tại.</span></label>
+                            <div id="logoCurrentWrap" th:if="${shop != null and shop.logoUrl != null}" class="mt-2">
+                                <p class="text-sm text-slate-500 mb-1">Logo hiện tại:</p>
+                                <img th:src="${shop.logoUrl}" id="logoCurrentImg" class="w-24 h-24 rounded-xl object-cover border border-slate-200" alt="Logo"/>
+                            </div>
+                            <div id="logoPreviewWrap" class="mt-2 hidden">
+                                <p class="text-sm text-slate-500 mb-1">Xem trước ảnh mới:</p>
+                                <img id="logoPreviewImg" class="w-24 h-24 rounded-xl object-cover border border-slate-200 border-primary" alt="Preview logo"/>
+                                <p id="logoPreviewError" class="text-error text-sm mt-1 hidden"></p>
+                            </div>
                         </div>
                         <div class="form-control">
-                            <label for="coverImageUrl" class="label"><span class="label-text">URL Ảnh Bìa Shop</span></label>
-                            <input type="text" id="coverImageUrl" th:field="*{coverImageUrl}" placeholder="Nhập URL ảnh bìa sau khi upload" class="input input-bordered w-full">
-                            <label class="label"><span class="label-text-alt">Upload ảnh và nhập URL vào đây</span></label>
-                            <span th:if="${#fields.hasErrors('coverImageUrl')}" class="label text-error text-sm" th:errors="*{coverImageUrl}"></span>
+                            <label for="coverImageFile" class="label"><span class="label-text">Ảnh Bìa Shop</span></label>
+                            <input type="file" id="coverImageFile" name="coverImageFile" accept="image/*" class="file-input file-input-bordered w-full max-w-xs">
+                            <label class="label"><span class="label-text-alt">Chọn ảnh từ máy (PNG, JPG). Tối đa 25MB. Để trống nếu giữ ảnh bìa hiện tại.</span></label>
+                            <div id="coverCurrentWrap" th:if="${shop != null and shop.coverImageUrl != null}" class="mt-2">
+                                <p class="text-sm text-slate-500 mb-1">Ảnh bìa hiện tại:</p>
+                                <img th:src="${shop.coverImageUrl}" id="coverCurrentImg" class="max-w-md max-h-32 rounded-lg object-cover border border-slate-200" alt="Bìa"/>
+                            </div>
+                            <div id="coverPreviewWrap" class="mt-2 hidden">
+                                <p class="text-sm text-slate-500 mb-1">Xem trước ảnh mới:</p>
+                                <img id="coverPreviewImg" class="max-w-md max-h-32 rounded-lg object-cover border border-slate-200 border-primary" alt="Preview bìa"/>
+                                <p id="coverPreviewError" class="text-error text-sm mt-1 hidden"></p>
+                            </div>
                         </div>
                         <button type="submit" id="updateShopBtn" class="btn btn-primary">Cập Nhật Shop</button>
                     </form>
@@ -198,6 +214,71 @@
                     document.getElementById('wardCode').value = wardCode;
                 }
             });
+        }
+
+        // Preview ảnh trước khi cập nhật (logo & ảnh bìa)
+        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+        const logoFileInput = document.getElementById('logoFile');
+        const coverFileInput = document.getElementById('coverImageFile');
+        if (logoFileInput) {
+        logoFileInput.addEventListener('change', function(e) {
+            const wrap = document.getElementById('logoPreviewWrap');
+            const img = document.getElementById('logoPreviewImg');
+            const err = document.getElementById('logoPreviewError');
+            wrap.classList.add('hidden');
+            err.classList.add('hidden');
+            err.textContent = '';
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+            if (!file.type.startsWith('image/')) {
+                err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG, ...)';
+                err.classList.remove('hidden');
+                this.value = '';
+                return;
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                err.textContent = 'Kích thước file không được vượt quá 25MB';
+                err.classList.remove('hidden');
+                this.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                img.src = ev.target.result;
+                wrap.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+        }
+        if (coverFileInput) {
+        coverFileInput.addEventListener('change', function(e) {
+            const wrap = document.getElementById('coverPreviewWrap');
+            const img = document.getElementById('coverPreviewImg');
+            const err = document.getElementById('coverPreviewError');
+            wrap.classList.add('hidden');
+            err.classList.add('hidden');
+            err.textContent = '';
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+            if (!file.type.startsWith('image/')) {
+                err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG, ...)';
+                err.classList.remove('hidden');
+                this.value = '';
+                return;
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                err.textContent = 'Kích thước file không được vượt quá 25MB';
+                err.classList.remove('hidden');
+                this.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                img.src = ev.target.result;
+                wrap.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
         }
 
         // Initialize shop address dropdowns

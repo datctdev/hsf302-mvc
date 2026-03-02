@@ -1,12 +1,15 @@
 package com.hsf.e_comerce.chat.controller;
 
+import com.hsf.e_comerce.chat.dto.ChatRequest;
 import com.hsf.e_comerce.chat.dto.ChatResponse;
 import com.hsf.e_comerce.chat.service.ChatService;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -16,15 +19,22 @@ public class ChatController {
     private final ChatService chatService;
 
     @PostMapping
-    public ResponseEntity<ChatResponse> chat(@RequestBody Map<String, Object> body) {
-        String message = body != null && body.get("message") != null ? body.get("message").toString().trim() : "";
-        if (message.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (message.length() > 2000) {
-            message = message.substring(0, 2000);
-        }
-        ChatResponse response = chatService.chat(message);
+    public ResponseEntity<?> chat(@RequestBody @Valid ChatRequest request, HttpSession session) {
+        String sessionId = session != null ? session.getId() : null;
+        ChatResponse response = chatService.chat(sessionId, request.getMessage());
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Streaming endpoint: SSE. Client gửi POST với body { "message": "..." }, nhận event stream:
+     * - event "chunk": data = đoạn text (reply đang gõ)
+     * - event "done": data = JSON { "reply": "...", "productSuggestions": [...] }
+     */
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamChat(@RequestBody @Valid ChatRequest request, HttpSession session) {
+        String sessionId = session != null ? session.getId() : null;
+        SseEmitter emitter = new SseEmitter(120_000L);
+        chatService.streamChat(sessionId, request.getMessage(), emitter);
+        return emitter;
     }
 }

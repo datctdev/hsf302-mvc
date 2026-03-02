@@ -22,6 +22,7 @@
                         </div>
                         <div th:if="${param.error != null and param.error[0] == 'true'}" class="alert alert-error text-sm">Email hoặc mật khẩu không đúng. Vui lòng thử lại.</div>
                         <div th:if="${param.logout}" class="alert alert-success text-sm">Bạn đã đăng xuất thành công.</div>
+                        <div th:if="${param.kycSuccess}" class="alert alert-success text-sm">KYC thành công. Vui lòng đăng nhập lại.</div>
                         <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
                     </div>
 
