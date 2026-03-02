@@ -440,7 +440,8 @@ public class ProductServiceImpl implements ProductService {
         if (size < 1) size = 20;
         if (size > 100) size = 100;
         
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // Native FTS query dùng cột created_at; Sort phải khớp tên cột.
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_at"));
         Page<Product> products = productRepository.searchPublishedProducts(keyword.trim(), pageable);
         
         return products.map(product -> ProductResponse.convertToResponse(

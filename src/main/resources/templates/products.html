@@ -96,71 +96,6 @@
             </div>
         </div>
 
-        <!-- Fragment: full list (for HTMX filter/sort swap) -->
-        <th:block th:fragment="productListFragment">
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <span class="text-slate-600"><span id="productCount" th:text="${totalItems}">0</span> sản phẩm</span>
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-slate-600">Sắp xếp:</label>
-                    <select name="sort" id="sortSelect" form="productFilterForm" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                            onchange="productListHxReload(0)">
-                        <option value="createdAt,desc" th:selected="${sortBy == 'createdAt' and sortDir == 'desc'}">Mới nhất</option>
-                        <option value="price,asc" th:selected="${sortBy == 'price' and sortDir == 'asc'}">Giá: Thấp → Cao</option>
-                        <option value="price,desc" th:selected="${sortBy == 'price' and sortDir == 'desc'}">Giá: Cao → Thấp</option>
-                        <option value="name,asc" th:selected="${sortBy == 'name' and sortDir == 'asc'}">Tên: A → Z</option>
-                    </select>
-                </div>
-            </div>
-            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <th:block th:each="product : ${products}">
-                    <a th:href="@{/products/{id}(id=${product.id})}" class="block no-underline rounded-lg bg-white border border-slate-200 shadow overflow-hidden hover:shadow-card-hover transition">
-                        <div class="aspect-square bg-slate-100">
-                            <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
-                                 th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}"
-                                 class="w-full h-full object-cover" onerror="this.src='/images/placeholder.png'">
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-medium text-slate-900 line-clamp-2 mb-1" th:text="${product.name}">Product Name</h3>
-                            <div class="text-primary-600 font-semibold" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                            <div class="text-sm text-slate-500 mt-1" th:text="${product.shopName ?: 'N/A'}">Shop</div>
-                        </div>
-                    </a>
-                </th:block>
-            </div>
-            <div th:if="${products == null or products.empty}" class="text-center py-12 text-slate-500 rounded-lg bg-slate-50">
-                Không tìm thấy sản phẩm nào.
-            </div>
-            <div id="pagination" class="flex flex-wrap justify-center gap-2 mt-8"></div>
-            <div id="load-more-wrap" class="mt-6 text-center" th:if="${hasMore}">
-                <button type="button" class="px-6 py-2.5 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition"
-                        th:attr="hx-get=@{/products(size=20, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${nextPage}, partial='append')}"
-                        hx-target="#productsGrid" hx-swap="beforeend" hx-trigger="click">Xem thêm</button>
-            </div>
-        </th:block>
-
-        <!-- Fragment: append cards + OOB load-more (for "Xem thêm") -->
-        <th:block th:fragment="productCardsAppend">
-            <th:block th:each="product : ${products}">
-                <a th:href="@{/products/{id}(id=${product.id})}" class="block no-underline rounded-lg bg-white border border-slate-200 shadow overflow-hidden hover:shadow-card-hover transition">
-                    <div class="aspect-square bg-slate-100">
-                        <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
-                             th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}"
-                             class="w-full h-full object-cover" onerror="this.src='/images/placeholder.png'">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-medium text-slate-900 line-clamp-2 mb-1" th:text="${product.name}">Product Name</h3>
-                        <div class="text-primary-600 font-semibold" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                        <div class="text-sm text-slate-500 mt-1" th:text="${product.shopName ?: 'N/A'}">Shop</div>
-                    </div>
-                </a>
-            </th:block>
-            <div id="load-more-wrap" class="mt-6 text-center" hx-swap-oob="true">
-                <button th:if="${hasMore}" type="button" class="px-6 py-2.5 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition"
-                        th:attr="hx-get=@{/products(size=20, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${nextPage}, partial='append')}"
-                        hx-target="#productsGrid" hx-swap="beforeend" hx-trigger="click">Xem thêm</button>
-            </div>
-        </th:block>
-
         <script th:inline="javascript">
             const pageSize = 20;
 
@@ -203,6 +138,71 @@
                 if (searchInput) searchInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); productListHxReload(0); } });
             });
         </script>
+    </th:block>
+
+    <!-- Fragment: full list (for HTMX filter/sort swap) -->
+    <th:block th:fragment="productListFragment">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <span class="text-slate-600"><span id="productCount" th:text="${totalItems}">0</span> sản phẩm</span>
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-slate-600">Sắp xếp:</label>
+                <select name="sort" id="sortSelect" form="productFilterForm" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        onchange="productListHxReload(0)">
+                    <option value="createdAt,desc" th:selected="${sortBy == 'createdAt' and sortDir == 'desc'}">Mới nhất</option>
+                    <option value="price,asc" th:selected="${sortBy == 'price' and sortDir == 'asc'}">Giá: Thấp → Cao</option>
+                    <option value="price,desc" th:selected="${sortBy == 'price' and sortDir == 'desc'}">Giá: Cao → Thấp</option>
+                    <option value="name,asc" th:selected="${sortBy == 'name' and sortDir == 'asc'}">Tên: A → Z</option>
+                </select>
+            </div>
+        </div>
+        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <th:block th:each="product : ${products}">
+                <a th:href="@{/products/{id}(id=${product.id})}" class="block no-underline rounded-lg bg-white border border-slate-200 shadow overflow-hidden hover:shadow-card-hover transition">
+                    <div class="aspect-square bg-slate-100">
+                        <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
+                             th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}"
+                             class="w-full h-full object-cover" onerror="this.src='/images/placeholder.png'">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-medium text-slate-900 line-clamp-2 mb-1" th:text="${product.name}">Product Name</h3>
+                        <div class="text-primary-600 font-semibold" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
+                        <div class="text-sm text-slate-500 mt-1" th:text="${product.shopName ?: 'N/A'}">Shop</div>
+                    </div>
+                </a>
+            </th:block>
+        </div>
+        <div th:if="${products == null or products.empty}" class="text-center py-12 text-slate-500 rounded-lg bg-slate-50">
+            Không tìm thấy sản phẩm nào.
+        </div>
+        <div id="pagination" class="flex flex-wrap justify-center gap-2 mt-8"></div>
+        <div id="load-more-wrap" class="mt-6 text-center" th:if="${hasMore}">
+            <button type="button" class="px-6 py-2.5 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition"
+                    th:attr="hx-get=@{/products(size=20, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${nextPage}, partial='append')}"
+                    hx-target="#productsGrid" hx-swap="beforeend" hx-trigger="click">Xem thêm</button>
+        </div>
+    </th:block>
+
+    <!-- Fragment: append cards + OOB load-more (for "Xem thêm") -->
+    <th:block th:fragment="productCardsAppend">
+        <th:block th:each="product : ${products}">
+            <a th:href="@{/products/{id}(id=${product.id})}" class="block no-underline rounded-lg bg-white border border-slate-200 shadow overflow-hidden hover:shadow-card-hover transition">
+                <div class="aspect-square bg-slate-100">
+                    <img th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}"
+                         th:src="${displayImage != null ? displayImage.imageUrl : '/images/placeholder.png'}" th:alt="${product.name}"
+                         class="w-full h-full object-cover" onerror="this.src='/images/placeholder.png'">
+                </div>
+                <div class="p-4">
+                    <h3 class="font-medium text-slate-900 line-clamp-2 mb-1" th:text="${product.name}">Product Name</h3>
+                    <div class="text-primary-600 font-semibold" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
+                    <div class="text-sm text-slate-500 mt-1" th:text="${product.shopName ?: 'N/A'}">Shop</div>
+                </div>
+            </a>
+        </th:block>
+        <div id="load-more-wrap" class="mt-6 text-center" hx-swap-oob="true">
+            <button th:if="${hasMore}" type="button" class="px-6 py-2.5 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition"
+                    th:attr="hx-get=@{/products(size=20, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${nextPage}, partial='append')}"
+                    hx-target="#productsGrid" hx-swap="beforeend" hx-trigger="click">Xem thêm</button>
+        </div>
     </th:block>
 </body>
 </html>

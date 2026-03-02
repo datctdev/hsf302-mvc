@@ -9,11 +9,15 @@
         .star-rating-precision { position: relative; display: inline-block; font-size: 1.7rem; margin-top: 10px; }
         .stars-fill { color: #ee4d2d; position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; z-index: 1; }
         .btn-report-direct.reported.editable::after { content: "✎"; position: absolute; top: -5px; right: -5px; background: #333; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #fff; }
-        #reportModal.show { display: flex !important; }
     </style>
 </head>
 <body>
     <th:block th:fragment="content">
+        <!-- CSS modal phải nằm trong content để layout base render ra (fragment content mới được chèn vào trang) -->
+        <style>
+            #reportModal { display: none !important; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.5); }
+            #reportModal[data-open="true"] { display: flex !important; }
+        </style>
         <nav class="text-sm text-slate-500 mb-4"><a href="/" class="no-underline text-primary-600 hover:underline">Trang chủ</a> / <a href="/products" class="no-underline text-primary-600 hover:underline">Sản phẩm</a> / <span id="productBreadcrumb">Chi tiết</span></nav>
 
         <div th:if="${product != null}" class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-xl shadow-card p-6 mb-8" th:attr="data-product-id=${product.id}" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}">
@@ -207,15 +211,14 @@
             Sản phẩm không tồn tại hoặc chưa được xuất bản.
         </div>
 
-        <div class="modal fade fixed inset-0 z-[9999] hidden items-center justify-center p-4" id="reportModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog w-full max-w-md mx-auto">
-        <div class="modal-content bg-white rounded-xl shadow-xl border-0">
-            <div class="modal-header text-center pt-6 pb-0">
-                <h5 class="modal-title text-xl font-bold text-slate-900">Báo cáo đánh giá</h5>
+        <div id="reportModal" data-open="false" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle" aria-hidden="true">
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-xl border-0 max-h-[90vh] overflow-y-auto">
+            <div class="text-center pt-6 pb-0 px-6">
+                <h5 id="reportModalTitle" class="text-xl font-bold text-slate-900">Báo cáo đánh giá</h5>
             </div>
             <form id="reportForm" onsubmit="submitReport(event)">
                 <input type="hidden" id="csrf_token" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <div class="modal-body pt-4 px-6">
+                <div class="pt-4 px-6">
                     <input type="hidden" id="reportReviewId" name="reviewId">
                     <p class="text-slate-500 text-center mb-4 text-sm">Vui lòng chọn lý do bạn muốn báo cáo đánh giá này</p>
                     <div class="flex flex-col gap-2">
@@ -244,16 +247,14 @@
                         <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm resize-none" id="otherNote" rows="3" placeholder="Mô tả chi tiết vi phạm..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer flex border-0 pt-4 pb-6 justify-center gap-3">
-                    <button type="button" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium min-w-[100px]" data-bs-dismiss="modal">Hủy</button>
+                <div class="flex border-0 pt-4 pb-6 justify-center gap-3 px-6">
+                    <button type="button" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium min-w-[100px]" id="reportModalCloseBtn">Hủy</button>
                     <button type="submit" class="px-6 py-2 rounded-lg bg-orange-500 text-white font-medium min-w-[100px] border-0">Gửi</button>
                 </div>
             </form>
-        </div>
     </div>
 </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
     // --- Biến và hàm (không dùng Thymeleaf ở đây để tránh lỗi cú pháp) ---
     var productId = null;
@@ -344,64 +345,62 @@
         if (isHidden) { const textarea = form.querySelector('textarea'); if (textarea) textarea.focus(); }
     }
 
-    // --- REPORT LOGIC - MỞ MODAL ---
+    // --- REPORT LOGIC - MỞ/ĐÓNG MODAL (không dùng Bootstrap) ---
     function openReportModal(reviewId, currentReason, currentNote, editMode) {
-        // Reset form về trạng thái sạch
-        document.getElementById('reportForm').reset();
-        document.getElementById('otherReasonGroup').classList.add('hidden');
-        document.getElementById('otherNote').removeAttribute('required');
+        var reportForm = document.getElementById('reportForm');
+        var reportModal = document.getElementById('reportModal');
+        if (!reportModal || !reportForm) return;
 
-        // Gán ID Review
-        document.getElementById('reportReviewId').value = reviewId;
+        reportForm.reset();
+        var otherGroup = document.getElementById('otherReasonGroup');
+        var otherNote = document.getElementById('otherNote');
+        if (otherGroup) otherGroup.classList.add('hidden');
+        if (otherNote) otherNote.removeAttribute('required');
 
-        // Lưu trạng thái
-        isEditMode = editMode;
+        document.getElementById('reportReviewId').value = reviewId || '';
+        isEditMode = !!editMode;
 
-        // Lấy các element giao diện
-        const modalTitle = document.querySelector('#reportModal .modal-title');
-        const submitBtn = document.querySelector('#reportModal button[type="submit"]');
-        const alertMsg = document.getElementById('edit-warning-msg');
+        var modalTitle = document.getElementById('reportModalTitle');
+        var submitBtn = document.querySelector('#reportModal button[type="submit"]');
+        if (modalTitle) {
+            modalTitle.textContent = isEditMode ? "Chỉnh sửa báo cáo" : "Báo cáo đánh giá";
+        }
+        if (submitBtn) {
+            submitBtn.textContent = isEditMode ? "Cập nhật thay đổi" : "Gửi báo cáo";
+            submitBtn.classList.toggle('bg-amber-500', isEditMode);
+            submitBtn.classList.toggle('bg-orange-500', !isEditMode);
+        }
 
-        if (isEditMode) {
-            // --- CHẾ ĐỘ SỬA ---
-            modalTitle.textContent = "Chỉnh sửa báo cáo";
-            submitBtn.textContent = "Cập nhật thay đổi";
-            submitBtn.classList.remove('bg-orange-500');
-            submitBtn.classList.add('bg-amber-500');
-
-            // 1. Fill Lý do cũ (Radio button)
-            if (currentReason) {
-                // Selector tìm input radio có value trùng với lý do cũ
-                const radio = document.querySelector(`input[name="reason"][value="${currentReason}"]`);
-                if (radio) {
-                    radio.checked = true;
-                    // Trigger sự kiện change thủ công để code xử lý ẩn/hiện ô Note chạy
-                    radio.dispatchEvent(new Event('change'));
+        if (isEditMode && currentReason) {
+            var radios = document.querySelectorAll('input[name="reason"]');
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].value === currentReason) {
+                    radios[i].checked = true;
+                    radios[i].dispatchEvent(new Event('change'));
+                    break;
                 }
             }
-
-            // 2. Fill Ghi chú cũ (Textarea)
-            if (currentNote && currentNote !== 'null') {
-                document.getElementById('otherNote').value = currentNote;
-            }
-
-        } else {
-            // --- CHẾ ĐỘ TẠO MỚI ---
-            modalTitle.textContent = "Báo cáo đánh giá";
-            submitBtn.textContent = "Gửi báo cáo";
-            submitBtn.classList.remove('bg-amber-500');
-            submitBtn.classList.add('bg-orange-500');
+        }
+        if (isEditMode && currentNote && currentNote !== 'null' && otherNote) {
+            otherNote.value = currentNote;
         }
 
-        // Mở Modal
-        const modalEl = document.getElementById('reportModal');
-        if(typeof bootstrap !== 'undefined') {
-            const myModal = new bootstrap.Modal(modalEl);
-            myModal.show();
-        } else {
-            alert('Lỗi thư viện Bootstrap JS');
+        reportModal.setAttribute('data-open', 'true');
+        reportModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeReportModal() {
+        var reportModal = document.getElementById('reportModal');
+        if (reportModal) {
+            reportModal.setAttribute('data-open', 'false');
+            reportModal.setAttribute('aria-hidden', 'true');
         }
     }
+
+    document.getElementById('reportModalCloseBtn') && document.getElementById('reportModalCloseBtn').addEventListener('click', closeReportModal);
+    document.getElementById('reportModal') && document.getElementById('reportModal').addEventListener('click', function(e) {
+        if (e.target === this) closeReportModal();
+    });
 
     document.querySelectorAll('input[name="reason"]').forEach((elem) => {
         elem.addEventListener("change", function(event) {
@@ -421,16 +420,15 @@
         const note = document.getElementById('otherNote').value;
         const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
 
-        // Đóng modal ngay cho mượt
-        const modalEl = document.getElementById('reportModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-        modalInstance.hide();
+        closeReportModal();
 
         // QUAN TRỌNG: Chọn Method (POST = Tạo mới, PUT = Cập nhật)
         const method = isEditMode ? 'PUT' : 'POST';
 
         fetch(`/reviews/${reviewId}/report`, {
             method: method,
+            credentials: 'same-origin',
+            redirect: 'manual',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRF-TOKEN': csrfToken
@@ -443,6 +441,11 @@
             .then(async response => {
                 const message = await response.text();
 
+                if (response.type === 'opaqueredirect' || response.status === 302) {
+                    alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    return;
+                }
                 if (response.ok) {
                     // Thành công
                     const successMsg = isEditMode ? "Đã cập nhật báo cáo thành công!" : "Đã gửi báo cáo thành công!";
@@ -451,8 +454,16 @@
                     // Reload sau 1.5s để cập nhật giao diện (Nút chuyển trạng thái)
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    // Thất bại (Lỗi logic từ Backend: Đã sửa rồi, Admin đã duyệt...)
-                    alert("Lỗi: " + message);
+                    if (response.status === 401) {
+                        alert("Phiên đăng nhập hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại.");
+                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                        return;
+                    }
+                    if (response.status === 403) {
+                        alert("Phiên không hợp lệ (CSRF). Vui lòng tải lại trang và thử lại.");
+                        return;
+                    }
+                    alert("Lỗi: " + (message || "Không thể gửi báo cáo."));
                 }
             })
             .catch(error => {

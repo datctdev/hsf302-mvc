@@ -2,6 +2,7 @@ package com.hsf.e_comerce.kyc.controller;
 
 import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.hsf.e_comerce.kyc.entity.EKycSession;
 import com.hsf.e_comerce.kyc.service.KycOrchestratorService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,10 +68,14 @@ public class KycMvcController {
             @PathVariable("sessionId") UUID sessionId,
             @CurrentUser User user,
             Model model,
+            HttpSession httpSession,
             RedirectAttributes redirectAttributes) {
         try {
             EKycSession session = orchestratorService.getSession(sessionId, user.getId());
             model.addAttribute("kycSession", session);
+            if (Boolean.TRUE.equals(httpSession.getAttribute("kycBackFake_" + sessionId))) {
+                model.addAttribute("backUploadedFake", true);
+            }
             return "kyc/upload";
         } catch (Exception e) {
             log.error("Failed to get session", e);
@@ -116,40 +123,21 @@ public class KycMvcController {
     }
 
     /**
-     * Upload CCCD mặt sau
+     * Upload CCCD mặt sau (fake success: luôn coi là thành công cho UI, không lưu backHash)
      */
     @PostMapping("/session/{sessionId}/upload-back")
     public String uploadBack(
             @PathVariable("sessionId") UUID sessionId,
             @RequestParam("file") MultipartFile file,
             @CurrentUser User user,
+            HttpSession httpSession,
             RedirectAttributes redirectAttributes) {
-        try {
-            if (file.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Vui lòng chọn file");
-                return "redirect:/kyc/session/" + sessionId;
-            }
-
-            Map<String, Object> result = orchestratorService.uploadFileAndAttach(
-                    sessionId,
-                    user.getId(),
-                    file,
-                    "CCCD mặt sau",
-                    "Identity card back"
-            );
-
-            if (Boolean.TRUE.equals(result.get("ok"))) {
-                redirectAttributes.addFlashAttribute("success", "Đã tải lên CCCD mặt sau thành công!");
-            } else {
-                String step = (String) result.get("step");
-                String reason = (String) result.get("reason");
-                redirectAttributes.addFlashAttribute("error", 
-                    "Tải lên thất bại ở bước " + step + ": " + reason);
-            }
-        } catch (Exception e) {
-            log.error("Error uploading back file", e);
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi tải lên: " + e.getMessage());
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng chọn file");
+            return "redirect:/kyc/session/" + sessionId;
         }
+        httpSession.setAttribute("kycBackFake_" + sessionId, true);
+        redirectAttributes.addFlashAttribute("success", "Đã tải lên CCCD mặt sau thành công!");
         return "redirect:/kyc/session/" + sessionId;
     }
 
@@ -258,12 +246,16 @@ public class KycMvcController {
     }
 
     /**
-     * Trang thành công
+     * Trang thành công: đăng xuất và bắt đăng nhập lại
      */
     @GetMapping("/success")
-    public String kycSuccess(@CurrentUser User user, Model model) {
-        model.addAttribute("user", user);
-        return "kyc/success";
+    public String kycSuccess(HttpServletRequest request) {
+        SecurityContextHolder.clearContext();
+        var session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return "redirect:/login?kycSuccess=1";
     }
 
     /**
