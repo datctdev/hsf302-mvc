@@ -26,6 +26,7 @@
             </div>
 
             <form id="productForm" style="display: none;"><input type="hidden" id="hiddenProductId" th:value="${product?.id}"></form>
+            <div id="productDataPayload" class="hidden" th:attr="data-images=${productImagesJson ?: '[]'},data-variants=${productVariantsJson ?: '[]'}"></div>
 
             <div id="step1">
                 <h3 class="text-lg font-semibold text-slate-900 mb-4">Thông Tin Cơ Bản & Hình Ảnh</h3>
@@ -101,8 +102,7 @@
             </div>
         </div>
 
-        <script>
-    <script>
+        <script th:inline="javascript">
         let currentStep = 1;
         const totalSteps = 3;
         let productId = null;
@@ -150,41 +150,49 @@
         });
 
         function loadProductDataFromModel() {
-            // Product data is already in the form via Thymeleaf
-            // Load images from Model
-            const productImages = /*[[${product?.images}]]*/ [];
-            if (productImages && productImages.length > 0) {
-                productData.images = productImages.map(img => ({
-                    id: img.id,
-                    imageUrl: img.imageUrl,
-                    isThumbnail: img.isThumbnail || false,
-                    displayOrder: img.displayOrder || 0
-                }));
-                updateImagePreviews();
+            const payload = document.getElementById('productDataPayload');
+            if (!payload) return;
+
+            // Load images from data attribute (HTML-escaped by Thymeleaf; getAttribute returns decoded JSON string)
+            const imagesRaw = payload.getAttribute('data-images');
+            if (imagesRaw) {
+                try {
+                    const productImages = JSON.parse(imagesRaw);
+                    if (Array.isArray(productImages) && productImages.length > 0) {
+                        productData.images = productImages.map(img => ({
+                            id: img.id || null,
+                            imageUrl: (img.imageUrl || '').trim(),
+                            isThumbnail: !!img.isThumbnail,
+                            displayOrder: img.displayOrder != null ? img.displayOrder : 0
+                        }));
+                        updateImagePreviews();
+                    }
+                } catch (e) { console.warn('Parse productImagesJson failed', e); }
             }
 
-            // Load variants from Model
-            const productVariants = /*[[${product?.variants}]]*/ [];
-            if (productVariants && productVariants.length > 0) {
-                productData.variants = productVariants.map(v => ({
-                    id: v.id,
-                    name: v.name,
-                    value: v.value,
-                    priceModifier: v.priceModifier || 0,
-                    stockQuantity: v.stockQuantity || 0,
-                    sku: v.sku
-                }));
-                updateVariantList();
+            // Load variants from data attribute
+            const variantsRaw = payload.getAttribute('data-variants');
+            if (variantsRaw) {
+                try {
+                    const productVariants = JSON.parse(variantsRaw);
+                    if (Array.isArray(productVariants) && productVariants.length > 0) {
+                        productData.variants = productVariants.map(v => ({
+                            id: v.id || null,
+                            name: v.name || '',
+                            value: v.value || '',
+                            priceModifier: v.priceModifier != null ? Number(v.priceModifier) : 0,
+                            stockQuantity: v.stockQuantity != null ? Number(v.stockQuantity) : 0,
+                            sku: v.sku || ''
+                        }));
+                        updateVariantList();
+                    }
+                } catch (e) { console.warn('Parse productVariantsJson failed', e); }
             }
 
-            // Load category from Model
-            const productCategoryId = /*[[${product?.categoryId}]]*/ null;
-            if (productCategoryId) {
-                productData.categoryId = productCategoryId;
-                const categorySelect = document.getElementById('productCategory');
-                if (categorySelect) {
-                    categorySelect.value = productCategoryId;
-                }
+            // Load category from form (already set by Thymeleaf on productCategory select)
+            const categorySelect = document.getElementById('productCategory');
+            if (categorySelect && categorySelect.value) {
+                productData.categoryId = categorySelect.value;
             }
         }
 
@@ -219,13 +227,11 @@
                 formData.append('file', file);
 
                 try {
-                    // Get CSRF token
-                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
-                                     document.querySelector('input[name="_csrf"]')?.value;
-                    if (csrfToken) {
-                        formData.append('_csrf', csrfToken);
+                    // CSRF: use the same input as the form (name may be _csrf or from server)
+                    const csrfInput = document.getElementById('csrfTokenInput');
+                    if (csrfInput) {
+                        formData.append(csrfInput.name, csrfInput.value);
                     }
-                    
                     const response = await fetch('/files/upload', {
                         method: 'POST',
                         body: formData
