@@ -1,8 +1,10 @@
 package com.hsf.e_comerce.shipping.controller;
 
 import com.hsf.e_comerce.common.annotation.CurrentUser;
+import com.hsf.e_comerce.shipping.dto.request.CalculateCartShippingFeeRequest;
 import com.hsf.e_comerce.shipping.dto.request.CalculateShippingFeeRequest;
 import com.hsf.e_comerce.shipping.dto.response.CalculateShippingFeeResponse;
+import com.hsf.e_comerce.shipping.dto.response.CartShippingFeeResponse;
 import com.hsf.e_comerce.shipping.dto.response.GHNProvinceResponse;
 import com.hsf.e_comerce.shipping.dto.response.GHNDistrictResponse;
 import com.hsf.e_comerce.shipping.dto.response.GHNWardResponse;
@@ -34,6 +36,23 @@ public class ShippingController {
         CalculateShippingFeeResponse response = shippingService.calculateShippingFee(
                 currentUser.getId(), request);
         
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Tính phí vận chuyển cho toàn bộ giỏ (nhiều shop): mỗi shop một phí GHN, trả về tổng + chi tiết.
+     * Dùng cho trang checkout "Đặt tất cả".
+     */
+    @PostMapping("/calculate-fee-cart")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CartShippingFeeResponse> calculateCartShippingFee(
+            @CurrentUser User currentUser,
+            @RequestBody CalculateCartShippingFeeRequest request) {
+        CartShippingFeeResponse response = shippingService.calculateShippingFeesForCart(
+                currentUser.getId(),
+                request.getToDistrictId(),
+                request.getToWardCode(),
+                request.getCartItemIds());
         return ResponseEntity.ok(response);
     }
 

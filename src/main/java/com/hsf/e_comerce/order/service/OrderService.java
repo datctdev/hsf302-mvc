@@ -17,6 +17,8 @@ public interface OrderService {
     List<OrderStatus> getAllowedNextStatuses(OrderStatus current);
     
     OrderResponse createOrder(User user, CreateOrderRequest request);
+
+    List<OrderResponse> createOrdersFromCart(User user, CreateOrderRequest request);
     
     OrderResponse getOrderById(UUID orderId);
     
@@ -25,6 +27,9 @@ public interface OrderService {
     OrderResponse getOrderByIdAndShop(UUID orderId, UUID shopId);
     
     List<OrderResponse> getOrdersByUser(User user);
+
+    /** Lấy danh sách đơn theo ids và user (dùng cho trang thanh toán gộp). */
+    List<OrderResponse> getOrdersByIdsAndUser(List<UUID> orderIds, User user);
     
     List<OrderResponse> getOrdersByShop(UUID shopId);
     

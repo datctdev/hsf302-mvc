@@ -16,10 +16,15 @@
         </div>
 
         <div th:if="${cart != null and cart.items != null and !cart.items.empty}">
+            <form id="formCheckoutSelected" th:action="@{/orders/checkout}" method="get">
+            <p class="text-sm text-slate-600 mb-4">Chọn món bạn muốn thanh toán, sau đó bấm <strong>Thanh toán đã chọn</strong>. Bỏ chọn = có thể bấm <strong>Thanh toán tất cả</strong>.</p>
             <div class="lg:grid lg:grid-cols-[1fr_320px] gap-8">
                 <!-- Cart items -->
                 <div class="space-y-4">
-                    <div th:each="item : ${cart.items}" class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div th:each="item : ${cart.items}" class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm items-start">
+                        <label class="flex items-center shrink-0 cursor-pointer pt-1">
+                            <input type="checkbox" name="cartItemIds" th:value="${item.id}" class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cart-item-cb">
+                        </label>
                         <img th:src="${item.productImageUrl}" th:alt="${item.productName}" class="w-20 h-20 rounded-lg object-cover shrink-0" onerror="this.src='/images/placeholder.png'">
                         <div class="flex-1 min-w-0">
                             <a th:href="@{'/products/' + ${item.productId}}" class="no-underline font-medium text-slate-900 hover:text-primary-600 line-clamp-2" th:text="${item.productName}">Product Name</a>
@@ -57,9 +62,8 @@
                             <span>Tổng tiền:</span>
                             <span th:text="|${#numbers.formatDecimal(cart.totalPrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</span>
                         </div>
-                        <form th:action="@{/orders/checkout}" method="get" class="mt-4">
-                            <button type="submit" class="w-full py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Thanh Toán</button>
-                        </form>
+                        <button type="submit" form="formCheckoutSelected" class="w-full mt-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Thanh toán đã chọn</button>
+                        <a th:href="@{/orders/checkout}" class="block mt-2 w-full py-2 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition text-center no-underline">Thanh toán tất cả</a>
                         <a href="/products" class="block mt-3 text-center no-underline py-2.5 rounded-lg border-2 border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition">Tiếp Tục Mua Sắm</a>
                         <form th:action="@{/cart/clear}" method="post" class="mt-3">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -68,6 +72,7 @@
                     </div>
                 </div>
             </div>
+            </form>
         </div>
 
         <div th:if="${cart == null or cart.items == null or cart.items.empty}" class="text-center py-16 bg-white rounded-xl border border-slate-200">

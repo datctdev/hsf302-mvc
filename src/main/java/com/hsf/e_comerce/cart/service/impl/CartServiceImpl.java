@@ -57,6 +57,12 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findPublishedById(request.getProductId())
                 .orElseThrow(() -> new CustomException("Sản phẩm không tồn tại hoặc chưa được xuất bản."));
 
+        // Không cho phép mua hàng của chính shop mình
+        if (product.getShop() != null && product.getShop().getUser() != null
+                && product.getShop().getUser().getId().equals(user.getId())) {
+            throw new CustomException("Bạn không thể mua sản phẩm của chính shop mình.");
+        }
+
         // Validate and get variant
         ProductVariant variant = null;
         if (request.getVariantId() != null) {

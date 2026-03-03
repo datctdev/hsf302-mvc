@@ -13,6 +13,7 @@ import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.service.OrderItemService;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.product.repository.ProductImageRepository;
 import com.hsf.e_comerce.review.service.ReviewService;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.service.ShopService;
@@ -40,9 +41,13 @@ public class OrderMvcController {
     private final OrderItemService orderItemService;
     private final ShopService shopService;
     private final ReviewService reviewService;
+    private final ProductImageRepository productImageRepository;
 
     @GetMapping("/checkout")
-    public String checkout(@CurrentUser User currentUser, Model model) {
+    public String checkout(
+            @CurrentUser User currentUser,
+            @RequestParam(required = false) List<UUID> cartItemIds,
+            Model model) {
         Cart cart = cartService.getCartWithItemsAndProducts(currentUser).orElse(null);
         
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
@@ -50,8 +55,24 @@ public class OrderMvcController {
             return "redirect:/cart";
         }
 
+        // Nếu có chọn món: chỉ lấy các cart item có ID trong cartItemIds (và thuộc giỏ của user)
+        List<CartItem> itemsToCheckout = new ArrayList<>(cart.getItems());
+        if (cartItemIds != null && !cartItemIds.isEmpty()) {
+            itemsToCheckout = cart.getItems().stream()
+                    .filter(item -> cartItemIds.contains(item.getId()))
+                    .toList();
+            if (itemsToCheckout.size() != cartItemIds.size()) {
+                model.addAttribute("error", "Một số món đã chọn không còn trong giỏ. Vui lòng kiểm tra lại.");
+                return "redirect:/cart";
+            }
+            if (itemsToCheckout.isEmpty()) {
+                model.addAttribute("error", "Vui lòng chọn ít nhất một món để thanh toán.");
+                return "redirect:/cart";
+            }
+        }
+
         // Group cart items by shop
-        Map<Shop, List<CartItem>> itemsByShop = cart.getItems().stream()
+        Map<Shop, List<CartItem>> itemsByShop = itemsToCheckout.stream()
                 .collect(Collectors.groupingBy(item -> item.getProduct().getShop()));
 
         // Calculate subtotal for each shop
@@ -63,13 +84,22 @@ public class OrderMvcController {
             shopSubtotals.put(entry.getKey().getId(), subtotal);
         }
 
-        // Get first shop for checkout (one order per shop for now)
-        Shop firstShop = itemsByShop.isEmpty() ? null : itemsByShop.keySet().iterator().next();
-        BigDecimal firstShopSubtotal = firstShop != null ? shopSubtotals.get(firstShop.getId()) : BigDecimal.ZERO;
+        BigDecimal totalSubtotal = shopSubtotals.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<UUID> selectedCartItemIds = itemsToCheckout.stream().map(CartItem::getId).toList();
+        Set<UUID> productIds = itemsToCheckout.stream().map(ci -> ci.getProduct().getId()).collect(Collectors.toSet());
+        Map<UUID, String> productImageUrls = new HashMap<>();
+        if (!productIds.isEmpty()) {
+            productImageRepository.findByProduct_IdInOrderByProductIdAndDisplayOrder(productIds).stream()
+                    .filter(pi -> pi.getProduct() != null)
+                    .forEach(pi -> productImageUrls.putIfAbsent(pi.getProduct().getId(), pi.getImageUrl()));
+        }
 
         model.addAttribute("itemsByShop", itemsByShop);
-        model.addAttribute("firstShop", firstShop);
-        model.addAttribute("firstShopSubtotal", firstShopSubtotal);
+        model.addAttribute("shopSubtotals", shopSubtotals);
+        model.addAttribute("totalSubtotal", totalSubtotal);
+        model.addAttribute("selectedCartItemIds", selectedCartItemIds);
+        model.addAttribute("productImageUrls", productImageUrls);
         model.addAttribute("createOrderRequest", new CreateOrderRequest());
         return "orders/checkout";
     }
@@ -83,16 +113,36 @@ public class OrderMvcController {
         
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin.");
-            return "redirect:/orders/checkout";
+            return redirectToCheckoutWithSelection(request.getCartItemIds());
         }
 
         try {
+            if (request.getShopId() == null) {
+                // Đặt tất cả (hoặc đã chọn): tạo một đơn cho mỗi shop
+                java.util.List<OrderResponse> orders = orderService.createOrdersFromCart(currentUser, request);
+                if (orders.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Không có đơn hàng nào được tạo.");
+                    return redirectToCheckoutWithSelection(request.getCartItemIds());
+                }
+                if (orders.size() == 1) {
+                    return "redirect:/payments/" + orders.get(0).getId();
+                }
+                String query = orders.stream().map(o -> "orderIds=" + o.getId()).reduce((a, b) -> a + "&" + b).orElse("");
+                return "redirect:/payments/batch?" + query;
+            }
             OrderResponse order = orderService.createOrder(currentUser, request);
             return "redirect:/payments/" + order.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/orders/checkout";
+            return redirectToCheckoutWithSelection(request.getCartItemIds());
         }
+    }
+
+    /** Giữ lại danh sách món đã chọn khi redirect về checkout (sau lỗi). */
+    private String redirectToCheckoutWithSelection(List<UUID> cartItemIds) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) return "redirect:/orders/checkout";
+        String query = cartItemIds.stream().map(UUID::toString).map(id -> "cartItemIds=" + id).reduce((a, b) -> a + "&" + b).orElse("");
+        return "redirect:/orders/checkout?" + query;
     }
 
     @GetMapping

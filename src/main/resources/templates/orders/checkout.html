@@ -65,13 +65,13 @@
                         </div>
                     </div>
 
-                    <!-- Shop items -->
-                    <div th:if="${firstShop != null}" class="bg-white rounded-xl shadow-card p-6">
-                        <h3 class="font-semibold text-primary-600 mb-4" th:text="'Shop: ' + ${firstShop.name}">Shop Name</h3>
-                        <input type="hidden" th:name="shopId" th:value="${firstShop.id}">
+                    <!-- Từng shop (một đơn mỗi shop khi Đặt tất cả) -->
+                    <div th:each="entry : ${itemsByShop}" class="bg-white rounded-xl shadow-card p-6">
+                        <h3 class="font-semibold text-primary-600 mb-4" th:text="'Shop: ' + ${entry.key.name}">Shop Name</h3>
                         <div class="space-y-4">
-                            <div th:each="item : ${itemsByShop[firstShop]}" class="flex gap-4 py-4 border-b border-slate-200 last:border-0">
-                                <img th:src="${item.productImageUrl ?: '/images/placeholder.png'}" alt="Product" class="w-20 h-20 rounded-lg object-cover shrink-0" onerror="this.src='/images/placeholder.png'">
+                            <div th:each="item : ${entry.value}" class="flex gap-4 py-4 border-b border-slate-200 last:border-0">
+                                <input type="hidden" name="cartItemIds" th:value="${item.id}"/>
+                                <img th:src="${productImageUrls != null and productImageUrls[item.product.id] != null ? productImageUrls[item.product.id] : '/images/placeholder.png'}" alt="Product" class="w-20 h-20 rounded-lg object-cover shrink-0" onerror="this.src='/images/placeholder.png'">
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium text-slate-900" th:text="${item.product.name}">Product Name</div>
                                     <div th:if="${item.variant != null}" class="text-sm text-slate-500" th:text="${item.variant.name + ': ' + item.variant.value}">Variant</div>
@@ -83,6 +83,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="text-sm text-slate-500 mt-2">Tạm tính shop: <span th:text="${shopSubtotals != null and shopSubtotals[entry.key.id] != null ? #numbers.formatDecimal(shopSubtotals[entry.key.id], 0, 'POINT', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span></p>
                     </div>
                 </div>
 
@@ -91,8 +92,8 @@
                     <div class="bg-white rounded-xl shadow-card p-6">
                         <h2 class="text-lg font-semibold text-slate-900 mb-4">Tóm Tắt Đơn Hàng</h2>
                         <div class="flex justify-between py-2 border-b border-slate-200">
-                            <span class="text-slate-600">Tạm tính:</span>
-                            <span id="subtotal" th:text="${firstShopSubtotal != null ? #numbers.formatDecimal(firstShopSubtotal, 0, 'POINT', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                            <span class="text-slate-600">Tạm tính (<span th:text="${itemsByShop != null ? itemsByShop.size() : 0}">0</span> shop):</span>
+                            <span id="subtotal" th:text="${totalSubtotal != null ? #numbers.formatDecimal(totalSubtotal, 0, 'POINT', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
                         </div>
                         <div class="mt-4">
                             <label for="shippingFee" class="block text-sm font-medium text-slate-700 mb-1">Phí Vận Chuyển (VNĐ)</label>
@@ -103,7 +104,7 @@
                             <span>Tổng tiền:</span>
                             <span id="totalPrice">0 VNĐ</span>
                         </div>
-                        <button type="submit" class="w-full mt-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">Đặt Hàng</button>
+                        <button type="submit" class="w-full mt-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">Đặt tất cả (<span th:text="${itemsByShop != null ? itemsByShop.size() : 0}">0</span> đơn)</button>
                         <a th:href="@{/cart}" class="block mt-3 text-center no-underline py-2.5 rounded-lg border-2 border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition">Quay Lại Giỏ Hàng</a>
                     </div>
                 </div>
@@ -113,7 +114,6 @@
         <script th:inline="javascript">
             const csrfToken = /*[[${_csrf.token}]]*/ '';
             const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
-            const shopId = /*[[${firstShop != null ? firstShop.id : ''}]]*/ '';
             const provinceSelect = document.getElementById('provinceSelect');
             const districtSelect = document.getElementById('districtSelect');
             const wardSelect = document.getElementById('wardSelect');
@@ -168,17 +168,21 @@
                 document.getElementById('shippingWard').value = this.options[this.selectedIndex].text;
                 if (!districtId || !wardCode) return;
                 const msg = document.getElementById('shippingFeeMessage');
-                msg.innerHTML = '<span class="text-slate-500">Đang tính phí...</span>';
-                fetch('/api/shipping/calculate-fee', {
+                msg.innerHTML = '<span class="text-slate-500">Đang tính phí (từng shop)...</span>';
+                const cartItemIds = Array.from(document.querySelectorAll('input[name="cartItemIds"]')).map(function(el) { return el.value; });
+                const body = { toDistrictId: parseInt(districtId), toWardCode: wardCode };
+                if (cartItemIds.length > 0) body.cartItemIds = cartItemIds;
+                fetch('/api/shipping/calculate-fee-cart', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
-                    body: JSON.stringify({ shopId: shopId, toDistrictId: parseInt(districtId), toWardCode: wardCode })
+                    body: JSON.stringify(body)
                 }).then(r => r.json()).then(data => {
                     if (data.success) {
-                        document.getElementById('shippingFee').value = data.shippingFee;
+                        const totalFee = data.totalFee != null ? data.totalFee : 0;
+                        document.getElementById('shippingFee').value = totalFee;
                         calculateTotal();
-                        msg.innerHTML = '<span class="text-green-600">✓ Phí vận chuyển: ' + data.shippingFee.toLocaleString('vi-VN') + ' VNĐ</span>';
-                    } else msg.innerHTML = '<span class="text-red-600">✗ ' + data.message + '</span>';
+                        msg.innerHTML = '<span class="text-green-600">✓ Phí vận chuyển (tổng ' + (data.feesByShop && data.feesByShop.length > 1 ? data.feesByShop.length + ' shop): ' : '') + totalFee.toLocaleString('vi-VN') + ' VNĐ</span>';
+                    } else msg.innerHTML = '<span class="text-red-600">✗ ' + (data.message || 'Lỗi tính phí') + '</span>';
                 }).catch(() => { msg.innerHTML = '<span class="text-red-600">✗ Lỗi tính phí. Thử lại.</span>'; });
             });
 
