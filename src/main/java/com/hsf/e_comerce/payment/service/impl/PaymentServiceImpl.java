@@ -10,9 +10,12 @@ import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
+import com.hsf.e_comerce.payment.entity.BatchPayment;
+import com.hsf.e_comerce.payment.entity.BatchPaymentOrder;
 import com.hsf.e_comerce.payment.entity.Payment;
 import com.hsf.e_comerce.payment.enums.PaymentMethod;
 import com.hsf.e_comerce.payment.enums.PaymentStatus;
+import com.hsf.e_comerce.payment.repository.BatchPaymentRepository;
 import com.hsf.e_comerce.payment.repository.PaymentRepository;
 import com.hsf.e_comerce.payment.service.PaymentService;
 import com.hsf.e_comerce.payment.service.VNPayService;
@@ -21,6 +24,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +37,7 @@ import java.util.UUID;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final BatchPaymentRepository batchPaymentRepository;
     private final OrderRepository orderRepository;
     private final VNPayService vnPayService;
     private final CartRepository cartRepository;
@@ -96,6 +102,11 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         String txnRef = params.get("vnp_TxnRef");
+        if (txnRef != null && txnRef.startsWith("B-")) {
+            handleBatchVNPayCallback(params);
+            return;
+        }
+
         String responseCode = params.get("vnp_ResponseCode");
         String gatewayTxnId = params.get("vnp_TransactionNo");
 
@@ -132,6 +143,44 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(order);
     }
 
+    private void handleBatchVNPayCallback(Map<String, String> params) {
+        String txnRef = params.get("vnp_TxnRef");
+        String responseCode = params.get("vnp_ResponseCode");
+        String gatewayTxnId = params.get("vnp_TransactionNo");
+
+        BatchPayment batch = batchPaymentRepository.findByTransactionIdWithOrders(txnRef)
+                .orElseThrow(() -> new CustomException("Batch payment không tồn tại"));
+
+        batch.setGatewayTransactionId(gatewayTxnId);
+        batch.setGatewayResponse(params.toString());
+
+        if ("00".equals(responseCode)) {
+            batch.setStatus(PaymentStatus.SUCCESS);
+            for (BatchPaymentOrder bpo : batch.getOrders()) {
+                Order order = bpo.getOrder();
+                order.setStatus(OrderStatus.CONFIRMED);
+                orderRepository.save(order);
+                this.handlePaymentSuccess(order.getId());
+            }
+        } else {
+            batch.setStatus(PaymentStatus.FAILED);
+            for (BatchPaymentOrder bpo : batch.getOrders()) {
+                Order order = bpo.getOrder();
+                if (order.isStockDeducted()) {
+                    for (OrderItem item : order.getItems()) {
+                        item.getVariant().setStockQuantity(
+                                item.getVariant().getStockQuantity() + item.getQuantity()
+                        );
+                    }
+                    order.setStockDeducted(false);
+                }
+                order.setStatus(OrderStatus.CANCELLED);
+                orderRepository.save(order);
+            }
+        }
+        batchPaymentRepository.save(batch);
+    }
+
     @Override
     public Payment getOrCreatePaymentForVNPay(UUID orderId, User user) {
         Order order = orderRepository.findByIdAndUser(orderId, user)
@@ -141,7 +190,50 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public BatchPayment createBatchPaymentForVNPay(List<UUID> orderIds, User user) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            throw new CustomException("Danh sách đơn hàng trống");
+        }
+        List<Order> orders = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        for (UUID orderId : orderIds) {
+            Order order = orderRepository.findByIdAndUser(orderId, user)
+                    .orElseThrow(() -> new CustomException("Order không hợp lệ: " + orderId));
+            if (paymentRepository.findByOrder(order).isPresent()) {
+                throw new CustomException("Đơn " + order.getOrderNumber() + " đã có thanh toán");
+            }
+            orders.add(order);
+            total = total.add(order.getTotal());
+        }
+        String transactionId = "B-" + UUID.randomUUID();
+        BatchPayment batch = BatchPayment.builder()
+                .user(user)
+                .totalAmount(total)
+                .method(PaymentMethod.VNPAY)
+                .status(PaymentStatus.INIT)
+                .transactionId(transactionId)
+                .build();
+        for (Order order : orders) {
+            order.setStatus(OrderStatus.PENDING_PAYMENT);
+            batch.getOrders().add(BatchPaymentOrder.builder()
+                    .batchPayment(batch)
+                    .order(order)
+                    .build());
+        }
+        orderRepository.saveAll(orders);
+        return batchPaymentRepository.save(batch);
+    }
+
+    @Override
+    public boolean isBatchTransaction(String transactionId) {
+        return transactionId != null && transactionId.startsWith("B-");
+    }
+
+    @Override
     public Optional<UUID> getOrderIdByTransactionId(String transactionId) {
+        if (isBatchTransaction(transactionId)) {
+            return Optional.empty();
+        }
         return paymentRepository.findByTransactionId(transactionId)
                 .map(p -> p.getOrder().getId());
     }

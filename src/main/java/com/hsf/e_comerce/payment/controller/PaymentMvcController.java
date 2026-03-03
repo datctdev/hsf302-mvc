@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.service.OrderService;
+import com.hsf.e_comerce.payment.entity.BatchPayment;
 import com.hsf.e_comerce.payment.service.PaymentService;
 import com.hsf.e_comerce.payment.service.VNPayService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -88,9 +90,53 @@ public class PaymentMvcController {
         }
 
         String txnRef = params.get("vnp_TxnRef");
+        if (paymentService.isBatchTransaction(txnRef)) {
+            return "redirect:/orders";
+        }
         return paymentService.getOrderIdByTransactionId(txnRef)
                 .map(orderId -> "redirect:/orders/" + orderId)
                 .orElse("redirect:/orders");
+    }
+
+    /**
+     * Trang thanh toán gộp (nhiều đơn, 1 lượt VNPay)
+     */
+    @GetMapping("/batch")
+    public String batchPayment(
+            @RequestParam List<UUID> orderIds,
+            @CurrentUser User user,
+            Model model) {
+        List<OrderResponse> orders = orderService.getOrdersByIdsAndUser(orderIds, user);
+        if (orders.isEmpty()) {
+            return "redirect:/orders";
+        }
+        java.math.BigDecimal total = orders.stream()
+                .map(OrderResponse::getTotal)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        model.addAttribute("orders", orders);
+        model.addAttribute("orderIds", orderIds);
+        model.addAttribute("total", total);
+        return "payments/batch";
+    }
+
+    /**
+     * Redirect sang VNPay (thanh toán gộp nhiều đơn 1 lượt)
+     */
+    @GetMapping("/vnpay/redirect-batch")
+    public String redirectVNPayBatch(
+            @RequestParam List<UUID> orderIds,
+            @CurrentUser User user,
+            RedirectAttributes redirectAttributes) {
+        try {
+            BatchPayment batch = paymentService.createBatchPaymentForVNPay(orderIds, user);
+            String orderInfo = "Thanh toan " + orderIds.size() + " don hang";
+            String url = vnPayService.buildPaymentUrl(batch.getTotalAmount(), batch.getTransactionId(), orderInfo);
+            return "redirect:" + url;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            String query = orderIds.stream().map(UUID::toString).map(id -> "orderIds=" + id).reduce((a, b) -> a + "&" + b).orElse("");
+            return "redirect:/payments/batch?" + query;
+        }
     }
 
     @GetMapping("/{orderId}/select-method")

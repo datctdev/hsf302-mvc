@@ -32,6 +32,7 @@ import com.hsf.e_comerce.review.valueobject.ReviewReportStatus;
 import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.repository.ShopRepository;
 import com.hsf.e_comerce.shipping.service.GHNService;
+import com.hsf.e_comerce.shipping.service.ShippingService;
 import com.hsf.e_comerce.shipping.dto.request.GHNCreateOrderRequest;
 import com.hsf.e_comerce.shipping.dto.response.GHNCreateOrderResponse;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,10 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -57,9 +61,11 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final ShopRepository shopRepository;
     private final ProductImageRepository productImageRepository;
     private final GHNService ghnService;
+    private final ShippingService shippingService;
     private final ReviewRepository reviewRepository;
     private final PlatformSettingService platformSettingService;
     private final ReviewReportRepository reviewReportRepository;
@@ -69,65 +75,86 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse createOrder(User user, CreateOrderRequest request) {
-        // Validate shop exists
+        if (request.getShopId() == null) {
+            throw new CustomException("Shop ID là bắt buộc khi đặt một shop. Dùng Đặt tất cả để tạo đơn theo từng shop.");
+        }
         Shop shop = shopRepository.findById(request.getShopId())
                 .orElseThrow(() -> new CustomException("Shop không tồn tại."));
-
-        // Get user's cart
         Cart cart = cartRepository.findByUserIdWithItems(user.getId())
                 .orElseThrow(() -> new CustomException("Giỏ hàng trống."));
-
-        // Filter cart items by shop
         List<CartItem> shopCartItems = cart.getItems().stream()
                 .filter(item -> item.getProduct().getShop().getId().equals(shop.getId()))
                 .collect(Collectors.toList());
-
         if (shopCartItems.isEmpty()) {
             throw new CustomException("Không có sản phẩm nào từ shop này trong giỏ hàng.");
         }
+        return createOrderForShop(user, shop, shopCartItems, request,
+                request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
+    }
 
-        // Validate stock and prepare order items
+    @Override
+    @Transactional
+    public List<OrderResponse> createOrdersFromCart(User user, CreateOrderRequest request) {
+        Cart cart = cartRepository.findByUserIdWithItems(user.getId())
+                .orElseThrow(() -> new CustomException("Giỏ hàng trống."));
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new CustomException("Giỏ hàng trống.");
+        }
+        List<CartItem> itemsToOrder = new ArrayList<>(cart.getItems());
+        if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
+            itemsToOrder = cart.getItems().stream()
+                    .filter(item -> request.getCartItemIds().contains(item.getId()))
+                    .toList();
+            if (itemsToOrder.size() != request.getCartItemIds().size()) {
+                throw new CustomException("Một số món đã chọn không còn trong giỏ. Vui lòng thử lại.");
+            }
+        }
+        Map<Shop, List<CartItem>> itemsByShop = itemsToOrder.stream()
+                .collect(Collectors.groupingBy(item -> item.getProduct().getShop(), LinkedHashMap::new, Collectors.toList()));
+        Integer toDistrictId = request.getShippingDistrictId();
+        String toWardCode = request.getShippingWardCode();
+        List<OrderResponse> orders = new ArrayList<>();
+        for (Map.Entry<Shop, List<CartItem>> entry : itemsByShop.entrySet()) {
+            BigDecimal shippingFee = BigDecimal.ZERO;
+            if (toDistrictId != null && toWardCode != null && !toWardCode.isBlank()) {
+                shippingFee = shippingService.calculateShippingFeeForShop(
+                        entry.getKey(), entry.getValue(), toDistrictId, toWardCode);
+            }
+            OrderResponse orderResponse = createOrderForShop(user, entry.getKey(), entry.getValue(), request, shippingFee);
+            orders.add(orderResponse);
+        }
+        return orders;
+    }
+
+    /** Tạo một đơn cho một shop, xóa các cart item của shop đó khỏi giỏ. */
+    private OrderResponse createOrderForShop(User user, Shop shop, List<CartItem> shopCartItems,
+                                             CreateOrderRequest request, BigDecimal shippingFee) {
+        if (shop.getUser() != null && shop.getUser().getId().equals(user.getId())) {
+            throw new CustomException("Bạn không thể đặt mua hàng của chính shop mình (shop: " + shop.getName() + "). Vui lòng xóa sản phẩm này khỏi giỏ hàng.");
+        }
+        Cart cart = shopCartItems.isEmpty() ? null : shopCartItems.get(0).getCart();
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal totalCommission = BigDecimal.ZERO;
         for (CartItem cartItem : shopCartItems) {
             Product product = cartItem.getProduct();
             ProductVariant variant = cartItem.getVariant();
-
             if (variant == null) {
                 throw new CustomException("Sản phẩm " + product.getName() + " chưa có biến thể.");
             }
-
-            // Check stock
             if (variant.getStockQuantity() < cartItem.getQuantity()) {
                 throw new CustomException("Sản phẩm " + product.getName() + " không đủ số lượng. Còn lại: " + variant.getStockQuantity());
             }
-
-            // Calculate item total
             BigDecimal unitPrice = product.getBasePrice().add(
-                    variant.getPriceModifier() != null ? variant.getPriceModifier() : BigDecimal.ZERO
-            );
-            BigDecimal itemTotal =
-                    unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-
+                    variant.getPriceModifier() != null ? variant.getPriceModifier() : BigDecimal.ZERO);
+            BigDecimal itemTotal = unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             subtotal = subtotal.add(itemTotal);
-
-            // 🔥 LẤY RATE THEO PRODUCT CATEGORY
-            UUID categoryId = product.getCategory().getId();
-
-            BigDecimal rate =
-                    categoryCommissionService.getCommissionByCategory(categoryId);
-
-            BigDecimal itemCommission =
-                    itemTotal.multiply(rate)
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
+            BigDecimal rate = product.getCategory() != null
+                    ? categoryCommissionService.getCommissionByCategory(product.getCategory().getId())
+                    : platformSettingService.getCommissionRate();
+            BigDecimal itemCommission = itemTotal.multiply(rate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             totalCommission = totalCommission.add(itemCommission);
         }
-
-        // Generate order number
         String orderNumber = generateOrderNumber();
-
-        // Create order
         Order order = new Order();
         order.setOrderNumber(orderNumber);
         order.setUser(user);
@@ -143,23 +170,14 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingWardCode(request.getShippingWardCode());
         order.setNotes(request.getNotes());
         order.setSubtotal(subtotal);
-        order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
+        order.setShippingFee(shippingFee != null ? shippingFee : BigDecimal.ZERO);
         order.setPlatformCommission(totalCommission);
-        order.setCommissionRate(null); // vì nhiều category khác nhau
+        order.setCommissionRate(null);
         order.calculateTotal();
-
         order = orderRepository.save(order);
-
-        // Create order items and reduce stock
         for (CartItem cartItem : shopCartItems) {
             Product product = cartItem.getProduct();
             ProductVariant variant = cartItem.getVariant();
-
-            // Reduce stock
-            int newStock = variant.getStockQuantity() - cartItem.getQuantity();
-//            variant.setStockQuantity(newStock);
-
-            // Create order item
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(product);
@@ -168,24 +186,20 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setVariantName(variant.getName());
             orderItem.setVariantValue(variant.getValue());
             orderItem.setQuantity(cartItem.getQuantity());
-
             BigDecimal unitPrice = product.getBasePrice().add(
-                    variant.getPriceModifier() != null ? variant.getPriceModifier() : BigDecimal.ZERO
-            );
+                    variant.getPriceModifier() != null ? variant.getPriceModifier() : BigDecimal.ZERO);
             orderItem.setUnitPrice(unitPrice);
             orderItem.calculateTotalPrice();
-
             order.getItems().add(orderItem);
             orderItemRepository.save(orderItem);
         }
-
-        // Remove cart items from cart
-//        for (CartItem cartItem : shopCartItems) {
-//            cart.getItems().remove(cartItem);
-//            cartItemRepository.delete(cartItem);
-//        }
-//        cartRepository.save(cart);
-
+        if (cart != null) {
+            for (CartItem cartItem : shopCartItems) {
+                cart.getItems().remove(cartItem);
+                cartItemRepository.delete(cartItem);
+            }
+            cartRepository.save(cart);
+        }
         return mapToResponse(order);
     }
 
@@ -231,6 +245,18 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByUser(User user) {
         List<Order> orders = orderRepository.findByUserIdWithItems(user.getId());
+        return orders.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByIdsAndUser(List<UUID> orderIds, User user) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return List.of();
+        }
+        List<Order> orders = orderRepository.findByIdInAndUserId(orderIds, user.getId());
         return orders.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
