@@ -4,50 +4,206 @@
     <title>Quản Lý Đơn Hàng - Admin</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <h2 class="text-xl font-bold text-slate-900 mb-6">Quản Lý Đơn Hàng</h2>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        <div class="flex flex-wrap gap-4 items-center mb-6">
-            <label class="text-sm font-medium text-slate-700">Lọc theo trạng thái:</label>
-            <select id="statusFilter" onchange="filterOrders()" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                <option value="">Tất cả</option>
-                <option th:each="status : ${orderStatuses}" th:value="${status}" th:text="${status}" th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
-            </select>
-        </div>
+    <style>
+        :root {
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-light: #f1f5f9;
+        }
 
-        <div th:if="${orders == null or orders.empty}" class="text-center py-12 rounded-xl bg-slate-50 border border-slate-200">
-            <p class="text-slate-500">Chưa có đơn hàng nào.</p>
-        </div>
+        .page-wrapper { background-color: #f8fafc; padding: 1.5rem; border-radius: 12px; min-height: calc(100vh - 100px); }
 
-        <div th:if="${orders != null and !orders.empty}" class="space-y-4">
-            <div th:each="order : ${orders}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-card-hover transition">
-                <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+        .saas-card {
+            background: #ffffff; border-radius: 1.25rem; border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow); overflow: hidden; display: flex; flex-direction: column;
+            margin-bottom: 1.5rem;
+        }
+
+        .icon-box { width: 3rem; height: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); flex-shrink: 0;}
+        .icon-blue { background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+
+        /* Status Badges */
+        .status-badge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap;}
+        .badge-success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; } /* DELIVERED */
+        .badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; } /* PENDING, PENDING_PAYMENT */
+        .badge-info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; } /* CONFIRMED, PROCESSING, SHIPPING */
+        .badge-danger { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; } /* CANCELLED, REFUNDED */
+
+        /* Table Hiện Đại */
+        .table-wrapper { overflow-x: auto; width: 100%; }
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .modern-table th { background: #f8fafc; color: #64748b; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 1.25rem; text-align: left; border-bottom: 2px solid #f1f5f9; white-space: nowrap;}
+        .modern-table td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.875rem; font-weight: 500; vertical-align: middle;}
+        .modern-table tr:hover td { background: #f8fafc; }
+        .modern-table tr:last-child td { border-bottom: none; }
+
+        /* Text Styles */
+        .order-code { color: #2563eb; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; letter-spacing: 0.05em; background: #eff6ff; padding: 0.2rem 0.5rem; border-radius: 0.4rem; border: 1px solid #bfdbfe; text-decoration: none;}
+        .order-code:hover { background: #dbeafe; color: #1d4ed8; }
+        .sub-text { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;}
+        .price-text { font-weight: 900; color: #1e293b; font-size: 0.95rem;}
+        .commission-text { font-weight: 900; color: #10b981; font-size: 0.9rem;}
+
+        /* Buttons */
+        .btn-sm-action { padding: 0.4rem 0.875rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.35rem; outline: none; border: 1px solid transparent; text-decoration: none; white-space: nowrap;}
+        .btn-outline-blue { background: #ffffff; color: #2563eb; border-color: #bfdbfe; }
+        .btn-outline-blue:hover { background: #eff6ff; border-color: #93c5fd; box-shadow: 0 2px 4px rgba(37,99,235,0.1);}
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 8px; }
+    </style>
+
+    <div class="page-wrapper">
+
+        <div class="saas-card" style="overflow: visible;">
+            <div style="padding: 1.5rem; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem;">
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="icon-box icon-blue"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     <div>
-                        <h3 class="font-semibold text-slate-900" th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h3>
-                        <p class="text-sm text-slate-500 mt-1" th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
+                        <h1 style="font-size: 1.5rem; font-weight: 900; color: #1e293b; margin: 0;">Quản Lý Đơn Hàng</h1>
+                        <p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.875rem;">Kiểm tra, theo dõi luồng trạng thái và chi tiết giao dịch toàn sàn.</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded text-sm font-medium bg-slate-100 text-slate-700"
-                          th:classappend="${order.status == 'PENDING'} ? 'bg-amber-100 text-amber-800' : (${order.status == 'DELIVERED'} ? 'bg-green-100 text-green-800' : (${order.status == 'CANCELLED'} ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'))"
-                          th:text="${order.status}">Status</span>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                    <div><span class="text-slate-500">Khách hàng:</span> <span th:text="${order.userName}">User</span></div>
-                    <div><span class="text-slate-500">Shop:</span> <span th:text="${order.shopName}">Shop</span></div>
-                    <div><span class="text-slate-500">Tổng tiền:</span> <span th:text="|${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} VNĐ|">Total</span></div>
-                    <div><span class="text-slate-500">Hoa hồng:</span> <span th:text="${order.platformCommission != null ? (#numbers.formatDecimal(order.platformCommission, 0, 'POINT', 0, 'POINT') + ' VNĐ') : '0 VNĐ'}">0 VNĐ</span></div>
-                </div>
-                <div class="mt-4">
-                    <a th:href="@{'/admin/orders/' + ${order.id}}" class="inline-block no-underline px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition">Xem Chi Tiết</a>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; background: #f8fafc; padding: 0.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 0.5rem;">
+                        <label for="statusFilter" style="font-size: 0.875rem; font-weight: 700; color: #475569;"><i class="fa-solid fa-filter text-slate-400 mr-1"></i> Trạng thái:</label>
+                        <select id="statusFilter" onchange="filterOrders()" style="background: white; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 0.4rem 0.75rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; outline: none; cursor: pointer; min-width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <option value="">Tất cả trạng thái</option>
+                            <option th:each="status : ${orderStatuses}" th:value="${status}" th:text="${status}" th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <script th:inline="javascript">
-            function filterOrders() {
-                const status = document.getElementById('statusFilter').value;
-                window.location.href = '/admin/orders' + (status ? '?status=' + encodeURIComponent(status) : '');
+        <div id="tableBox" class="saas-card" style="margin-bottom: 0;">
+            <div class="table-wrapper custom-scroll">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th>Mã Đơn / Thời gian</th>
+                        <th>Khách Hàng</th>
+                        <th>Gian Hàng</th>
+                        <th>Trạng Thái</th>
+                        <th style="text-align: right;">Giá Trị & Hoa Hồng</th>
+                        <th style="text-align: center;">Thao Tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${orders}" class="order-row" th:attr="data-status=${order.status.name()}">
+
+                        <td>
+                            <div>
+                                <a th:href="@{'/admin/orders/' + ${order.id}}" class="order-code" th:text="${order.orderNumber}">#ORD-000</a>
+                                <div class="sub-text">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">Date</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 2rem; height: 2rem; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; flex-shrink: 0;" th:text="${#strings.substring(order.userName != null ? order.userName : 'U', 0, 1).toUpperCase()}">U</div>
+                                <span style="font-weight: 700; color: #1e293b;" th:text="${order.userName}">User Name</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #f1f5f9; padding: 0.35rem 0.6rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                                <i class="fa-solid fa-store text-slate-400" style="font-size: 0.75rem;"></i>
+                                <span style="font-weight: 700; color: #334155;" th:text="${order.shopName}">Shop Name</span>
+                            </div>
+                        </td>
+
+                        <td>
+                                    <span class="status-badge"
+                                          th:classappend="${order.status.name() == 'DELIVERED'} ? 'badge-success' :
+                                                         (${order.status.name() == 'PENDING' or order.status.name() == 'PENDING_PAYMENT'} ? 'badge-warning' :
+                                                         (${order.status.name() == 'CANCELLED' or order.status.name() == 'REFUNDED'} ? 'badge-danger' : 'badge-info'))">
+
+                                        <i th:class="${order.status.name() == 'DELIVERED'} ? 'fa-solid fa-check-circle' :
+                                                      (${order.status.name() == 'PENDING' or order.status.name() == 'PENDING_PAYMENT'} ? 'fa-solid fa-clock' :
+                                                      (${order.status.name() == 'CANCELLED' or order.status.name() == 'REFUNDED'} ? 'fa-solid fa-xmark-circle' : 'fa-solid fa-spinner fa-spin-pulse'))"></i>
+
+                                        <span th:text="${order.status}"></span>
+                                    </span>
+                        </td>
+
+                        <td style="text-align: right;">
+                            <div class="price-text" th:text="${order.total != null ? #numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT') : '0'}">0</div>
+                            <div class="sub-text" style="justify-content: flex-end;">
+                                <span>Hoa hồng: </span>
+                                <span class="commission-text" th:text="${order.platformCommission != null ? '+' + #numbers.formatDecimal(order.platformCommission, 0, 'POINT', 0, 'POINT') : '0'}">0</span>
+                            </div>
+                        </td>
+
+                        <td style="text-align: center;">
+                            <a th:href="@{'/admin/orders/' + ${order.id}}" class="btn-sm-action btn-outline-blue">
+                                <i class="fa-solid fa-eye"></i> Chi tiết
+                            </a>
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="emptyStateBox" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 5rem 1rem; background: white; border-radius: 1.25rem; border: 1px dashed #cbd5e1; box-shadow: var(--card-shadow);">
+            <div style="width: 5rem; height: 5rem; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #cbd5e1; margin-bottom: 1rem;">
+                <i class="fa-solid fa-receipt"></i>
+            </div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #334155; margin: 0 0 0.5rem 0;">Không có đơn hàng</h3>
+            <p style="font-size: 0.875rem; color: #64748b; margin: 0;">Chưa có đơn hàng nào phù hợp với bộ lọc trạng thái này.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Lọc trạng thái trực tiếp bằng Javascript
+        function filterOrders() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('.order-row');
+            const emptyState = document.getElementById('emptyStateBox');
+            const tableBox = document.getElementById('tableBox');
+            let hasVisible = false;
+
+            if (rows.length === 0) {
+                emptyState.style.display = 'flex';
+                tableBox.style.display = 'none';
+                return;
             }
-        </script>
-    </th:block>
+
+            rows.forEach(row => {
+                const rowStatus = row.getAttribute('data-status');
+                if (statusFilter === "" || rowStatus === statusFilter) {
+                    row.style.display = '';
+                    hasVisible = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (hasVisible) {
+                emptyState.style.display = 'none';
+                tableBox.style.display = 'flex';
+            } else {
+                emptyState.style.display = 'flex';
+                tableBox.style.display = 'none';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", filterOrders);
+    </script>
+</th:block>
+
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>
