@@ -1,243 +1,187 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-    <!-- AI Chatbot widget: floating button + panel -->
-    <th:block th:fragment="widget">
-        <div id="chat-widget-root" class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-            <!-- Panel (hidden by default) -->
-            <div id="chat-panel" class="hidden w-[380px] max-w-[calc(100vw-2rem)] h-[480px] max-h-[70vh] rounded-2xl shadow-xl border border-slate-200 bg-white flex flex-col overflow-hidden">
-                <div class="flex items-center justify-between px-4 py-3 bg-slate-800 text-white rounded-t-2xl">
-                    <span class="font-semibold">Trợ lý mua sắm</span>
-                    <button type="button" id="chat-close" class="p-1 rounded-lg hover:bg-slate-700" aria-label="Đóng">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+<th:block th:fragment="widget">
+    <div id="chat-widget-root" class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+
+        <div id="chat-panel" class="hidden w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[75vh] rounded-[24px] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-100 bg-white flex flex-col overflow-hidden transition-all transform origin-bottom-right">
+            <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-[24px] shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-11 h-11 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-md overflow-hidden p-1.5">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix&backgroundColor=e2e8f0" alt="AI Avatar" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div>
+                        <span class="block font-extrabold text-base leading-none tracking-tight">Trợ Lý AI VIP</span>
+                        <span class="text-blue-100 text-[11px] font-medium flex items-center gap-1.5 mt-1"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Luôn trực tuyến</span>
+                    </div>
                 </div>
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
-                    <div class="flex justify-start">
-                        <div class="max-w-[85%] space-y-2">
-                            <div class="rounded-2xl rounded-tl-sm bg-slate-100 text-slate-800 px-4 py-2.5">
-                                Chào bạn! Tôi có thể giúp bạn tìm sản phẩm. Hãy gõ nhu cầu hoặc từ khóa (ví dụ: điện thoại, áo, giày).
-                            </div>
+                <button type="button" id="chat-close" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors relative z-10" aria-label="Đóng"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50/50 scroll-smooth">
+                <div class="flex justify-start">
+                    <div class="max-w-[85%] space-y-2">
+                        <div class="rounded-2xl rounded-tl-sm bg-white border border-slate-100 shadow-sm text-slate-700 px-4 py-3 text-[14px] leading-relaxed font-medium">
+                            Chào bạn! 👋 Tôi là trợ lý AI. Tôi có thể giúp bạn tìm kiếm sản phẩm. Bạn đang muốn mua gì hôm nay?
                         </div>
                     </div>
                 </div>
-                <div class="p-3 border-t border-slate-100 flex gap-2">
-                    <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." maxlength="2000"
-                           class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-400 focus:border-slate-400 outline-none"/>
-                    <button type="button" id="chat-send" class="rounded-xl bg-slate-800 text-white px-4 py-2.5 text-sm font-medium hover:bg-slate-700 focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 disabled:opacity-50">
-                        Gửi
-                    </button>
-                </div>
             </div>
-            <!-- Toggle button -->
-            <button type="button" id="chat-toggle" class="flex items-center justify-center w-14 h-14 rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-slate-500" aria-label="Mở trợ lý chat">
-                <svg id="chat-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                <svg id="chat-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+
+            <div class="p-3 bg-white border-t border-slate-100 flex gap-2 items-center">
+                <input type="text" id="chat-input" placeholder="Hỏi tôi bất cứ điều gì..." maxlength="2000" class="flex-1 rounded-2xl bg-slate-100 border-transparent px-4 py-3 text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"/>
+                <button type="button" id="chat-send" class="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"><i class="fa-solid fa-paper-plane text-sm -ml-0.5"></i></button>
+            </div>
         </div>
-        <script th:inline="javascript">
-            (function() {
-                var panel = document.getElementById('chat-panel');
-                var toggle = document.getElementById('chat-toggle');
-                var closeBtn = document.getElementById('chat-close');
-                var input = document.getElementById('chat-input');
-                var sendBtn = document.getElementById('chat-send');
-                var messagesEl = document.getElementById('chat-messages');
-                var iconOpen = document.getElementById('chat-icon-open');
-                var iconClose = document.getElementById('chat-icon-close');
 
-                function openPanel() { panel.classList.remove('hidden'); iconOpen.classList.add('hidden'); iconClose.classList.remove('hidden'); }
-                function closePanel() { panel.classList.add('hidden'); iconOpen.classList.remove('hidden'); iconClose.classList.add('hidden'); }
-                toggle.addEventListener('click', function() { if (panel.classList.contains('hidden')) openPanel(); else closePanel(); });
-                closeBtn.addEventListener('click', closePanel);
+        <button type="button" id="chat-toggle" class="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_8px_25px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_30px_rgba(37,99,235,0.5)] focus:outline-none transition-all transform hover:-translate-y-1 cursor-pointer border-[3px] border-white z-50 group" aria-label="Mở trợ lý chat">
+            <i id="chat-toggle-icon" class="fa-solid fa-comment-dots text-2xl drop-shadow-md group-hover:scale-110 transition-transform"></i>
+        </button>
+    </div>
 
-                function priceFmt(n) { return n != null ? new Intl.NumberFormat('vi-VN').format(n) + ' đ' : ''; }
+    <script th:inline="javascript">
+        (function() {
+            var panel = document.getElementById('chat-panel');
+            var toggle = document.getElementById('chat-toggle');
+            var closeBtn = document.getElementById('chat-close');
+            var input = document.getElementById('chat-input');
+            var sendBtn = document.getElementById('chat-send');
+            var messagesEl = document.getElementById('chat-messages');
+            var toggleIcon = document.getElementById('chat-toggle-icon');
 
-                /** Thêm tin nhắn; nếu là bot và có items thì gắn gợi ý sản phẩm ngay dưới bong bóng (có thể bấm). */
-                function appendMessage(text, isUser, items) {
-                    var wrap = document.createElement('div');
-                    wrap.className = 'flex justify-' + (isUser ? 'end' : 'start');
-                    var inner = document.createElement('div');
-                    inner.className = 'max-w-[85%] space-y-2';
-                    var bubble = document.createElement('div');
-                    bubble.className = 'rounded-2xl px-4 py-2.5 text-sm ' + (isUser ? 'rounded-tr-sm bg-slate-800 text-white' : 'rounded-tl-sm bg-slate-100 text-slate-800');
-                    bubble.textContent = text;
-                    inner.appendChild(bubble);
-                    if (!isUser && items && items.length > 0) {
-                        var sugg = document.createElement('div');
-                        sugg.className = 'mt-1 flex flex-col gap-1.5';
-                        var label = document.createElement('p');
-                        label.className = 'text-xs font-medium text-slate-500';
-                        label.textContent = 'Gợi ý sản phẩm (bấm để xem):';
-                        sugg.appendChild(label);
-                        var grid = document.createElement('div');
-                        grid.className = 'grid grid-cols-2 gap-1.5';
-                        items.forEach(function(p) {
-                            var a = document.createElement('a');
-                            a.href = p.productUrl;
-                            a.target = '_blank';
-                            a.rel = 'noopener';
-                            a.className = 'flex gap-2 rounded-lg border border-slate-200 bg-white p-1.5 hover:shadow hover:border-slate-300 transition text-left';
-                            var imgPart = p.thumbnailUrl
-                                ? '<img src="' + p.thumbnailUrl + '" alt="" class="w-10 h-10 rounded object-cover bg-slate-100 flex-shrink-0"/>'
-                                : '<div class="w-10 h-10 rounded bg-slate-200 flex-shrink-0 flex items-center justify-center"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/></svg></div>';
-                            a.innerHTML = imgPart + '<div class="flex-1 min-w-0"><span class="text-xs text-slate-700 line-clamp-2 block">' + (p.name || '') + '</span><span class="text-[11px] text-slate-500">' + priceFmt(p.basePrice) + '</span></div>';
-                            grid.appendChild(a);
-                        });
-                        sugg.appendChild(grid);
-                        inner.appendChild(sugg);
-                    }
-                    wrap.appendChild(inner);
-                    messagesEl.appendChild(wrap);
-                    messagesEl.scrollTop = messagesEl.scrollHeight;
-                }
+            if (!toggle) return; // Bảo vệ JS không bị lỗi nếu thiếu DOM
 
-                function setLoading(loading) {
-                    sendBtn.disabled = loading;
-                    if (loading) {
-                        var dot = document.createElement('div');
-                        dot.className = 'flex justify-start';
-                        dot.innerHTML = '<div class="rounded-2xl rounded-tl-sm bg-slate-100 px-4 py-2 text-slate-500 text-sm">Đang trả lời...</div>';
-                        dot.id = 'chat-loading';
-                        messagesEl.appendChild(dot);
-                        messagesEl.scrollTop = messagesEl.scrollHeight;
-                    } else {
-                        var el = document.getElementById('chat-loading');
-                        if (el) el.remove();
-                    }
-                }
+            // Dùng JS để đổi icon (Chống lỗi CSS đè nhau)
+            function openPanel() {
+                panel.classList.remove('hidden');
+                toggleIcon.classList.remove('fa-comment-dots');
+                toggleIcon.classList.add('fa-chevron-down');
+            }
+            function closePanel() {
+                panel.classList.add('hidden');
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-comment-dots');
+            }
 
-                /** Trả về wrap + bubble (chưa gắn vào DOM) để có thể append chunk vào bubble. */
-                function createAssistantBubble() {
-                    var wrap = document.createElement('div');
-                    wrap.className = 'flex justify-start';
-                    var inner = document.createElement('div');
-                    inner.className = 'max-w-[85%] space-y-2';
-                    var bubble = document.createElement('div');
-                    bubble.className = 'rounded-2xl rounded-tl-sm bg-slate-100 text-slate-800 px-4 py-2.5 text-sm';
-                    bubble.textContent = '';
-                    inner.appendChild(bubble);
-                    wrap.appendChild(inner);
-                    return { wrap: wrap, bubble: bubble, inner: inner };
-                }
+            toggle.addEventListener('click', function() {
+                if (panel.classList.contains('hidden')) openPanel();
+                else closePanel();
+            });
+            closeBtn.addEventListener('click', closePanel);
 
-                function sendMessage() {
-                    var msg = (input.value || '').trim();
-                    if (!msg) return;
-                    input.value = '';
-                    appendMessage(msg, true);
-                    setLoading(true);
+            function priceFmt(n) { return n != null ? new Intl.NumberFormat('vi-VN').format(n) + ' đ' : ''; }
 
-                    var headers = { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' };
-                    var csrfMeta = document.querySelector('meta[name="_csrf"]');
-                    var csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
-                    if (csrfMeta && csrfHeaderMeta) {
-                        headers[csrfHeaderMeta.getAttribute('content')] = csrfMeta.getAttribute('content');
-                    }
-
-                    fetch([[@{/api/chat/stream}]], {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify({ message: msg })
-                    }).then(function(response) {
-                        if (!response.ok) throw new Error('Network error');
-                        var reader = response.body.getReader();
-                        var decoder = new TextDecoder();
-                        var buffer = '';
-                        var currentEvent = '';
-                        var assistantEl = null;
-                        function processLine(line) {
-                            if (line.indexOf('event:') === 0) {
-                                currentEvent = line.replace(/^event:\s*/, '').trim();
-                                return;
-                            }
-                            if (line.indexOf('data:') === 0) {
-                                var data = line.replace(/^data:\s*/, '');
-                                if (currentEvent === 'chunk') {
-                                    if (!assistantEl) {
-                                        setLoading(false);
-                                        assistantEl = createAssistantBubble();
-                                        messagesEl.appendChild(assistantEl.wrap);
-                                    }
-                                    assistantEl.bubble.textContent += data;
-                                    messagesEl.scrollTop = messagesEl.scrollHeight;
-                                } else if (currentEvent === 'done') {
-                                    try {
-                                        var payload = JSON.parse(data);
-                                        var replyText = (payload.reply && payload.reply.trim()) ? payload.reply.trim() : 'Dạ em là trợ lý mua sắm, em có thể giúp anh/chị tìm sản phẩm khi cần ạ.';
-                                        if (!assistantEl) {
-                                            setLoading(false);
-                                            assistantEl = createAssistantBubble();
-                                            assistantEl.bubble.textContent = replyText;
-                                            messagesEl.appendChild(assistantEl.wrap);
-                                        } else {
-                                            assistantEl.bubble.textContent = replyText;
-                                        }
-                                        var list = (payload.productSuggestions && Array.isArray(payload.productSuggestions)) ? payload.productSuggestions : [];
-                                        if (list.length > 0) {
-                                            var sugg = document.createElement('div');
-                                            sugg.className = 'mt-1 flex flex-col gap-1.5';
-                                            var label = document.createElement('p');
-                                            label.className = 'text-xs font-medium text-slate-500';
-                                            label.textContent = 'Gợi ý sản phẩm (bấm để xem):';
-                                            sugg.appendChild(label);
-                                            var grid = document.createElement('div');
-                                            grid.className = 'grid grid-cols-2 gap-1.5';
-                                            list.forEach(function(p) {
-                                                var a = document.createElement('a');
-                                                a.href = p.productUrl;
-                                                a.target = '_blank';
-                                                a.rel = 'noopener';
-                                                a.className = 'flex gap-2 rounded-lg border border-slate-200 bg-white p-1.5 hover:shadow hover:border-slate-300 transition text-left';
-                                                var imgPart = p.thumbnailUrl
-                                                    ? '<img src="' + p.thumbnailUrl + '" alt="" class="w-10 h-10 rounded object-cover bg-slate-100 flex-shrink-0"/>'
-                                                    : '<div class="w-10 h-10 rounded bg-slate-200 flex-shrink-0 flex items-center justify-center"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/></svg></div>';
-                                                a.innerHTML = imgPart + '<div class="flex-1 min-w-0"><span class="text-xs text-slate-700 line-clamp-2 block">' + (p.name || '') + '</span><span class="text-[11px] text-slate-500">' + priceFmt(p.basePrice) + '</span></div>';
-                                                grid.appendChild(a);
-                                            });
-                                            sugg.appendChild(grid);
-                                            assistantEl.inner.appendChild(sugg);
-                                        }
-                                        messagesEl.scrollTop = messagesEl.scrollHeight;
-                                    } catch (e) { /* ignore parse */ }
-                                    setLoading(false);
-                                } else if (currentEvent === 'error') {
-                                    if (!assistantEl) {
-                                        setLoading(false);
-                                        appendMessage(data || 'Đã xảy ra lỗi. Bạn thử lại sau.', false);
-                                    }
-                                    setLoading(false);
-                                }
-                                currentEvent = '';
-                                return;
-                            }
-                        }
-                        function read() {
-                            return reader.read().then(function(result) {
-                                if (result.done) { setLoading(false); return; }
-                                buffer += decoder.decode(result.value, { stream: true });
-                                var parts = buffer.split('\n');
-                                buffer = parts.pop() || '';
-                                for (var i = 0; i < parts.length; i++) {
-                                    var line = parts[i];
-                                    if (line === '') continue;
-                                    processLine(line);
-                                }
-                                return read();
-                            });
-                        }
-                        return read();
-                    }).catch(function() {
-                        setLoading(false);
-                        appendMessage('Không thể kết nối trợ lý. Bạn thử lại sau hoặc dùng ô tìm kiếm trên trang Sản phẩm.', false);
+            function appendMessage(text, isUser, items) {
+                var wrap = document.createElement('div');
+                wrap.className = 'flex justify-' + (isUser ? 'end' : 'start');
+                var inner = document.createElement('div');
+                inner.className = 'max-w-[85%] space-y-2';
+                var bubble = document.createElement('div');
+                bubble.className = 'rounded-2xl px-4 py-3 text-[14px] leading-relaxed font-medium shadow-sm ' + (isUser ? 'rounded-tr-sm bg-blue-600 text-white' : 'rounded-tl-sm bg-white border border-slate-100 text-slate-700');
+                bubble.textContent = text;
+                inner.appendChild(bubble);
+                if (!isUser && items && items.length > 0) {
+                    var sugg = document.createElement('div');
+                    sugg.className = 'mt-2 flex flex-col gap-2 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm';
+                    var label = document.createElement('p');
+                    label.className = 'text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1';
+                    label.textContent = 'Gợi ý từ AI:';
+                    sugg.appendChild(label);
+                    var grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 gap-2';
+                    items.forEach(function(p) {
+                        var a = document.createElement('a');
+                        a.href = p.productUrl; a.target = '_blank'; a.rel = 'noopener';
+                        a.className = 'flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 hover:shadow-md hover:border-blue-300 hover:bg-blue-50 transition-all text-left group';
+                        var imgPart = p.thumbnailUrl ? '<img src="' + p.thumbnailUrl + '" alt="" class="w-12 h-12 rounded-lg object-cover bg-white flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform"/>' : '<div class="w-12 h-12 rounded-lg bg-white shadow-sm flex-shrink-0 flex items-center justify-center"><i class="fa-solid fa-image text-slate-300"></i></div>';
+                        a.innerHTML = imgPart + '<div class="flex-1 min-w-0"><span class="text-[13px] font-extrabold text-slate-800 line-clamp-1 group-hover:text-blue-700 transition-colors">' + (p.name || '') + '</span><span class="text-[13px] font-black text-blue-600">' + priceFmt(p.basePrice) + '</span></div>';
+                        grid.appendChild(a);
                     });
+                    sugg.appendChild(grid); inner.appendChild(sugg);
                 }
+                wrap.appendChild(inner); messagesEl.appendChild(wrap); messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
 
-                sendBtn.addEventListener('click', sendMessage);
+            function setLoading(loading) {
+                sendBtn.disabled = loading;
+                if (loading) {
+                    var dot = document.createElement('div'); dot.className = 'flex justify-start';
+                    dot.innerHTML = '<div class="rounded-2xl rounded-tl-sm bg-white border border-slate-100 shadow-sm px-4 py-3 flex gap-1.5 items-center"><div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div><div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div></div>';
+                    dot.id = 'chat-loading'; messagesEl.appendChild(dot); messagesEl.scrollTop = messagesEl.scrollHeight;
+                } else {
+                    var el = document.getElementById('chat-loading'); if (el) el.remove();
+                }
+            }
 
-                input.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendBtn.click(); });
-            })();
-        </script>
-    </th:block>
+            function createAssistantBubble() {
+                var wrap = document.createElement('div'); wrap.className = 'flex justify-start';
+                var inner = document.createElement('div'); inner.className = 'max-w-[85%] space-y-2';
+                var bubble = document.createElement('div'); bubble.className = 'rounded-2xl rounded-tl-sm bg-white border border-slate-100 shadow-sm text-slate-700 px-4 py-3 text-[14px] leading-relaxed font-medium';
+                bubble.textContent = ''; inner.appendChild(bubble); wrap.appendChild(inner); return { wrap: wrap, bubble: bubble, inner: inner };
+            }
+
+            function sendMessage() {
+                var msg = (input.value || '').trim(); if (!msg) return;
+                input.value = ''; appendMessage(msg, true); setLoading(true);
+                var headers = { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' };
+                var csrfMeta = document.querySelector('meta[name="_csrf"]'); var csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+                if (csrfMeta && csrfHeaderMeta) { headers[csrfHeaderMeta.getAttribute('content')] = csrfMeta.getAttribute('content'); }
+
+                fetch([[@{/api/chat/stream}]], { method: 'POST', headers: headers, body: JSON.stringify({ message: msg }) })
+            .then(function(response) {
+                    if (!response.ok) throw new Error('Network error');
+                    var reader = response.body.getReader(); var decoder = new TextDecoder(); var buffer = ''; var currentEvent = ''; var assistantEl = null;
+                    function processLine(line) {
+                        if (line.indexOf('event:') === 0) { currentEvent = line.replace(/^event:\s*/, '').trim(); return; }
+                        if (line.indexOf('data:') === 0) {
+                            var data = line.replace(/^data:\s*/, '');
+                            if (currentEvent === 'chunk') {
+                                if (!assistantEl) { setLoading(false); assistantEl = createAssistantBubble(); messagesEl.appendChild(assistantEl.wrap); }
+                                assistantEl.bubble.textContent += data; messagesEl.scrollTop = messagesEl.scrollHeight;
+                            } else if (currentEvent === 'done') {
+                                try {
+                                    var payload = JSON.parse(data);
+                                    var replyText = (payload.reply && payload.reply.trim()) ? payload.reply.trim() : 'Dạ em có thể giúp anh/chị tìm sản phẩm ạ.';
+                                    if (!assistantEl) { setLoading(false); assistantEl = createAssistantBubble(); assistantEl.bubble.textContent = replyText; messagesEl.appendChild(assistantEl.wrap); }
+                                    else { assistantEl.bubble.textContent = replyText; }
+                                    var list = (payload.productSuggestions && Array.isArray(payload.productSuggestions)) ? payload.productSuggestions : [];
+                                    if (list.length > 0) {
+                                        var sugg = document.createElement('div'); sugg.className = 'mt-2 flex flex-col gap-2 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm';
+                                        var label = document.createElement('p'); label.className = 'text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1'; label.textContent = 'Gợi ý từ AI:'; sugg.appendChild(label);
+                                        var grid = document.createElement('div'); grid.className = 'grid grid-cols-1 gap-2';
+                                        list.forEach(function(p) {
+                                            var a = document.createElement('a'); a.href = p.productUrl; a.target = '_blank'; a.rel = 'noopener'; a.className = 'flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5 hover:shadow-md hover:border-blue-300 hover:bg-blue-50 transition-all text-left group';
+                                            var imgPart = p.thumbnailUrl ? '<img src="' + p.thumbnailUrl + '" alt="" class="w-12 h-12 rounded-lg object-cover bg-white flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform"/>' : '<div class="w-12 h-12 rounded-lg bg-white shadow-sm flex-shrink-0 flex items-center justify-center"><i class="fa-solid fa-image text-slate-300"></i></div>';
+                                            a.innerHTML = imgPart + '<div class="flex-1 min-w-0"><span class="text-[13px] font-extrabold text-slate-800 line-clamp-1 group-hover:text-blue-700 transition-colors">' + (p.name || '') + '</span><span class="text-[13px] font-black text-blue-600">' + priceFmt(p.basePrice) + '</span></div>';
+                                            grid.appendChild(a);
+                                        });
+                                        sugg.appendChild(grid); assistantEl.inner.appendChild(sugg);
+                                    }
+                                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                                } catch (e) {} setLoading(false);
+                            } else if (currentEvent === 'error') {
+                                if (!assistantEl) { setLoading(false); appendMessage(data || 'Lỗi kết nối. Vui lòng thử lại sau.', false); } setLoading(false);
+                            }
+                            currentEvent = ''; return;
+                        }
+                    }
+                    function read() {
+                        return reader.read().then(function(result) {
+                            if (result.done) { setLoading(false); return; }
+                            buffer += decoder.decode(result.value, { stream: true });
+                            var parts = buffer.split('\n'); buffer = parts.pop() || '';
+                            for (var i = 0; i < parts.length; i++) { if (parts[i] === '') continue; processLine(parts[i]); }
+                            return read();
+                        });
+                    }
+                    return read();
+                }).catch(function() { setLoading(false); appendMessage('Không thể kết nối trợ lý. Bạn thử lại sau.', false); });
+            }
+            sendBtn.addEventListener('click', sendMessage);
+            input.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendBtn.click(); });
+        })();
+    </script>
+</th:block>
 </body>
 </html>

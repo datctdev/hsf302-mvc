@@ -4,47 +4,83 @@
     <title>Tổng quan của tôi - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-2xl font-bold text-base-content mb-6">Tổng quan của tôi</h1>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
-                    <div class="card-body py-5">
-                        <p class="text-sm font-medium text-base-content/60">Tổng số đơn</p>
-                        <p class="text-2xl font-bold" th:text="${totalOrders != null ? totalOrders : 0}">0</p>
-                    </div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-8 sm:p-12 mb-8 text-white shadow-[0_10px_40px_rgba(37,99,235,0.2)] relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4"></div>
+            <div class="relative z-10">
+                <h1 class="text-4xl font-black mb-3 tracking-tight">Xin chào, <span th:text="${currentUser != null ? (currentUser.fullName != null ? currentUser.fullName : 'Bạn') : 'Bạn'}">Bạn</span>! 👋</h1>
+                <p class="text-blue-100 font-medium text-lg">Chào mừng trở lại bảng điều khiển cá nhân. Chúc bạn một ngày mua sắm vui vẻ!</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-6 transition-transform hover:-translate-y-1">
+                <div class="w-20 h-20 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl border border-blue-100 shrink-0">
+                    <i class="fa-solid fa-box-open"></i>
                 </div>
-                <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-secondary">
-                    <div class="card-body py-5">
-                        <p class="text-sm font-medium text-base-content/60">Tổng chi tiêu</p>
-                        <p class="text-2xl font-bold" th:text="${totalSpent != null ? (#numbers.formatDecimal(totalSpent, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</p>
-                        <p class="text-xs text-base-content/60">Đơn đã xác nhận → đã giao</p>
-                    </div>
+                <div>
+                    <p class="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-1">Tổng Số Đơn Hàng</p>
+                    <p class="text-4xl font-black text-slate-800" th:text="${totalOrders != null ? totalOrders : 0}">0</p>
                 </div>
             </div>
 
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-3">Đơn gần đây</h2>
-                <div th:if="${recentOrders == null or recentOrders.empty}" class="text-base-content/60 py-4">Chưa có đơn hàng nào.</div>
-                <div th:if="${recentOrders != null and !recentOrders.empty}" class="card bg-base-100 border border-base-200 shadow-sm">
-                    <div class="divide-y divide-base-200">
-                        <div th:each="order : ${recentOrders}" class="flex flex-wrap items-center justify-between gap-3 py-4 px-4">
-                            <a th:href="@{'/orders/' + ${order.id}}" class="flex-1 min-w-0 link link-hover font-medium">
-                                <strong th:text="${order.orderNumber != null ? order.orderNumber : ('Đơn ' + order.id)}">#ORDER</strong>
-                                <span th:if="${order.createdAt != null}" th:text="' – ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}" class="text-base-content/60 text-sm"></span>
-                                <span th:if="${order.shopName != null}" th:text="' – ' + ${order.shopName}" class="text-base-content/60 text-sm"></span>
-                            </a>
-                            <span class="badge badge-ghost" th:text="${order.status != null ? order.status.name() : ''}">Status</span>
-                            <span th:if="${order.total != null}" class="font-semibold" th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' đ'"></span>
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-6 transition-transform hover:-translate-y-1">
+                <div class="w-20 h-20 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl border border-emerald-100 shrink-0">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-1">Tổng Chi Tiêu</p>
+                    <p class="text-4xl font-black text-slate-800 tracking-tight" th:text="${totalSpent != null ? (#numbers.formatDecimal(totalSpent, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</p>
+                    <p class="text-xs font-bold text-emerald-600 mt-2 bg-emerald-50 px-2 py-1 rounded inline-flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Đơn đã giao thành công</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+            <div class="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h2 class="text-xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-clock-rotate-left"></i></div> Lịch Sử Gần Đây
+                </h2>
+                <a th:href="@{/orders}" class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-sm font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">Xem tất cả</a>
+            </div>
+
+            <div th:if="${recentOrders == null or recentOrders.empty}" class="py-20 px-4 text-center flex flex-col items-center">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-receipt text-4xl text-slate-300"></i>
+                </div>
+                <p class="text-slate-600 font-bold text-lg">Bạn chưa có đơn hàng nào.</p>
+                <p class="text-slate-400 font-medium mt-1">Khám phá các sản phẩm hot và đặt hàng ngay.</p>
+            </div>
+
+            <div th:if="${recentOrders != null and !recentOrders.empty}" class="divide-y divide-slate-100">
+                <div th:each="order : ${recentOrders}" class="p-6 hover:bg-blue-50/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0 border border-slate-200">
+                            <i class="fa-solid fa-bag-shopping text-lg"></i>
+                        </div>
+                        <div>
+                            <a th:href="@{'/orders/' + ${order.id}}" class="text-lg font-extrabold text-slate-800 hover:text-blue-600 transition-colors tracking-tight block" th:text="${order.orderNumber != null ? order.orderNumber : ('Đơn ' + order.id)}">#ORDER</a>
+                            <div class="text-xs font-bold text-slate-500 mt-1 flex flex-wrap items-center gap-3">
+                                <span th:if="${order.createdAt != null}" class="bg-slate-100 px-2 py-1 rounded"><i class="fa-regular fa-clock mr-1"></i> <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span></span>
+                                <span th:if="${order.shopName != null}" class="bg-blue-50 text-blue-700 px-2 py-1 rounded"><i class="fa-solid fa-shop mr-1"></i> <span th:text="${order.shopName}"></span></span>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-actions p-4 border-t border-base-200">
-                        <a th:href="@{/orders}" class="btn btn-outline btn-primary btn-sm">Xem tất cả đơn hàng</a>
+                    <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
+                            <span class="px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider border shadow-sm"
+                                  th:classappend="${order.status != null and order.status.name() == 'COMPLETED'} ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-700 border-slate-200'"
+                                  th:text="${order.status != null ? order.status.name() : ''}">Status</span>
+                        <span th:if="${order.total != null}" class="font-black text-slate-900 text-lg" th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' đ'"></span>
                     </div>
                 </div>
             </div>
         </div>
-    </th:block>
+
+    </div>
+</th:block>
 </body>
 </html>

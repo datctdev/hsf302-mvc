@@ -4,38 +4,60 @@
     <title>Giới thiệu - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="max-w-3xl mx-auto">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-slate-900">Giới thiệu</h1>
-                <p class="text-slate-500 mt-1">Về nền tảng E-commerce HSF</p>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+        <div class="text-center mb-16">
+            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-blue-100">
+                <i class="fa-solid fa-store text-3xl"></i>
             </div>
-
-            <section class="mb-8">
-                <h2 class="text-xl font-semibold text-slate-900 mb-3">Về nền tảng</h2>
-                <p class="text-slate-600 leading-relaxed">E-commerce HSF là nền tảng mua sắm trực tuyến kết nối người mua và cửa hàng, hỗ trợ thanh toán VNPay, vận chuyển qua đối tác và quản lý đơn hàng thuận tiện.</p>
-                <p class="text-slate-600 leading-relaxed mt-3">Chúng tôi hướng tới trải nghiệm mua sắm minh bạch, an toàn và nhanh chóng cho cả người mua và người bán.</p>
-            </section>
-
-            <section class="mb-8">
-                <h2 class="text-xl font-semibold text-slate-900 mb-3">Quy chế & Chính sách</h2>
-                <ul class="list-disc list-inside text-slate-600 space-y-2">
-                    <li>Người mua và người bán tuân thủ pháp luật Việt Nam và nội quy nền tảng.</li>
-                    <li>Sản phẩm không được vi phạm bản quyền, hàng cấm hoặc hàng nhái.</li>
-                    <li>Giao dịch được bảo vệ qua thanh toán trung gian và chính sách hoàn trả theo quy định.</li>
-                    <li>Nền tảng thu một phần hoa hồng theo cấu hình từ đơn hàng đã xác nhận.</li>
-                </ul>
-            </section>
-
-            <section>
-                <h2 class="text-xl font-semibold text-slate-900 mb-3">Liên hệ</h2>
-                <p class="text-slate-600 mb-3">Mọi góp ý hoặc khiếu nại, vui lòng liên hệ:</p>
-                <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                    <p class="text-slate-700"><strong>E-mail:</strong> support@hsf-ecommerce.example</p>
-                    <p class="text-slate-600 text-sm mt-1">Trang quản trị: dành cho Admin cấu hình hoa hồng, quản lý đơn và người dùng.</p>
-                </div>
-            </section>
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Về E-Market<span class="text-blue-600">VIP</span></h1>
+            <p class="text-lg text-slate-500 font-medium max-w-2xl mx-auto">Nền tảng thương mại điện tử đột phá, kết nối hàng triệu người mua và người bán với trải nghiệm an toàn, minh bạch và thông minh.</p>
         </div>
-    </th:block>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+            <div class="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-transform hover:-translate-y-1">
+                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-shield-halved text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-slate-900 mb-3">Mua Sắm An Toàn</h2>
+                <p class="text-slate-500 font-medium leading-relaxed">Giao dịch được bảo vệ qua hệ thống thanh toán trung gian chuẩn quốc tế. Chính sách hoàn trả minh bạch, rõ ràng bảo vệ quyền lợi người tiêu dùng tuyệt đối.</p>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-transform hover:-translate-y-1">
+                <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-handshake text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-slate-900 mb-3">Hỗ Trợ Đối Tác</h2>
+                <p class="text-slate-500 font-medium leading-relaxed">Cung cấp công cụ quản lý bán hàng mạnh mẽ, hệ thống thống kê trực quan và hỗ trợ xử lý đơn hàng tự động hóa giúp chủ shop tăng trưởng doanh thu.</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-10 sm:p-12 text-white relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+            <div class="relative z-10">
+                <h2 class="text-2xl font-extrabold mb-4">Bạn cần hỗ trợ?</h2>
+                <p class="text-slate-300 font-medium mb-8 max-w-lg leading-relaxed">Đội ngũ chăm sóc khách hàng của chúng tôi luôn sẵn sàng lắng nghe và giải quyết mọi vấn đề của bạn 24/7.</p>
+                <div class="flex flex-col sm:flex-row gap-6">
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-envelope text-lg text-blue-300"></i></div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Email hỗ trợ</p>
+                            <p class="font-bold text-lg">support@emarket.vip</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-phone text-lg text-emerald-300"></i></div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Hotline CSKH</p>
+                            <p class="font-bold text-lg">1900 1234 56</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</th:block>
 </body>
 </html>

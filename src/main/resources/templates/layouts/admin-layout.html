@@ -20,5 +20,6 @@
     <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/admin.js}"></script>
     <th:block th:replace="~{::scripts}"></th:block>
+    <th:block th:replace="~{ :: scripts} ?: ~{}"></th:block>
 </body>
 </html>

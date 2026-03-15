@@ -1,34 +1,56 @@
-<!-- Navigation Fragment - Home/General Pages -->
-<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-home" class="bg-white border-b border-slate-200 shadow-sm">
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="nav-home" class="sticky top-0 z-50 bg-white/85 backdrop-blur-lg border-b border-slate-200/80 shadow-[0_4px_30px_rgb(0,0,0,0.03)] transition-all duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-12 gap-6">
-            <div class="flex items-center gap-6">
-                <a href="/" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Trang chủ</a>
-                <a href="/products" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Sản phẩm</a>
-                <a href="/cart" class="flex items-center gap-1.5 no-underline text-slate-700 hover:text-primary-600 font-medium transition">
-                    Giỏ hàng
-                    <span id="cart-badge">
-                        <span th:if="${cartItemCount != null and cartItemCount > 0}"
-                              class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-medium"
-                              th:text="${cartItemCount}"></span>
+        <div class="flex items-center justify-between h-16 gap-6">
+
+            <div class="shrink-0 flex items-center gap-2.5 cursor-pointer" onclick="window.location.href='/'">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl flex items-center justify-center text-xl shadow-md border border-blue-500/30">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <span class="font-extrabold text-xl tracking-tight text-slate-900 hidden sm:block">E-Market<span class="text-blue-600">VIP</span></span>
+            </div>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/" class="no-underline text-slate-600 hover:text-blue-600 font-bold transition-colors">Trang chủ</a>
+                <a href="/products" class="no-underline text-slate-600 hover:text-blue-600 font-bold transition-colors">Khám phá</a>
+                <a href="/about" class="no-underline text-slate-600 hover:text-blue-600 font-bold transition-colors">Giới thiệu</a>
+
+                <a href="/cart" class="flex items-center gap-2 no-underline text-slate-600 hover:text-blue-600 font-bold transition-all group relative">
+                    <i class="fa-solid fa-cart-shopping text-lg group-hover:scale-110 transition-transform"></i>
+                    <span>Giỏ hàng</span>
+                    <span id="cart-badge" class="absolute -top-2.5 -right-3.5 flex h-5 w-5">
+                        <span th:if="${cartItemCount != null and cartItemCount > 0}" class="relative inline-flex items-center justify-center w-full h-full rounded-full bg-rose-500 text-white text-[10px] font-black shadow-sm ring-2 ring-white transform group-hover:-translate-y-0.5 transition-transform" th:text="${cartItemCount}"></span>
                     </span>
                 </a>
-                <a href="/about" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Giới thiệu</a>
             </div>
-            <div th:if="${currentUser == null}" class="flex items-center gap-3">
-                <a href="/login" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Đăng nhập</a>
-                <a href="/register" class="no-underline px-3 py-1.5 text-sm font-medium rounded bg-primary-500 text-white hover:bg-primary-600 transition">Đăng ký</a>
+
+            <div class="flex items-center gap-3">
+                <th:block th:if="${currentUser == null}">
+                    <a href="/login" class="no-underline text-slate-600 hover:text-blue-700 font-bold px-3 py-2 transition-colors">Đăng nhập</a>
+                    <a href="/register" class="no-underline px-5 py-2.5 text-sm font-bold rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-[0_4px_12px_rgb(15,23,42,0.2)] transition-all transform hover:-translate-y-0.5">Đăng ký ngay</a>
+                </th:block>
+
+                <th:block th:if="${currentUser != null}">
+                    <div class="flex items-center gap-3 sm:gap-4 bg-slate-50 border border-slate-100 rounded-full p-1.5 pr-4 shadow-inner transition-all hover:bg-white hover:shadow-md">
+                        <a href="/profile" class="flex items-center gap-2 no-underline group">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                                 th:style="${currentUser.avatarUrl != null} ? 'background-image: url(' + ${currentUser.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
+                                <span th:if="${currentUser.avatarUrl == null}" th:text="${#strings.substring(currentUser.fullName != null ? currentUser.fullName : currentUser.email, 0, 1).toUpperCase()}">U</span>
+                            </div>
+                            <span class="text-slate-700 group-hover:text-blue-600 text-sm font-bold truncate max-w-[100px] sm:max-w-[150px] transition-colors" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
+                        </a>
+
+                        <div class="w-px h-5 bg-slate-200"></div>
+
+                        <a href="/my-summary" class="text-slate-400 hover:text-blue-600 transition-colors" title="Tổng quan"><i class="fa-solid fa-chart-pie"></i></a>
+                        <a href="/orders" class="text-slate-400 hover:text-blue-600 transition-colors" title="Đơn hàng của tôi"><i class="fa-solid fa-box"></i></a>
+                        <form th:action="@{/logout}" method="post" class="m-0 flex items-center">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" title="Đăng xuất"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                        </form>
+                    </div>
+                </th:block>
             </div>
-            <div th:if="${currentUser != null}" class="flex items-center gap-4">
-                <a href="/my-summary" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Tổng quan</a>
-                <a href="/orders" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Đơn hàng</a>
-                <a href="/profile" class="no-underline text-slate-700 hover:text-primary-600 font-medium transition">Hồ sơ</a>
-                <span class="text-slate-600 text-sm" th:text="${currentUser.fullName != null ? currentUser.fullName : currentUser.email}">User</span>
-                <form th:action="@{/logout}" method="post" class="inline">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="text-slate-600 hover:text-red-600 text-sm font-medium transition">Đăng xuất</button>
-                </form>
-            </div>
+
         </div>
     </div>
 </nav>
