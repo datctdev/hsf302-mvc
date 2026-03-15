@@ -5,6 +5,8 @@ import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.product.dto.request.CreateProductRequest;
 import com.hsf.e_comerce.product.dto.request.UpdateProductRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
 import com.hsf.e_comerce.shop.entity.Shop;
@@ -18,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +32,7 @@ public class SellerProductMvcController {
 
     private final ProductService productService;
     private final ShopService shopService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     public String getAllProducts(
@@ -135,6 +139,27 @@ public class SellerProductMvcController {
             }
             model.addAttribute("categories", productService.findAllCategory());
             model.addAttribute("product", product);
+            // JSON for JS: simple maps so Jackson produces id/imageUrl/isThumbnail/displayOrder (no LocalDateTime issues)
+            List<?> imagesForJson = product.getImages() != null ? product.getImages().stream()
+                    .map(img -> java.util.Map.of(
+                            "id", img.getId() != null ? img.getId().toString() : null,
+                            "imageUrl", img.getImageUrl() != null ? img.getImageUrl() : "",
+                            "isThumbnail", Boolean.TRUE.equals(img.getIsThumbnail()),
+                            "displayOrder", img.getDisplayOrder() != null ? img.getDisplayOrder() : 0))
+                    .toList() : Collections.emptyList();
+            List<?> variantsForJson = product.getVariants() != null ? product.getVariants().stream()
+                    .map(v -> java.util.Map.<String, Object>of(
+                            "id", v.getId() != null ? v.getId().toString() : null,
+                            "name", v.getName() != null ? v.getName() : "",
+                            "value", v.getValue() != null ? v.getValue() : "",
+                            "priceModifier", v.getPriceModifier() != null ? v.getPriceModifier() : java.math.BigDecimal.ZERO,
+                            "stockQuantity", v.getStockQuantity() != null ? v.getStockQuantity() : 0,
+                            "sku", v.getSku() != null ? v.getSku() : ""))
+                    .toList() : Collections.emptyList();
+            String productImagesJson = escapeJsonForScript(toJson(imagesForJson));
+            String productVariantsJson = escapeJsonForScript(toJson(variantsForJson));
+            model.addAttribute("productImagesJson", productImagesJson);
+            model.addAttribute("productVariantsJson", productVariantsJson);
             return "seller/products-edit";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -188,5 +213,18 @@ public class SellerProductMvcController {
 
     private UUID getShopIdByUser(User user) {
         return shopService.getShopByUserId(user.getId()).getId();
+    }
+
+    private String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            return "[]";
+        }
+    }
+
+    /** Escape so that JSON can be safely embedded inside a <script> tag. */
+    private String escapeJsonForScript(String json) {
+        return json.replace("</", "<\\/");
     }
 }

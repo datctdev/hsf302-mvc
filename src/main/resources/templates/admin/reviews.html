@@ -4,168 +4,321 @@
     <title>Quản Lý Đánh Giá - Admin</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <h1 class="text-xl font-bold text-slate-900 mb-6">Quản Lý Đánh Giá</h1>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        <div class="flex border-b border-slate-200 mb-6">
-            <a th:href="@{/admin/reviews(tab='list')}" class="px-4 py-3 font-medium border-b-2 -mb-px no-underline transition" th:classappend="${currentTab == 'list'} ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-600 hover:text-primary-600'">Tất cả đánh giá</a>
-            <a th:href="@{/admin/reviews(tab='reports')}" class="px-4 py-3 font-medium border-b-2 -mb-px no-underline transition flex items-center gap-2" th:classappend="${currentTab == 'reports'} ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-600 hover:text-primary-600'">
-                Báo cáo vi phạm
-                <span th:if="${pendingReportCount > 0}" class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full" th:text="${pendingReportCount}">0</span>
-            </a>
+    <style>
+        :root {
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-light: #f1f5f9;
+        }
+
+        .page-wrapper { background-color: #f8fafc; padding: 1.5rem; border-radius: 12px; min-height: calc(100vh - 100px); }
+
+        .saas-card {
+            background: #ffffff; border-radius: 1.25rem; border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow); overflow: hidden; display: flex; flex-direction: column;
+            margin-bottom: 1.5rem;
+        }
+
+        .icon-box { width: 3rem; height: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); flex-shrink: 0;}
+        .icon-amber { background-color: #fffbeb; color: #f59e0b; border: 1px solid #fef3c7; }
+
+        /* Tabs Navigation */
+        .tabs-container { display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;}
+        .tab-item { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 700; text-decoration: none; transition: all 0.2s; color: #64748b; background: transparent; display: flex; align-items: center; gap: 0.5rem;}
+        .tab-item:hover { background: #f1f5f9; color: #1e293b; }
+        .tab-active { background: #eff6ff !important; color: #2563eb !important; pointer-events: none; }
+        .badge-count { background: #ef4444; color: white; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 999px; font-weight: 800; line-height: 1; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);}
+
+        /* Table Styles */
+        .table-wrapper { overflow-x: auto; width: 100%; }
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .modern-table th { background: #f8fafc; color: #64748b; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 1.25rem; text-align: left; border-bottom: 2px solid #f1f5f9; white-space: nowrap;}
+
+        /* ÉP CHUẨN VERTICAL-ALIGN: TOP ĐỂ CHỐNG LỆCH HÀNG */
+        .modern-table td { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.875rem; vertical-align: top;}
+
+        .modern-table tr:hover td { background: #f8fafc; }
+        .modern-table tr:last-child td { border-bottom: none; }
+
+        /* Badges & Buttons */
+        .status-badge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap;}
+        .badge-visible { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .badge-hidden { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+        .badge-disabled { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+
+        .btn-action { padding: 0.4rem 0.875rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; outline: none; border: 1px solid transparent; text-decoration: none; white-space: nowrap;}
+        .btn-primary { background: #2563eb; color: white; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline-slate { background: white; color: #64748b; border-color: #cbd5e1; }
+        .btn-outline-slate:hover { background: #f8fafc; border-color: #94a3b8; color: #1e293b;}
+        .btn-outline-danger { background: white; color: #e11d48; border-color: #fecdd3; }
+        .btn-outline-danger:hover { background: #fff1f2; border-color: #fda4af; }
+        .btn-outline-success { background: white; color: #059669; border-color: #a7f3d0; }
+        .btn-outline-success:hover { background: #ecfdf5; border-color: #6ee7b7; }
+
+        .btn-danger-solid { background: #e11d48; color: white; box-shadow: 0 2px 4px rgba(225,29,72,0.3); }
+        .btn-danger-solid:hover { background: #be123c; transform: translateY(-1px);}
+
+        /* Thumbnails */
+        .product-img { width: 3.5rem; height: 3.5rem; border-radius: 0.5rem; object-fit: cover; border: 1px solid #e2e8f0; flex-shrink: 0; background: #f8fafc;}
+        .review-img { width: 4rem; height: 4rem; border-radius: 0.5rem; object-fit: cover; border: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.2s;}
+        .review-img:hover { transform: scale(1.05); }
+        .user-avatar { width: 2.25rem; height: 2.25rem; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; flex-shrink: 0; object-fit: cover;}
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 8px; }
+    </style>
+
+    <div class="page-wrapper">
+
+        <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-700 font-medium shadow-sm">
+            <i class="fa-solid fa-circle-check text-xl"></i> <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-3 text-rose-700 font-medium shadow-sm">
+            <i class="fa-solid fa-circle-exclamation text-xl"></i> <span th:text="${error}"></span>
         </div>
 
-        <div th:if="${currentTab == 'list'}">
-            <form method="get" th:action="@{/admin/reviews}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end p-4 rounded-xl bg-white border border-slate-200 mb-6">
-                <input type="hidden" name="tab" value="list">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Gian hàng (Shop)</label>
-                    <select name="shopId" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
-                        <option value="">Tất cả Shop</option>
-                        <option th:each="shop : ${shops}" th:value="${shop.id}" th:text="${shop.name}" th:selected="${currentShopId != null and currentShopId.equals(shop.id)}"></option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Tìm kiếm</label>
-                    <input type="text" name="keyword" th:value="${keyword}" placeholder="Email user, tên sản phẩm..." class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Số sao</label>
-                    <select name="rating" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
-                        <option value="">Tất cả</option>
-                        <option value="5" th:selected="${currentRating == 5}">⭐⭐⭐⭐⭐</option>
-                        <option value="4" th:selected="${currentRating == 4}">⭐⭐⭐⭐</option>
-                        <option value="3" th:selected="${currentRating == 3}">⭐⭐⭐</option>
-                        <option value="2" th:selected="${currentRating == 2}">⭐⭐</option>
-                        <option value="1" th:selected="${currentRating == 1}">⭐</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
-                    <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
-                        <option value="">Tất cả</option>
-                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${currentStatus == st}"></option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Lọc</button>
-                    <a th:href="@{/admin/reviews(tab='list')}" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 no-underline">Reset</a>
-                </div>
-            </form>
+        <div class="saas-card" style="overflow: visible;">
+            <div style="padding: 1.5rem;">
 
-            <div class="rounded-xl border border-slate-200 overflow-hidden bg-white">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-slate-100">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-64">Sản phẩm</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-52">Người đánh giá</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Nội dung đánh giá</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-28">Trạng thái</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-24">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${reviewPage.empty}">
-                                <td colspan="5" class="px-4 py-8 text-center text-slate-500">Không tìm thấy đánh giá nào.</td>
-                            </tr>
-                            <tr th:each="review : ${reviewPage.content}" class="border-t border-slate-200 hover:bg-slate-50 align-top">
-                                <td class="px-4 py-3">
-                                    <div class="flex gap-2 max-w-[280px]">
-                                        <img th:if="${review.product.images.size() > 0}" th:src="${review.product.images.iterator().next().imageUrl}" class="w-12 h-12 rounded object-cover border border-slate-200 flex-shrink-0">
-                                        <div th:unless="${review.product.images.size() > 0}" class="w-12 h-12 rounded bg-slate-100 flex-shrink-0"></div>
-                                        <div class="min-w-0">
-                                            <a th:href="@{'/products/' + ${review.product.id}}" target="_blank" class="text-sm font-medium text-primary-600 hover:underline line-clamp-2 no-underline" th:text="${review.product.name}"></a>
-                                            <div class="text-xs text-slate-500">Shop: <span th:text="${review.product.shop.name}"></span></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2">
-                                        <img th:if="${review.user.avatarUrl}" th:src="${review.user.avatarUrl}" class="w-8 h-8 rounded-full object-cover bg-slate-100">
-                                        <div th:unless="${review.user.avatarUrl}" class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold" th:text="${#strings.substring(review.user.email, 0, 1).toUpperCase()}">U</div>
-                                        <div>
-                                            <div class="text-sm font-medium text-slate-900" th:text="${review.user.fullName ?: 'No Name'}"></div>
-                                            <div class="text-xs text-slate-500" th:text="${review.user.email}"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="text-amber-500 text-sm"><span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating ? '★' : '☆'}"></span></div>
-                                    <div class="text-sm text-slate-600 mt-0.5" th:text="${review.comment}"></div>
-                                    <div th:if="${not #lists.isEmpty(review.images)}" class="flex gap-1 mt-2 flex-wrap">
-                                        <img th:each="img : ${review.images}" th:src="${img.imageUrl}" class="w-14 h-14 rounded object-cover border border-slate-200 cursor-pointer hover:opacity-90" onclick="window.open(this.src, '_blank')">
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium" th:classappend="${review.status.name() == 'ACTIVE'} ? 'bg-green-100 text-green-800' : (${review.status.name() == 'HIDDEN'} ? 'bg-slate-100 text-slate-600' : 'bg-red-100 text-red-800')" th:text="${review.status}"></span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <form th:action="@{'/admin/reviews/' + ${review.id} + '/toggle-status'}" method="post" class="inline">
-                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                        <button th:if="${review.status.name() == 'ACTIVE'}" type="submit" class="text-xs px-2 py-1 rounded border border-red-500 text-red-600 hover:bg-red-50" onclick="return confirm('Ẩn đánh giá này?')">Ẩn</button>
-                                        <button th:if="${review.status.name() == 'HIDDEN' or review.status.name() == 'DISABLED'}" type="submit" class="text-xs px-2 py-1 rounded border border-green-500 text-green-600 hover:bg-green-50">Hiện</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="icon-box icon-amber"><i class="fa-solid fa-star-half-stroke"></i></div>
+                    <div>
+                        <h1 style="font-size: 1.5rem; font-weight: 900; color: #1e293b; margin: 0;">Quản Lý Đánh Giá</h1>
+                        <p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.875rem;">Kiểm duyệt nội dung, theo dõi phản hồi và xử lý vi phạm.</p>
+                    </div>
                 </div>
-                <div th:if="${reviewPage.totalPages > 1}" class="flex items-center gap-2 px-4 py-3 border-t border-slate-200 bg-slate-50">
-                    <a th:if="${reviewPage.hasPrevious()}" th:href="@{/admin/reviews(tab='list', keyword=${keyword}, rating=${currentRating}, status=${currentStatus}, shopId=${currentShopId}, page=${reviewPage.number - 1})}" class="px-3 py-1.5 rounded border border-slate-300 text-sm font-medium hover:bg-slate-100 no-underline text-slate-700">Trước</a>
-                    <span class="text-sm text-slate-600" th:text="${reviewPage.number + 1}">1</span>
-                    <a th:if="${reviewPage.hasNext()}" th:href="@{/admin/reviews(tab='list', keyword=${keyword}, rating=${currentRating}, status=${currentStatus}, shopId=${currentShopId}, page=${reviewPage.number + 1})}" class="px-3 py-1.5 rounded border border-slate-300 text-sm font-medium hover:bg-slate-100 no-underline text-slate-700">Sau</a>
+
+                <div class="tabs-container">
+                    <a th:href="@{/admin/reviews(tab='list')}" class="tab-item" th:classappend="${currentTab == 'list'} ? 'tab-active'">
+                        <i class="fa-regular fa-comments"></i> Tất cả đánh giá
+                    </a>
+                    <a th:href="@{/admin/reviews(tab='reports')}" class="tab-item" th:classappend="${currentTab == 'reports'} ? 'tab-active'">
+                        <i class="fa-solid fa-shield-halved text-rose-500"></i> Báo cáo vi phạm
+                        <span th:if="${pendingReportCount != null and pendingReportCount > 0}" class="badge-count" th:text="${pendingReportCount}">0</span>
+                    </a>
+                </div>
+
+                <form th:if="${currentTab == 'list'}" method="get" th:action="@{/admin/reviews}" style="margin: 1.5rem 0 0 0; display: flex; flex-wrap: wrap; gap: 1rem; background: #f8fafc; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; align-items: flex-end;">
+                    <input type="hidden" name="tab" value="list">
+
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 200px;">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Gian hàng (Shop)</label>
+                        <select name="shopId" style="width: 100%; border-radius: 0.5rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; outline: none;">
+                            <option value="">Tất cả Shop</option>
+                            <option th:each="shop : ${shops}" th:value="${shop.id}" th:text="${shop.name}" th:selected="${currentShopId != null and currentShopId.equals(shop.id)}"></option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 200px;">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Tìm kiếm</label>
+                        <input type="text" name="keyword" th:value="${keyword}" placeholder="Email user, tên sản phẩm..." style="width: 100%; border-radius: 0.5rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #1e293b; outline: none;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 140px;">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Số Sao</label>
+                        <select name="rating" style="width: 100%; border-radius: 0.5rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; outline: none;">
+                            <option value="">Tất cả</option>
+                            <option value="5" th:selected="${currentRating == 5}">5 Sao</option>
+                            <option value="4" th:selected="${currentRating == 4}">4 Sao</option>
+                            <option value="3" th:selected="${currentRating == 3}">3 Sao</option>
+                            <option value="2" th:selected="${currentRating == 2}">2 Sao</option>
+                            <option value="1" th:selected="${currentRating == 1}">1 Sao</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 140px;">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Trạng thái</label>
+                        <select name="status" style="width: 100%; border-radius: 0.5rem; border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; outline: none;">
+                            <option value="">Tất cả</option>
+                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${currentStatus == st}"></option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn-action btn-primary"><i class="fa-solid fa-filter"></i> Lọc</button>
+                        <a th:href="@{/admin/reviews(tab='list')}" class="btn-action btn-outline-slate"><i class="fa-solid fa-rotate-right"></i> Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${currentTab == 'list'}" class="saas-card" style="margin-bottom: 0;">
+            <div class="table-wrapper custom-scroll">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 25%;">Sản phẩm</th>
+                        <th style="width: 20%;">Người đánh giá</th>
+                        <th style="width: 35%;">Nội dung đánh giá</th>
+                        <th>Trạng thái</th>
+                        <th style="text-align: center;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${reviewPage.empty}">
+                        <td colspan="5" style="text-align: center; padding: 5rem 1rem;">
+                            <div style="color: #cbd5e1; font-size: 3rem; margin-bottom: 1rem;"><i class="fa-regular fa-comment-slash"></i></div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #334155; margin: 0 0 0.5rem 0;">Không tìm thấy đánh giá</h3>
+                            <p style="font-weight: 500; color: #64748b; margin:0;">Hãy thử điều chỉnh lại bộ lọc tìm kiếm.</p>
+                        </td>
+                    </tr>
+
+                    <tr th:each="review : ${reviewPage.content}">
+                        <td>
+                            <div style="display: flex; gap: 0.75rem;">
+                                <img th:if="${review.product.images.size() > 0}" th:src="${review.product.images.iterator().next().imageUrl}" class="product-img">
+                                <div th:unless="${review.product.images.size() > 0}" class="product-img flex items-center justify-center text-slate-300"><i class="fa-solid fa-image"></i></div>
+                                <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                                    <a th:href="@{'/products/' + ${review.product.id}}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: none; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:text="${review.product.name}"></a>
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 0.25rem;"><i class="fa-solid fa-shop"></i> <span th:text="${review.product.shop.name}"></span></span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <img th:if="${review.user.avatarUrl}" th:src="${review.user.avatarUrl}" class="user-avatar">
+                                <div th:unless="${review.user.avatarUrl}" class="user-avatar" th:text="${#strings.substring(review.user.email, 0, 1).toUpperCase()}">U</div>
+                                <div style="min-width: 0;">
+                                    <div style="font-weight: 800; color: #1e293b; margin-bottom: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" th:text="${review.user.fullName ?: 'No Name'}"></div>
+                                    <div style="font-size: 0.75rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" th:text="${review.user.email}"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="display: flex; flex-direction: column;">
+                                <div style="color: #fbbf24; font-size: 0.85rem; margin-bottom: 0.35rem; display: flex; gap: 0.1rem;">
+                                    <i th:each="i : ${#numbers.sequence(1, 5)}" class="fa-star" th:classappend="${i <= review.rating} ? 'fa-solid' : 'fa-regular text-slate-300'"></i>
+                                </div>
+                                <p style="margin: 0; color: #334155; line-height: 1.5; font-weight: 500;" th:text="${review.comment}"></p>
+                                <div th:if="${not #lists.isEmpty(review.images)}" style="display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                                    <img th:each="img : ${review.images}" th:src="${img.imageUrl}" class="review-img" onclick="window.open(this.src, '_blank')" title="Xem ảnh lớn">
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                                    <span class="status-badge" th:classappend="${review.status.name() == 'ACTIVE'} ? 'badge-active' : (${review.status.name() == 'HIDDEN'} ? 'badge-hidden' : 'badge-disabled')">
+                                        <i th:class="${review.status.name() == 'ACTIVE'} ? 'fa-solid fa-eye' : (${review.status.name() == 'HIDDEN'} ? 'fa-solid fa-eye-slash' : 'fa-solid fa-ban')"></i>
+                                        <span th:text="${review.status}"></span>
+                                    </span>
+                        </td>
+
+                        <td style="text-align: center;">
+                            <form th:action="@{'/admin/reviews/' + ${review.id} + '/toggle-status'}" method="post" style="margin: 0; display: inline-block;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button th:if="${review.status.name() == 'ACTIVE'}" type="submit" class="btn-action btn-outline-danger" onclick="return confirm('Ẩn đánh giá này khỏi người dùng?')">
+                                    <i class="fa-solid fa-eye-slash"></i> Ẩn
+                                </button>
+                                <button th:if="${review.status.name() == 'HIDDEN' or review.status.name() == 'DISABLED'}" type="submit" class="btn-action btn-outline-success">
+                                    <i class="fa-solid fa-eye"></i> Hiện
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:if="${reviewPage.totalPages > 1}" style="padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+                <span style="font-size: 0.875rem; color: #64748b; font-weight: 600;" th:text="'Trang ' + (${reviewPage.number + 1}) + ' / ' + (${reviewPage.totalPages})"></span>
+
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <a th:if="${reviewPage.hasPrevious()}" th:href="@{/admin/reviews(tab='list', keyword=${keyword}, rating=${currentRating}, status=${currentStatus}, shopId=${currentShopId}, page=${reviewPage.number - 1})}" class="btn-action btn-outline-slate">
+                        <i class="fa-solid fa-chevron-left"></i> Trước
+                    </a>
+                    <span style="font-size: 0.875rem; font-weight: 700; color: #1e293b; padding: 0 0.5rem;" th:text="${reviewPage.number + 1}">1</span>
+                    <a th:if="${reviewPage.hasNext()}" th:href="@{/admin/reviews(tab='list', keyword=${keyword}, rating=${currentRating}, status=${currentStatus}, shopId=${currentShopId}, page=${reviewPage.number + 1})}" class="btn-action btn-outline-slate">
+                        Sau <i class="fa-solid fa-chevron-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div th:if="${currentTab == 'reports'}">
-            <div class="rounded-xl border border-slate-200 overflow-hidden bg-white">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-slate-100">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-2/5">Nội dung Review</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-3/10">Thông tin báo cáo</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900 w-3/10">Xử lý</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${reportedReviews == null || reportedReviews.empty}">
-                                <td colspan="3" class="px-4 py-8 text-center text-slate-500">Không có báo cáo nào cần xử lý.</td>
-                            </tr>
-                            <tr th:each="report : ${reportedReviews}" class="border-t border-slate-200 hover:bg-slate-50 align-top">
-                                <td class="px-4 py-3">
-                                    <div class="font-medium text-slate-900 mb-1">Review ID: <span class="font-normal text-slate-500" th:text="${#strings.substring(report.reviewId, 0, 8) + '...'}"></span></div>
-                                    <div class="text-sm text-slate-600" th:text="${report.reviewContent}"></div>
-                                    <div class="text-sm text-slate-500 mt-2">Người viết: <strong th:text="${report.reviewOwnerEmail}"></strong></div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="text-red-600 font-semibold text-sm mb-2">⚠️ Tổng cộng: <span th:text="${report.reportCount}"></span> báo cáo</div>
-                                    <div th:each="detail : ${report.reports}" class="bg-red-50 border border-red-200 rounded-lg p-2 mb-2 text-sm text-red-800">
-                                        <strong th:text="${detail.reason}">Reason</strong>
-                                        <div th:if="${detail.note}" th:text="|Ghi chú: ${detail.note}|" class="italic"></div>
-                                        <div class="text-xs text-slate-500 mt-1">Bởi: <span th:text="${detail.reporterEmail}"></span> - <span th:text="${#temporals.format(detail.createdAt, 'dd/MM HH:mm')}"></span></div>
+        <div th:if="${currentTab == 'reports'}" class="saas-card" style="margin-bottom: 0;">
+            <div class="table-wrapper custom-scroll">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 35%;">Nội dung bị báo cáo</th>
+                        <th style="width: 45%;">Chi tiết các vi phạm</th>
+                        <th style="text-align: center; width: 20%;">Hành động xử lý</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${reportedReviews == null || reportedReviews.empty}">
+                        <td colspan="3" style="text-align: center; padding: 5rem 1rem;">
+                            <div style="color: #cbd5e1; font-size: 3rem; margin-bottom: 1rem;"><i class="fa-solid fa-shield-check"></i></div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #10b981; margin: 0 0 0.5rem 0;">Hệ thống an toàn</h3>
+                            <p style="font-weight: 500; color: #64748b; margin: 0;">Tuyệt vời! Hiện không có báo cáo vi phạm nào cần xử lý.</p>
+                        </td>
+                    </tr>
+
+                    <tr th:each="report : ${reportedReviews}">
+
+                        <td>
+                            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.75rem; height: 100%;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">
+                                    <i class="fa-solid fa-fingerprint text-slate-400"></i> ID: <span th:text="${#strings.substring(report.reviewId, 0, 8) + '...'}"></span>
+                                </div>
+                                <p style="margin: 0; color: #1e293b; line-height: 1.5; font-weight: 600; font-size: 0.9rem;" th:text="${report.reviewContent}"></p>
+                                <div style="margin-top: auto; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; display: flex; align-items: center; gap: 0.5rem;">
+                                    <div class="user-avatar" style="width: 1.5rem; height: 1.5rem; font-size: 0.7rem;" th:text="${#strings.substring(report.reviewOwnerEmail, 0, 1).toUpperCase()}">U</div>
+                                    <span style="font-size: 0.75rem; color: #475569; font-weight: 600;" th:text="${report.reviewOwnerEmail}"></span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="margin-bottom: 0.75rem; display: flex; align-items: center;">
+                                        <span style="background: #fff1f2; color: #e11d48; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800; border: 1px solid #fecdd3;">
+                                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Có <span th:text="${report.reportCount}"></span> lượt báo cáo
+                                        </span>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div th:each="detail : ${report.reports}" style="background: #ffffff; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; border-radius: 0.5rem; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                    <div style="font-weight: 800; color: #be123c; font-size: 0.85rem; margin-bottom: 0.25rem;" th:text="${detail.reason}">Lý do vi phạm</div>
+                                    <div th:if="${detail.note != null and detail.note != ''}" style="font-size: 0.8rem; color: #475569; margin-bottom: 0.5rem; line-height: 1.4;" th:text="${detail.note}"></div>
+                                    <div style="font-size: 0.7rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                                        <span><i class="fa-regular fa-user mr-1"></i> <span th:text="${detail.reporterEmail}"></span></span>
+                                        <span><i class="fa-regular fa-clock mr-1"></i> <span th:text="${#temporals.format(detail.createdAt, 'dd/MM HH:mm')}"></span></span>
                                     </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-col gap-2">
-                                        <form th:action="@{'/admin/reviews/' + ${report.reviewId} + '/hide-report'}" method="post">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <button type="submit" class="w-full px-3 py-1.5 rounded text-sm font-medium bg-red-600 text-white hover:bg-red-700" onclick="return confirm('Xác nhận ẩn review này và đánh dấu đã xử lý báo cáo?')">Ẩn Review (Phạt)</button>
-                                        </form>
-                                        <form th:action="@{'/admin/reviews/' + ${report.reviewId} + '/ignore-report'}" method="post">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <button type="submit" class="w-full px-3 py-1.5 rounded text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50" onclick="return confirm('Review này hợp lệ? Bỏ qua báo cáo?')">Bỏ qua báo cáo</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td style="text-align: center;">
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 160px; margin: 0 auto;">
+                                <form th:action="@{'/admin/reviews/' + ${report.reviewId} + '/hide-report'}" method="post" style="margin: 0;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn-action btn-danger-solid" style="width: 100%; justify-content: center; padding: 0.6rem 1rem;" onclick="return confirm('Xác nhận ẩn review này do vi phạm và đóng báo cáo?')">
+                                        <i class="fa-solid fa-gavel"></i> Ẩn (Phạt)
+                                    </button>
+                                </form>
+                                <form th:action="@{'/admin/reviews/' + ${report.reviewId} + '/ignore-report'}" method="post" style="margin: 0;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn-action btn-outline-slate" style="width: 100%; justify-content: center; padding: 0.6rem 1rem;" onclick="return confirm('Xác nhận review này hợp lệ và bỏ qua cảnh báo?')">
+                                        <i class="fa-solid fa-check-double"></i> Bỏ qua
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-    </th:block>
+
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

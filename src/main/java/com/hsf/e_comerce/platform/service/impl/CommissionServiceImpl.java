@@ -11,6 +11,7 @@ import com.hsf.e_comerce.platform.entity.Commission;
 import com.hsf.e_comerce.platform.entity.CommissionItem;
 import com.hsf.e_comerce.platform.repository.CommissionRepository;
 import com.hsf.e_comerce.platform.service.CommissionService;
+import com.hsf.e_comerce.platform.service.PlatformSettingService;
 import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class CommissionServiceImpl implements CommissionService {
 
     private final CommissionRepository commissionRepository;
     private final CategoryCommissionServiceImpl categoryCommissionService;
+    private final PlatformSettingService platformSettingService;
     private final ShopService shopService;
 
     @Override
@@ -85,13 +87,10 @@ public class CommissionServiceImpl implements CommissionService {
     }
 
     private BigDecimal resolveCommissionRate(OrderItem item) {
-
-        UUID categoryId = item.getProduct()
-                .getCategory()
-                .getId();
-
-        return categoryCommissionService
-                .getCommissionByCategory(categoryId);
+        if (item.getProduct().getCategory() == null) {
+            return platformSettingService.getCommissionRate();
+        }
+        return categoryCommissionService.getCommissionByCategory(item.getProduct().getCategory().getId());
     }
 
     @Override

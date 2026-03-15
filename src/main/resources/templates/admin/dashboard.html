@@ -4,189 +4,409 @@
     <title>Admin Dashboard - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <h2 class="text-xl font-bold text-base-content mb-6">Thống kê theo thời gian</h2>
-        <form th:action="@{/admin/dashboard}" method="get" class="flex flex-wrap gap-3 items-end mb-4">
-            <div class="form-control">
-                <label for="fromDate" class="label"><span class="label-text">Từ ngày</span></label>
-                <input type="date" id="fromDate" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" class="input input-bordered w-auto">
-            </div>
-            <div class="form-control">
-                <label for="toDate" class="label"><span class="label-text">Đến ngày</span></label>
-                <input type="date" id="toDate" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" class="input input-bordered w-auto">
-            </div>
-            <button type="submit" class="btn btn-primary">Xem</button>
-        </form>
-        <div class="flex flex-wrap gap-2 mb-4">
-            <a th:href="${urlLast7}" class="btn btn-ghost btn-sm">7 ngày qua</a>
-            <a th:href="${urlLast30}" class="btn btn-ghost btn-sm">30 ngày qua</a>
-            <a th:href="${urlLast90}" class="btn btn-ghost btn-sm">90 ngày qua</a>
-            <a th:href="${urlAll}" class="btn btn-ghost btn-sm">Tất cả</a>
-        </div>
-        <p class="text-sm text-base-content/60 mb-6" th:if="${fromDate != null or toDate != null}">
-            Đang xem: <span th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}">...</span> – <span th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}">...</span>
-        </p>
-        <p class="text-sm text-base-content/60 mb-6" th:if="${fromDate == null and toDate == null}">Đang xem: Tất cả thời gian</p>
-        <h2 class="text-xl font-bold text-base-content mb-4">
-            So sánh tháng này vs tháng trước
-        </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-            <!-- Doanh thu -->
-            <div class="card bg-base-100 border border-base-200 shadow-sm">
-                <div class="card-body">
-                    <p class="text-sm text-base-content/60">Doanh thu tháng này</p>
-                    <p class="text-2xl font-bold"
-                       th:text="${#numbers.formatDecimal(revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
-                        0 đ
+    <style>
+        :root {
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-light: #f1f5f9;
+        }
+
+        .dashboard-wrapper { background-color: #f8fafc; padding: 1.5rem; border-radius: 12px; }
+
+        .saas-card {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .saas-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); border-color: #e2e8f0; }
+        .saas-card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; z-index: 10; width: 100%; overflow: hidden;}
+
+        .icon-box { width: 3.5rem; height: 3.5rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); flex-shrink: 0;}
+        .icon-blue { background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+        .icon-indigo { background-color: #eef2ff; color: #4f46e5; border: 1px solid #e0e7ff; }
+        .icon-emerald { background-color: #ecfdf5; color: #10b981; border: 1px solid #d1fae5; }
+        .icon-amber { background-color: #fffbeb; color: #f59e0b; border: 1px solid #fef3c7; }
+        .icon-cyan { background-color: #ecfeff; color: #06b6d4; border: 1px solid #cffafe; }
+        .icon-purple { background-color: #faf5ff; color: #8b5cf6; border: 1px solid #ede9fe; }
+
+        .dark-grad-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; }
+        .dark-grad-card .icon-box { background-color: rgba(255,255,255,0.1); color: #fbbf24; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); }
+
+        .watermark-icon { position: absolute; right: -1rem; bottom: -1rem; font-size: 120px; opacity: 0.04; z-index: 1; transition: transform 0.5s ease; }
+        .saas-card:hover .watermark-icon { transform: scale(1.1); }
+        .dark-grad-card .watermark-icon { opacity: 0.05; color: #ffffff; }
+
+        .chart-wrapper-large { position: relative; width: 100%; height: 320px; display: block; margin-top: 1rem;}
+        .chart-wrapper-medium { position: relative; width: 100%; height: 260px; display: block; margin-top: 1rem;}
+        .chart-wrapper-small { position: relative; width: 100%; height: 200px; display: block; margin-top: 1rem;}
+        canvas { display: block; width: 100% !important; height: 100% !important; }
+
+        .kpi-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.5rem;}
+        .kpi-value { font-size: clamp(1.5rem, 2.5vw, 2.25rem); font-weight: 900; color: #1e293b; line-height: 1.2; margin-bottom: 1rem; word-break: break-word; }
+
+        /* HỆ THỐNG GRID MỚI */
+        .grid-4-cols { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-2-cols { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-3-cols { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-data-tables { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+
+        @media (min-width: 640px) {
+            .grid-4-cols { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1024px) {
+            .grid-4-cols { grid-template-columns: repeat(4, 1fr); }
+            .grid-2-cols { grid-template-columns: repeat(2, 1fr); }
+            .grid-3-cols { grid-template-columns: repeat(3, 1fr); }
+            .grid-data-tables { grid-template-columns: 1fr 2fr; } /* Cột 1 nhỏ, cột 2 lớn */
+        }
+
+        .list-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: 0.75rem; transition: background 0.2s; border: 1px solid transparent; }
+        .list-item:hover { background: #f8fafc; border-color: #f1f5f9; }
+        .rank-badge { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; flex-shrink: 0; }
+        .rank-1 { background: linear-gradient(135deg, #fcd34d, #f59e0b); color: white; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3); }
+        .rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: white; }
+        .rank-3 { background: linear-gradient(135deg, #ffedd5, #fdba74); color: #9a3412; }
+        .rank-other { background: #f1f5f9; color: #94a3b8; }
+
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 500px;}
+        .modern-table th { background: #f8fafc; color: #64748b; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; padding: 0.75rem 1rem; text-align: left; border-bottom: 2px solid #f1f5f9; white-space: nowrap;}
+        .modern-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.875rem; font-weight: 600; white-space: nowrap;}
+        .modern-table tr:hover td { background: #f8fafc; }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 8px; }
+    </style>
+
+    <div class="dashboard-wrapper" id="pdf-export-area">
+
+        <div class="saas-card" style="margin-bottom: 1.5rem; overflow: visible;">
+            <div class="saas-card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div>
+                    <h1 style="font-size: 1.875rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                        <span class="icon-box icon-blue" style="width: 2.5rem; height: 2.5rem; font-size: 1.25rem;"><i class="fa-solid fa-chart-pie"></i></span>
+                        Trung Tâm Điều Hành & Quản Lý
+                    </h1>
+                    <p style="color: #64748b; margin: 0.5rem 0 0 0; font-size: 0.875rem; font-weight: 500;">
+                        <i class="fa-regular fa-calendar" style="color:#3b82f6;"></i>
+                        <span th:if="${fromDate == null and toDate == null}">Hiển thị dữ liệu 30 ngày gần nhất (Mặc định).</span>
+                        <span th:if="${fromDate != null or toDate != null}">
+                            Kỳ báo cáo:
+                            <strong style="background:#f1f5f9; padding:0.1rem 0.4rem; border-radius:4px;" th:text="${fromDate != null ? #temporals.format(fromDate, 'dd/MM/yyyy') : '...'}"></strong>
+                            <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; color:#cbd5e1; margin:0 0.25rem;"></i>
+                            <strong style="background:#f1f5f9; padding:0.1rem 0.4rem; border-radius:4px;" th:text="${toDate != null ? #temporals.format(toDate, 'dd/MM/yyyy') : '...'}"></strong>
+                        </span>
                     </p>
+                </div>
 
-                    <div class="text-sm mt-2">
-                <span th:if="${revenueGrowth >= 0}" class="text-success font-semibold">
-                    ▲ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
-                </span>
-                        <span th:if="${revenueGrowth < 0}" class="text-error font-semibold">
-                    ▼ <span th:text="${#numbers.formatDecimal(revenueGrowth,1,1)}"></span>%
-                </span>
-                        so với tháng trước
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                    <div style="background: #f8fafc; padding: 0.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                        <form th:action="@{/admin/dashboard}" method="get" style="display: flex; align-items: center; gap: 0.5rem; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; margin: 0;">
+                            <input type="date" name="fromDate" th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.875rem; outline: none;">
+                            <span style="color: #94a3b8;"><i class="fa-solid fa-arrow-right text-xs"></i></span>
+                            <input type="date" name="toDate" th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.875rem; outline: none;">
+                            <button type="submit" style="background: #2563eb; color: #fff; border: none; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">Lọc</button>
+                        </form>
+                        <div style="display: flex; gap: 0.25rem;">
+                            <a th:href="${urlLast1}" style="padding: 0.35rem 0.75rem; border-radius: 0.5rem; color: #475569; text-decoration: none; font-size: 0.875rem; font-weight: 600;">1 Ngày</a>
+                            <a th:href="${urlLast7}" style="padding: 0.35rem 0.75rem; border-radius: 0.5rem; color: #475569; text-decoration: none; font-size: 0.875rem; font-weight: 600;">7 Ngày</a>
+                            <a th:href="${urlLast30}" style="padding: 0.35rem 0.75rem; border-radius: 0.5rem; color: #475569; text-decoration: none; font-size: 0.875rem; font-weight: 600;">30 Ngày</a>
+                            <a th:href="${urlLast90}" style="padding: 0.35rem 0.75rem; border-radius: 0.5rem; color: #475569; text-decoration: none; font-size: 0.875rem; font-weight: 600;">90 Ngày</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-4-cols">
+            <div class="saas-card">
+                <i class="fa-solid fa-wallet watermark-icon" style="color: #3b82f6;"></i>
+                <div class="saas-card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <p class="kpi-title">Doanh thu sàn</p>
+                        <div class="icon-box icon-blue"><i class="fa-solid fa-sack-dollar"></i></div>
+                    </div>
+                    <h3 class="kpi-value" style="color: #2563eb;" th:text="${revenueThisMonth != null ? #numbers.formatDecimal(revenueThisMonth,0,'POINT',0,'POINT') : '0'}">0</h3>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: auto;">
+                        <span th:if="${revenueGrowth != null}" th:style="${revenueGrowth >= 0} ? 'background:#d1fae5; color:#047857; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;' : 'background:#ffe4e6; color:#be123c; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;'">
+                            <i th:classappend="${revenueGrowth >= 0} ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
+                            <span th:text="${#numbers.formatDecimal(revenueGrowth.abs(),1,1)} + '%'"></span>
+                        </span>
+                        <span th:if="${revenueGrowth == null}" style="background:#f1f5f9; color:#64748b; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;">0%</span>
+                        <span style="color: #94a3b8; font-size: 0.75rem; font-weight: 600;">so với kỳ trước</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Số đơn -->
-            <div class="card bg-base-100 border border-base-200 shadow-sm">
-                <div class="card-body">
-                    <p class="text-sm text-base-content/60">Số đơn tháng này</p>
-                    <p class="text-2xl font-bold"
-                       th:text="${ordersThisMonth}">
-                        0
-                    </p>
-
-                    <p class="text-sm text-base-content/60 mt-2">
-                        Tháng trước: <span th:text="${ordersLastMonth}"></span>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Hoa hồng -->
-            <div class="card bg-base-100 border border-base-200 shadow-sm">
-                <div class="card-body">
-                    <p class="text-sm text-base-content/60">Hoa hồng tháng này</p>
-                    <p class="text-2xl font-bold"
-                       th:text="${#numbers.formatDecimal(commissionThisMonth,0,'POINT',0,'POINT')} + ' đ'">
-                        0 đ
-                    </p>
-
-                    <div class="text-sm mt-2">
-                <span th:if="${commissionGrowth >= 0}" class="text-success font-semibold">
-                    ▲ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
-                </span>
-                        <span th:if="${commissionGrowth < 0}" class="text-error font-semibold">
-                    ▼ <span th:text="${#numbers.formatDecimal(commissionGrowth,1,1)}"></span>%
-                </span>
-                        so với tháng trước
+            <div class="saas-card">
+                <i class="fa-solid fa-coins watermark-icon" style="color: #6366f1;"></i>
+                <div class="saas-card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <p class="kpi-title">Lợi nhuận (Hoa hồng)</p>
+                        <div class="icon-box icon-indigo"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    </div>
+                    <h3 class="kpi-value" style="color: #4f46e5;" th:text="${commissionThisMonth != null ? #numbers.formatDecimal(commissionThisMonth,0,'POINT',0,'POINT') : '0'}">0</h3>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: auto;">
+                        <span th:if="${commissionGrowth != null}" th:style="${commissionGrowth >= 0} ? 'background:#d1fae5; color:#047857; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;' : 'background:#ffe4e6; color:#be123c; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;'">
+                            <i th:classappend="${commissionGrowth >= 0} ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
+                            <span th:text="${#numbers.formatDecimal(commissionGrowth.abs(),1,1)} + '%'"></span>
+                        </span>
+                        <span th:if="${commissionGrowth == null}" style="background:#f1f5f9; color:#64748b; padding:0.25rem 0.5rem; border-radius:0.5rem; font-size:0.75rem; font-weight:bold;">0%</span>
+                        <span style="color: #94a3b8; font-size: 0.75rem; font-weight: 600;">so với kỳ trước</span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ================= TREND CHART ================= -->
-        <h2 class="text-xl font-bold text-base-content mb-4 mt-10">
-            Biểu đồ xu hướng
-        </h2>
+            <div class="saas-card">
+                <i class="fa-solid fa-basket-shopping watermark-icon" style="color: #10b981;"></i>
+                <div class="saas-card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <p class="kpi-title">Giá trị TB 1 Đơn</p>
+                        <div class="icon-box icon-emerald"><i class="fa-solid fa-receipt"></i></div>
+                    </div>
+                    <h3 class="kpi-value" style="color: #10b981;" th:text="${aovThisMonth != null ? #numbers.formatDecimal(aovThisMonth,0,'POINT',0,'POINT') : '0'}">0</h3>
+                    <div style="display: flex; align-items: center; margin-top: auto;">
+                        <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-box-open" style="color: #10b981;"></i>
+                            Đã giao <span style="color: #0f172a; font-size: 0.875rem;" th:text="${ordersThisMonth != null ? ordersThisMonth : '0'}">0</span> đơn
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-        <div class="card bg-base-100 border border-base-200 shadow-sm p-6 mb-10">
-            <canvas id="trendChart" height="100"></canvas>
-        </div>
-
-        <h2 class="text-xl font-bold text-base-content mb-4 mt-10">
-            Shop Tăng Trưởng Nhanh Nhất
-        </h2>
-
-        <div th:if="${fastestGrowthShop != null}"
-             class="card bg-base-100 border border-base-200 shadow-sm mb-8">
-            <div class="card-body">
-                <h3 class="text-lg font-semibold"
-                    th:text="${fastestGrowthShop.shopName}">
-                    Shop Name
-                </h3>
-
-                <div class="flex flex-wrap gap-6 mt-4 text-sm">
-                    <div>
-                        <p class="text-base-content/60">Doanh thu tháng này</p>
-                        <p class="font-bold text-success"
-                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
+            <div class="saas-card dark-grad-card">
+                <i class="fa-solid fa-globe watermark-icon"></i>
+                <div class="saas-card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <p class="kpi-title" style="color: #94a3b8;">Tổng hệ sinh thái</p>
+                        <div class="icon-box"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1rem;">
+                        <h3 style="font-size: 3rem; font-weight: 900; line-height: 1; margin: 0;" th:text="${totalUsers != null ? totalUsers : '0'}">0</h3>
+                        <span style="font-size: 1rem; font-weight: 600; color: #cbd5e1;">Thành viên</span>
+                    </div>
+                    <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.75rem;">
+                        <p style="margin: 0; font-size: 0.875rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-store" style="color: #fbbf24; margin-right: 0.5rem;"></i> Shop hoạt động:</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 0.15rem 0.5rem; border-radius: 0.5rem;" th:text="${totalShops != null ? totalShops : '0'}">0</span>
                         </p>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div>
-                        <p class="text-base-content/60">Tháng trước</p>
-                        <p class="font-bold"
-                           th:text="${#numbers.formatDecimal(fastestGrowthShop.revenueLastMonth,0,'POINT',0,'POINT')} + ' đ'">
-                        </p>
+        <div class="saas-card" style="margin-bottom: 1.5rem;">
+            <div class="saas-card-body">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                    <h2 style="font-size: 1.25rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="icon-box icon-blue" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-chart-line"></i></div>
+                        Biểu Đồ Xu Hướng Dòng Tiền
+                    </h2>
+                    <div style="display: flex; gap: 1rem; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; background: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid #f1f5f9;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 0.75rem; height: 0.75rem; border-radius: 50%; background: #2563eb;"></span> Doanh thu</span>
+                        <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 0.75rem; height: 0.75rem; border-radius: 50%; background: #6366f1;"></span> Hoa hồng</span>
                     </div>
+                </div>
+                <div class="chart-wrapper-large">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-                    <div>
-                        <p class="text-base-content/60">Tăng trưởng</p>
-                        <p class="font-bold"
-                           th:classappend="${fastestGrowthShop.growthPercent >= 0} ? 'text-success' : 'text-error'"
-                           th:text="${#numbers.formatDecimal(fastestGrowthShop.growthPercent,1,1)} + '%'">
-                        </p>
+        <div class="grid-2-cols">
+            <div class="saas-card">
+                <div class="saas-card-body">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                        <h2 style="font-size: 1.25rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="icon-box icon-purple" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            Lưu Lượng Đơn Đặt
+                        </h2>
+                    </div>
+                    <div class="chart-wrapper-medium">
+                        <canvas id="orderVolumeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saas-card">
+                <div class="saas-card-body">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                        <h2 style="font-size: 1.25rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="icon-box icon-emerald" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-user-plus"></i></div>
+                            Tốc Độ Tăng Trưởng User Mới
+                        </h2>
+                    </div>
+                    <div class="chart-wrapper-medium">
+                        <canvas id="userVolumeChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <p th:if="${fastestGrowthShop == null}"
-           class="text-base-content/60 mb-8">
-            Chưa có dữ liệu tăng trưởng.
-        </p>
+        <div class="grid-3-cols">
+            <div class="saas-card">
+                <div class="saas-card-body">
+                    <h2 style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="icon-box icon-emerald" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-truck-fast"></i></div>
+                        Tỷ Lệ Trạng Thái
+                    </h2>
 
-        <h2 class="text-xl font-bold text-base-content mb-4">
-            Top 5 Shop Tháng Này
-        </h2>
+                    <th:block th:if="${(countDelivered ?: 0) + (countConfirmed ?: 0) + (countProcessing ?: 0) + (countShipping ?: 0) + (countPendingPayment ?: 0) + (countCancelled ?: 0) > 0}">
+                        <div class="chart-wrapper-small">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                            <div style="text-align: center; background:#ecfdf5; border:1px solid #d1fae5; border-radius:8px; padding:0.5rem;">
+                                <p style="font-size: 0.6rem; font-weight: 900; color: #059669; text-transform: uppercase; margin: 0 0 0.25rem 0;">Thành Công</p>
+                                <p style="font-size: 1.1rem; font-weight: 900; color: #047857; margin: 0;" th:text="${countDelivered}">0</p>
+                            </div>
+                            <div style="text-align: center; background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:0.5rem;">
+                                <p style="font-size: 0.6rem; font-weight: 900; color: #d97706; text-transform: uppercase; margin: 0 0 0.25rem 0;">Đang Xử Lý</p>
+                                <p style="font-size: 1.1rem; font-weight: 900; color: #b45309; margin: 0;" th:text="${(countConfirmed ?: 0) + (countProcessing ?: 0) + (countShipping ?: 0) + (countPendingPayment ?: 0)}">0</p>
+                            </div>
+                            <div style="text-align: center; background:#fff1f2; border:1px solid #ffe4e6; border-radius:8px; padding:0.5rem;">
+                                <p style="font-size: 0.6rem; font-weight: 900; color: #e11d48; text-transform: uppercase; margin: 0 0 0.25rem 0;">Đã Hủy</p>
+                                <p style="font-size: 1.1rem; font-weight: 900; color: #be123c; margin: 0;" th:text="${countCancelled}">0</p>
+                            </div>
+                        </div>
+                    </th:block>
 
-        <div class="card bg-base-100 border border-base-200 shadow-sm mb-10">
-            <div class="card-body p-0">
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra">
+                    <div th:unless="${(countDelivered ?: 0) + (countConfirmed ?: 0) + (countProcessing ?: 0) + (countShipping ?: 0) + (countPendingPayment ?: 0) + (countCancelled ?: 0) > 0}" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1; padding: 2rem 0;">
+                        <i class="fa-solid fa-chart-pie" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p style="font-weight: bold; margin: 0; color: #94a3b8;">Chưa có đơn hàng trong kỳ này</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saas-card">
+                <div class="saas-card-body">
+                    <h2 style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="icon-box icon-cyan" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-layer-group"></i></div>
+                        Top 5 Hoa Hồng Ngành
+                    </h2>
+
+                    <div th:if="${categoryStats != null and not #lists.isEmpty(categoryStats)}" class="chart-wrapper-medium">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+
+                    <div th:if="${categoryStats == null or #lists.isEmpty(categoryStats)}" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1; padding: 2rem 0;">
+                        <i class="fa-solid fa-chart-bar" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p style="font-weight: bold; margin: 0; color: #94a3b8;">Chưa có dữ liệu danh mục</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saas-card">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="icon-box icon-amber" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;"><i class="fa-solid fa-crown"></i></div>
+                        Top 5 Gian Hàng
+                    </h2>
+                    <a href="/admin/commission" style="font-size: 0.75rem; font-weight: bold; color: #2563eb; background: #eff6ff; padding: 0.35rem 0.75rem; border-radius: 0.5rem; text-decoration: none;">Xem tất cả</a>
+                </div>
+
+                <div class="custom-scroll" style="flex: 1; overflow-y: auto; padding: 1rem; max-height: 330px;">
+                    <div th:if="${top5Shops == null or top5Shops.empty}" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1;">
+                        <i class="fa-solid fa-store-slash" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p style="font-weight: bold; margin: 0; color: #94a3b8;">Chưa có giao dịch kỳ này</p>
+                    </div>
+
+                    <div th:if="${top5Shops != null and !top5Shops.empty}" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div th:each="s, stat : ${top5Shops}" class="list-item">
+                            <div class="rank-badge" th:classappend="${stat.count == 1} ? 'rank-1' : (${stat.count == 2} ? 'rank-2' : (${stat.count == 3} ? 'rank-3' : 'rank-other'))">
+                                <i th:if="${stat.count == 1}" class="fa-solid fa-crown" style="font-size: 0.875rem; margin-bottom: 2px;"></i>
+                                <span th:unless="${stat.count == 1}" th:text="${stat.count}">2</span>
+                            </div>
+
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <h4 style="font-weight: 800; font-size: 0.9rem; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" th:text="${s.shopName}">Shop</h4>
+                                    <span th:if="${s.shopName == (fastestGrowthShop != null ? fastestGrowthShop.shopName : '')}" style="background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; line-height: 1;">HOT</span>
+                                </div>
+                                <p style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin: 0.25rem 0 0 0;"><i class="fa-solid fa-box-open" style="color:#cbd5e1; margin-right:4px;"></i> <span style="color:#475569;" th:text="${s.ordersThisMonth != null ? s.ordersThisMonth : 0}"></span> đơn</p>
+                            </div>
+
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <p style="font-weight: 900; font-size: 0.9rem; color: #2563eb; margin: 0;" th:text="${s.revenueThisMonth != null ? #numbers.formatDecimal(s.revenueThisMonth,0,'POINT',0,'POINT') : '0'}">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-data-tables">
+
+            <div class="saas-card">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc;">
+                    <h2 style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-medal" style="color: #fbbf24;"></i> Top 100 Khách Hàng VIP
+                    </h2>
+                </div>
+                <div class="custom-scroll" style="flex: 1; overflow-y: auto; padding: 1rem; max-height: 380px;">
+                    <div th:if="${topBuyers == null or topBuyers.empty}" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1;">
+                        <i class="fa-solid fa-user-slash" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p style="font-weight: bold; margin: 0; color: #94a3b8;">Chưa có dữ liệu</p>
+                    </div>
+                    <div th:if="${topBuyers != null and !topBuyers.empty}" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div th:each="buyer, stat : ${topBuyers}" class="list-item">
+                            <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; flex-shrink: 0;" th:text="${#strings.substring(buyer.key, 0, 1).toUpperCase()}">U</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="font-weight: 800; font-size: 0.9rem; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" th:text="${buyer.key}">Name</h4>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <p style="font-weight: 900; font-size: 0.9rem; color: #10b981; margin: 0;" th:text="${#numbers.formatDecimal(buyer.value,0,'POINT',0,'POINT')}">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saas-card">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc; display: flex; justify-content: space-between; align-items: center; min-width: 600px;">
+                    <h2 style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-clock-rotate-left" style="color: #6366f1;"></i> Giao Dịch Gần Đây
+                    </h2>
+                    <a href="/admin/orders" style="font-size: 0.75rem; font-weight: bold; color: #4f46e5; background: #eef2ff; padding: 0.35rem 0.75rem; border-radius: 0.5rem; text-decoration: none;">Xem toàn bộ</a>
+                </div>
+                <div class="custom-scroll" style="flex: 1; max-height: 380px; overflow-x: auto; overflow-y: auto;">
+                    <table class="modern-table">
                         <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Shop</th>
-                            <th>Doanh thu</th>
-                            <th>Số đơn</th>
-                            <th>Tăng trưởng</th>
+                            <th>Mã Đơn</th>
+                            <th>Thời Gian</th>
+                            <th>Khách Hàng</th>
+                            <th>Gian Hàng</th>
+                            <th>Trạng Thái</th>
+                            <th style="text-align: right;">Tổng Tiền</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="s, stat : ${top5Shops}">
-                            <td th:text="${stat.count}">1</td>
-
-                            <td class="font-medium"
-                                th:text="${s.shopName}">
-                                Shop Name
-                            </td>
-
-                            <td class="text-success font-semibold"
-                                th:text="${#numbers.formatDecimal(s.revenueThisMonth,0,'POINT',0,'POINT')} + ' đ'">
-                            </td>
-
-                            <td th:text="${s.ordersThisMonth}">
-                            </td>
-
-                            <td>
-                        <span th:classappend="${s.growthPercent >= 0} ? 'text-success' : 'text-error'"
-                              th:text="${#numbers.formatDecimal(s.growthPercent,1,1)} + '%'">
-                        </span>
-                            </td>
+                        <tr th:if="${recentOrders == null or recentOrders.empty}">
+                            <td colspan="6" style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">Không có giao dịch nào gần đây</td>
                         </tr>
-
-                        <tr th:if="${top5Shops == null or top5Shops.empty}">
-                            <td colspan="5" class="text-center text-base-content/60 py-4">
-                                Chưa có dữ liệu
+                        <tr th:each="ro : ${recentOrders}">
+                            <td><a th:href="@{'/admin/orders/' + ${ro.id}}" style="color: #2563eb; font-weight: 800; text-decoration: none;" th:text="${ro.orderNumber}">#000</a></td>
+                            <td style="color: #64748b; font-size: 0.8rem;" th:text="${#temporals.format(ro.createdAt, 'dd/MM/yyyy HH:mm')}">Time</td>
+                            <td th:text="${ro.userName}">Name</td>
+                            <td><span style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;" th:text="${ro.shopName}">Shop</span></td>
+                            <td>
+                                    <span style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;"
+                                          th:classappend="${ro.status.name() == 'DELIVERED'} ? 'bg-emerald-100 text-emerald-700' : (${ro.status.name() == 'CANCELLED'} ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')"
+                                          th:text="${ro.status.name()}">Status</span>
                             </td>
+                            <td style="text-align: right; font-weight: 800; color: #1e293b;" th:text="${#numbers.formatDecimal(ro.total,0,'POINT',0,'POINT')}">0</td>
                         </tr>
                         </tbody>
                     </table>
@@ -194,168 +414,286 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-primary">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Tổng Users</p>
-                    <p class="text-2xl font-bold" th:text="${totalUsers ?: 0}">0</p>
-                    <p class="text-xs text-base-content/60">Tổng số người dùng</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-success">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Yêu Cầu Seller</p>
-                    <p class="text-2xl font-bold" th:text="${pendingRequests ?: 0}">0</p>
-                    <p class="text-xs text-base-content/60">Đang chờ duyệt</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-warning">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Tổng Shops</p>
-                    <p class="text-2xl font-bold" th:text="${totalShops ?: 0}">0</p>
-                    <p class="text-xs text-base-content/60">Shops đang hoạt động</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-error">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Tổng Đơn Hàng</p>
-                    <p class="text-2xl font-bold" th:text="${totalOrders ?: 0}">0</p>
-                    <p class="text-xs text-base-content/60">Tất cả đơn hàng</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-secondary">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Tổng Doanh Thu Các Shop</p>
-                    <p class="text-2xl font-bold" th:text="${totalRevenueShops != null ? (#numbers.formatDecimal(totalRevenueShops, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</p>
-                    <p class="text-xs text-base-content/60">Đơn đã xác nhận → đã giao</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 border border-base-200 shadow-sm border-l-4 border-l-accent">
-                <div class="card-body py-5">
-                    <p class="text-sm font-medium text-base-content/60">Tổng Hoa Hồng Nền Tảng</p>
-                    <p class="text-2xl font-bold" th:text="${totalCommission != null ? (#numbers.formatDecimal(totalCommission, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</p>
-                    <p class="text-xs text-base-content/60">Hoa hồng thu từ đơn</p>
-                </div>
-            </div>
-        </div>
+    </div>
+</th:block>
 
-        <h2 class="text-xl font-bold text-base-content mb-4">Thao Tác Nhanh</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            <a href="/admin/seller-requests" class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition">
-                <div class="card-body">
-                    <h3 class="card-title text-base">📋 Duyệt Yêu Cầu Seller</h3>
-                    <p class="text-sm text-base-content/70">Xem và duyệt các yêu cầu trở thành seller</p>
-                </div>
-            </a>
-            <a href="/admin/users" class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition">
-                <div class="card-body">
-                    <h3 class="card-title text-base">👥 Quản Lý Users</h3>
-                    <p class="text-sm text-base-content/70">Xem danh sách và quản lý người dùng</p>
-                </div>
-            </a>
-            <a href="/admin/products" class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition">
-                <div class="card-body">
-                    <h3 class="card-title text-base">📦 Quản Lý Sản Phẩm</h3>
-                    <p class="text-sm text-base-content/70">Xem và quản lý tất cả sản phẩm</p>
-                </div>
-            </a>
-            <a href="/admin/orders" class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition">
-                <div class="card-body">
-                    <h3 class="card-title text-base">🛒 Quản Lý Đơn Hàng</h3>
-                    <p class="text-sm text-base-content/70">Xem và xử lý đơn hàng</p>
-                </div>
-            </a>
-            <a href="/admin/commission" class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition">
-                <div class="card-body">
-                    <h3 class="card-title text-base">💰 Cấu hình hoa hồng</h3>
-                    <p class="text-sm text-base-content/70">Tỷ lệ hoa hồng nền tảng theo sản phẩm</p>
-                </div>
-            </a>
-        </div>
-
-        <h2 class="text-xl font-bold text-base-content mb-4">Hoạt Động Gần Đây</h2>
-        <p th:if="${recentActivities == null or recentActivities.empty}" class="text-base-content/60">Chưa có hoạt động nào.</p>
-        <ul th:if="${recentActivities != null and !recentActivities.empty}" class="menu bg-base-100 rounded-xl border border-base-200 overflow-hidden p-0">
-            <li th:each="act : ${recentActivities}" class="border-b border-base-200 last:border-0">
-                <a th:href="${act.linkUrl}" class="flex items-center gap-3 py-3">
-                    <span th:if="${act.type == 'ORDER'}" class="badge badge-primary badge-sm">Đơn</span>
-                    <span th:if="${act.type == 'SELLER_REQUEST'}" class="badge badge-secondary badge-sm">Yêu cầu</span>
-                    <span class="flex-1" th:text="${act.title}">Title</span>
-                    <span th:if="${act.at != null}" class="text-sm text-base-content/60" th:text="${#temporals.format(act.at, 'dd/MM/yyyy HH:mm')}"></span>
-                </a>
-            </li>
-        </ul>
-    </th:block>
+<th:block th:fragment="scripts">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
 
-    <th:block th:fragment="scripts">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        document.addEventListener("DOMContentLoaded", function() {
+            Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+            Chart.defaults.color = '#94a3b8';
 
-        <script th:inline="javascript">
-            const labels = [[${trendLabels}]];
-            const revenueData = [[${trendRevenue}]];
-            const commissionData = [[${trendCommission}]];
-            const ordersData = [[${trendOrders}]];
+            const rawLabels = /*[[${trendLabels}]]*/ null;
+            const rawRevenue = /*[[${trendRevenue}]]*/ null;
+            const rawCommission = /*[[${trendCommission}]]*/ null;
+            const rawOrderCounts = /*[[${trendOrderCounts}]]*/ null;
+            const rawUsers = /*[[${trendUsers}]]*/ null;
 
-            const ctx = document.getElementById('trendChart');
+            const labels = Array.isArray(rawLabels) ? rawLabels : [];
+            const revenueData = Array.isArray(rawRevenue) ? rawRevenue : [];
+            const commissionData = Array.isArray(rawCommission) ? rawCommission : [];
+            const orderCountsData = Array.isArray(rawOrderCounts) ? rawOrderCounts : [];
+            const userCountsData = Array.isArray(rawUsers) ? rawUsers : [];
 
-            if (ctx && labels && labels.length > 0) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Revenue',
-                                data: revenueData,
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59,130,246,0.1)',
-                                borderWidth: 2,
-                                tension: 0.3
+            // 1. TREND CHART (DOANH THU)
+            try {
+                const ctxTrend = document.getElementById('trendChart');
+                if (ctxTrend) {
+                    if (labels.length > 0) {
+                        const ctx = ctxTrend.getContext('2d');
+                        const gradPrimary = ctx.createLinearGradient(0, 0, 0, 350);
+                        gradPrimary.addColorStop(0, 'rgba(37, 99, 235, 0.4)');
+                        gradPrimary.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+                        const gradSecondary = ctx.createLinearGradient(0, 0, 0, 350);
+                        gradSecondary.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+                        gradSecondary.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+                        const shortLabels = labels.map(d => {
+                            let str = String(d);
+                            if(str.includes('-')) { const p = str.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : str; }
+                            return str;
+                        });
+
+                        new Chart(ctxTrend, {
+                            type: 'line',
+                            data: {
+                                labels: shortLabels,
+                                datasets: [
+                                    {
+                                        label: 'Doanh thu', data: revenueData,
+                                        borderColor: '#2563eb', backgroundColor: gradPrimary,
+                                        borderWidth: 3, fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 6,
+                                        pointBackgroundColor: '#fff'
+                                    },
+                                    {
+                                        label: 'Hoa hồng', data: commissionData,
+                                        borderColor: '#6366f1', backgroundColor: gradSecondary, borderDash: [5, 5],
+                                        borderWidth: 2, fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 6,
+                                        pointBackgroundColor: '#fff'
+                                    }
+                                ]
                             },
-                            {
-                                label: 'Commission',
-                                data: commissionData,
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16,185,129,0.1)',
-                                borderWidth: 2,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Orders',
-                                data: ordersData,
-                                borderColor: '#f59e0b',
-                                backgroundColor: 'rgba(245,158,11,0.1)',
-                                borderWidth: 2,
-                                tension: 0.3,
-                                yAxisID: 'y1'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        stacked: false,
-                        scales: {
-                            y: {
-                                type: 'linear',
-                                position: 'left'
-                            },
-                            y1: {
-                                type: 'linear',
-                                position: 'right',
-                                grid: {
-                                    drawOnChartArea: false
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8,
+                                        titleFont: { size: 14, weight: 'bold', family: "'Segoe UI'" }, bodyFont: {size: 13, weight: 'bold', family: "'Segoe UI'"},
+                                        callbacks: { label: function(c) { return c.dataset.label + ': ' + new Intl.NumberFormat('vi-VN').format(c.parsed.y); } }
+                                    }
+                                },
+                                scales: {
+                                    x: { grid: { display: false }, ticks: { font: {weight: 'bold'} } },
+                                    y: {
+                                        grid: { borderDash: [4, 4], color: '#f1f5f9' }, border: {display: false},
+                                        ticks: { font: {weight: 'bold'}, callback: v => v >= 1000000 ? (v/1000000).toFixed(0) + 'M' : (v >= 1000 ? (v/1000).toFixed(0) + 'K' : v) }
+                                    }
                                 }
                             }
+                        });
+                    } else {
+                        ctxTrend.parentElement.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;color:#cbd5e1;"><i class="fa-solid fa-chart-area" style="font-size:3rem;margin-bottom:1rem;opacity:0.5;"></i><p style="font-weight:bold;margin:0;color:#94a3b8;">Chưa có dữ liệu giao dịch</p></div>';
+                    }
+                }
+            } catch(e) {}
+
+            // 1.5 ORDER VOLUME CHART (BIỂU ĐỒ CỘT MỚI)
+            try {
+                const ctxOrder = document.getElementById('orderVolumeChart');
+                if (ctxOrder) {
+                    if (labels.length > 0) {
+                        const shortLabels = labels.map(d => {
+                            let str = String(d);
+                            if(str.includes('-')) { const p = str.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : str; }
+                            return str;
+                        });
+
+                        new Chart(ctxOrder, {
+                            type: 'bar',
+                            data: {
+                                labels: shortLabels,
+                                datasets: [{
+                                    label: 'Số lượng đơn',
+                                    data: orderCountsData,
+                                    backgroundColor: '#a855f7',
+                                    borderRadius: 4,
+                                    barThickness: 'flex'
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8,
+                                        titleFont: { size: 14, family: "'Segoe UI'" }, bodyFont: {size: 14, weight: 'bold', family: "'Segoe UI'"}
+                                    }
+                                },
+                                scales: {
+                                    x: { grid: { display: false }, ticks: { font: {weight: 'bold'} } },
+                                    y: {
+                                        grid: { borderDash: [4, 4], color: '#f1f5f9' }, border: {display: false},
+                                        ticks: { stepSize: 1, font: {weight: 'bold'} }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        ctxOrder.parentElement.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;color:#cbd5e1;"><i class="fa-solid fa-chart-column" style="font-size:3rem;margin-bottom:1rem;opacity:0.5;"></i><p style="font-weight:bold;margin:0;color:#94a3b8;">Chưa có dữ liệu</p></div>';
+                    }
+                }
+            } catch(e) {}
+
+            // 1.6 USER VOLUME CHART (BIỂU ĐỒ USER MỚI)
+            try {
+                const ctxUser = document.getElementById('userVolumeChart');
+                if (ctxUser) {
+                    if (labels.length > 0) {
+                        const shortLabels = labels.map(d => {
+                            let str = String(d);
+                            if(str.includes('-')) { const p = str.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : str; }
+                            return str;
+                        });
+
+                        const gradTeal = ctxUser.getContext('2d').createLinearGradient(0, 0, 0, 250);
+                        gradTeal.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+                        gradTeal.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+                        new Chart(ctxUser, {
+                            type: 'line',
+                            data: {
+                                labels: shortLabels,
+                                datasets: [{
+                                    label: 'User Đăng Ký',
+                                    data: userCountsData,
+                                    borderColor: '#10b981',
+                                    backgroundColor: gradTeal,
+                                    borderWidth: 3, fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 6,
+                                    pointBackgroundColor: '#fff'
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8,
+                                        titleFont: { size: 14, family: "'Segoe UI'" }, bodyFont: {size: 14, weight: 'bold', family: "'Segoe UI'"}
+                                    }
+                                },
+                                scales: {
+                                    x: { grid: { display: false }, ticks: { font: {weight: 'bold'} } },
+                                    y: {
+                                        grid: { borderDash: [4, 4], color: '#f1f5f9' }, border: {display: false},
+                                        ticks: { stepSize: 1, font: {weight: 'bold'} }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        ctxUser.parentElement.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;color:#cbd5e1;"><i class="fa-solid fa-users" style="font-size:3rem;margin-bottom:1rem;opacity:0.5;"></i><p style="font-weight:bold;margin:0;color:#94a3b8;">Chưa có dữ liệu</p></div>';
+                    }
+                }
+            } catch(e) {}
+
+            // 2. STATUS CHART
+            try {
+                const ctxStatus = document.getElementById('statusChart');
+                if (ctxStatus) {
+                    let countDel = /*[[${countDelivered}]]*/ 0;
+                    let countConf = /*[[${countConfirmed}]]*/ 0;
+                    let countPro = /*[[${countProcessing}]]*/ 0;
+                    let countShip = /*[[${countShipping}]]*/ 0;
+                    let countPen = /*[[${countPendingPayment}]]*/ 0;
+                    let countCan = /*[[${countCancelled}]]*/ 0;
+
+                    countDel = countDel || 0;
+                    let inProgress = (countConf || 0) + (countPro || 0) + (countShip || 0) + (countPen || 0);
+                    countCan = countCan || 0;
+
+                    if (countDel + inProgress + countCan > 0) {
+                        new Chart(ctxStatus, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Thành công', 'Đang xử lý', 'Đã hủy'],
+                                datasets: [{
+                                    data: [countDel, inProgress, countCan],
+                                    backgroundColor: ['#10b981', '#f59e0b', '#e11d48'],
+                                    borderWidth: 0, hoverOffset: 5
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false, cutout: '75%',
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8,
+                                        titleFont: { size: 14, family: "'Segoe UI'" }, bodyFont: {size: 14, weight: 'bold', family: "'Segoe UI'"},
+                                        callbacks: {
+                                            label: function(c) {
+                                                const total = c.dataset.data.reduce((a,b)=>a+b, 0);
+                                                const pct = Math.round((c.parsed/total)*100);
+                                                return ` ${c.label}: ${c.parsed} đơn (${pct}%)`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch(e) {}
+
+            // 3. CATEGORY CHART
+            try {
+                const rawCategories = /*[[${categoryStats}]]*/ null;
+                const ctxCat = document.getElementById('categoryChart');
+
+                if (ctxCat) {
+                    if (Array.isArray(rawCategories) && rawCategories.length > 0) {
+                        const validData = rawCategories.filter(item => item && item.categoryName != null);
+                        validData.sort((a,b) => b.totalCommission - a.totalCommission);
+                        const topCats = validData.slice(0, 5);
+
+                        if(topCats.length > 0) {
+                            new Chart(ctxCat, {
+                                type: 'bar',
+                                data: {
+                                    labels: topCats.map(c => c.categoryName.length > 15 ? c.categoryName.substring(0,15)+'...' : c.categoryName),
+                                    datasets: [{
+                                        label: 'Hoa hồng',
+                                        data: topCats.map(c => c.totalCommission),
+                                        backgroundColor: '#06b6d4',
+                                        borderRadius: 6, barThickness: 24
+                                    }]
+                                },
+                                options: {
+                                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8,
+                                            titleFont: { size: 13, family: "'Segoe UI'" }, bodyFont: {size: 14, weight: 'bold', family: "'Segoe UI'"},
+                                            callbacks: { label: c => ' ' + new Intl.NumberFormat('vi-VN').format(c.parsed.x) }
+                                        }
+                                    },
+                                    scales: {
+                                        x: { display: false, grid: {display: false} },
+                                        y: { grid: { display: false }, border: {display: false}, ticks: { font: {weight: 'bold', size: 12, family: "'Segoe UI'"} } }
+                                    }
+                                }
+                            });
                         }
                     }
-                });
-            }
-        </script>
-    </th:block>
+                }
+            } catch(e) {}
+        });
+    </script>
+</th:block>
 </body>
 </html>

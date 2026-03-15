@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
+<head>
+    <title>Thanh toán gộp - E-commerce</title>
+</head>
+<body>
+    <th:block th:fragment="content">
+        <div class="max-w-lg mx-auto">
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <h2 class="text-xl font-bold text-slate-900 text-center mb-6">Thanh toán gộp (1 lượt VNPay)</h2>
+
+                <div th:if="${error}" class="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm" th:text="${error}">Lỗi</div>
+
+                <p class="text-slate-600 mb-4">Bạn có <span th:text="${#lists.size(orders)}">0</span> đơn hàng từ nhiều shop. Thanh toán một lần qua VNPay cho tất cả.</p>
+
+                <ul class="space-y-2 mb-6">
+                    <li th:each="o : ${orders}" class="flex justify-between py-2 border-b border-slate-100 last:border-0">
+                        <span th:text="${o.orderNumber}">ORD-xxx</span>
+                        <span class="font-medium" th:text="${#numbers.formatDecimal(o.total, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</span>
+                    </li>
+                </ul>
+
+                <p class="text-xl font-bold text-primary-600 mb-6">
+                    Tổng thanh toán: <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}"></span> ₫
+                </p>
+
+                <hr class="border-slate-200 my-6">
+
+                <form th:action="@{/payments/vnpay/redirect-batch}" method="get" class="block">
+                    <th:block th:each="id : ${orderIds}">
+                        <input type="hidden" name="orderIds" th:value="${id}"/>
+                    </th:block>
+                    <button type="submit" class="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
+                        Thanh toán qua VNPay (1 lượt)
+                    </button>
+                    <p class="text-slate-500 text-sm text-center mt-1">Hỗ trợ ATM, Visa, QR Code</p>
+                </form>
+
+                <a th:href="@{/orders}" class="block mt-6 text-center no-underline py-2.5 rounded-lg border-2 border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition">
+                    ← Xem đơn hàng của tôi
+                </a>
+            </div>
+        </div>
+    </th:block>
+</body>
+</html>

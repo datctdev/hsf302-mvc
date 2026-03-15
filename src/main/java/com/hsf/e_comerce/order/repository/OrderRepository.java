@@ -51,6 +51,10 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Optional<Order> findByIdAndUser(UUID orderId, User currentUser);
 
+    @EntityGraph(attributePaths = {"user", "shop", "items", "items.product", "items.variant"})
+    @Query("SELECT o FROM Order o WHERE o.id IN :ids AND o.user.id = :userId ORDER BY o.createdAt DESC")
+    List<Order> findByIdInAndUserId(@Param("ids") List<UUID> ids, @Param("userId") UUID userId);
+
     @Query("""
     SELECT o
     FROM Order o

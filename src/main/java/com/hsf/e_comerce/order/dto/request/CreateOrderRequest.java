@@ -9,14 +9,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateOrderRequest {
     
-    @NotNull(message = "Shop ID is required")
-    private java.util.UUID shopId;
+    private UUID shopId;
+
+    /** Khi đặt từ giỏ: chỉ đơn hàng hóa các món có ID trong list này. Null/empty = tất cả món trong giỏ. */
+    private List<UUID> cartItemIds;
     
     @NotBlank(message = "Shipping name is required")
     private String shippingName;
