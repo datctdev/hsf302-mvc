@@ -29,4 +29,8 @@ public interface KycSessionRepository extends JpaRepository<EKycSession, UUID> {
     
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM EKycSession s WHERE s.accountId = :accountId AND s.status = 'VERIFIED'")
     boolean hasVerifiedKyc(@Param("accountId") UUID accountId);
+
+    // ĐẾM SỐ LƯỢNG KYC CẦN DUYỆT
+    long countByStatus(KycStatus status);
+
 }
