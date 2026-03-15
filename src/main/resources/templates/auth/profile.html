@@ -1,102 +1,214 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/base}">
 <head>
-    <title>Hồ Sơ - E-commerce</title>
+    <title>Hồ Sơ Của Tôi - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="space-y-8">
-            <div class="space-y-3">
-                <div th:if="${success}" class="alert alert-success text-sm" th:text="${success}"></div>
-                <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
-            </div>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-            <div th:if="${user}" class="card bg-base-100 shadow-card border border-base-200">
-                <div class="card-body">
-                    <div class="flex flex-wrap items-center gap-6">
-                        <div class="avatar placeholder">
-                            <div class="w-20 rounded-full bg-primary text-primary-content text-2xl font-semibold"
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-slate-900">Hồ Sơ Cá Nhân</h1>
+            <p class="text-slate-500 mt-2 font-medium">Quản lý thông tin, bảo mật và cài đặt tài khoản của bạn.</p>
+        </div>
+
+        <div class="space-y-3 mb-8">
+            <div th:if="${success}" class="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-medium shadow-sm">
+                <i class="fa-solid fa-circle-check text-lg mt-0.5"></i> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 text-sm font-medium shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation text-lg mt-0.5"></i> <span th:text="${error}"></span>
+            </div>
+        </div>
+
+        <div th:if="${user}" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <div class="lg:col-span-4 space-y-6">
+
+                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 overflow-hidden relative">
+                    <div class="h-32 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+
+                    <div class="px-6 pb-6 relative">
+                        <div class="absolute -top-12 left-6 p-1.5 bg-white rounded-full">
+                            <div class="w-20 h-20 rounded-full bg-slate-200 border border-slate-100 overflow-hidden flex items-center justify-center text-2xl font-bold text-slate-500 shadow-sm"
                                  th:style="${user.avatarUrl != null} ? 'background-image: url(' + ${user.avatarUrl} + '); background-size: cover; background-position: center;' : ''">
-                                <span th:if="${user.avatarUrl == null}" th:text="${#strings.substring(user.fullName, 0, 1).toUpperCase()}">U</span>
+                                <span th:if="${user.avatarUrl == null}" th:text="${#strings.substring(user.fullName ?: user.email, 0, 1).toUpperCase()}">U</span>
                             </div>
                         </div>
-                        <div>
-                            <h2 class="text-xl font-semibold text-base-content" th:text="${user.fullName ?: 'Chưa cập nhật'}">Chưa cập nhật</h2>
-                            <p class="text-base-content/70" th:text="${user.email}">Email</p>
-                            <p class="text-base-content/70" th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">Chưa cập nhật</p>
-                            <span class="badge mt-2" th:classappend="${user.isActive} ? 'badge-success' : 'badge-ghost'" th:text="${user.isActive} ? 'Đang hoạt động' : 'Đã vô hiệu hóa'">Đang hoạt động</span>
+
+                        <div class="absolute top-4 right-6 flex gap-2">
+                                <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-full"
+                                      th:classappend="${user.isActive} ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'"
+                                      th:text="${user.isActive} ? 'Hoạt động' : 'Đã khóa'">Status</span>
+                        </div>
+
+                        <div class="pt-12 mt-2">
+                            <h2 class="text-xl font-extrabold text-slate-900" th:text="${user.fullName ?: 'Chưa cập nhật tên'}">User Name</h2>
+                            <div class="mt-3 space-y-2">
+                                <div class="flex items-center gap-3 text-sm text-slate-600 font-medium">
+                                    <div class="w-6 text-center text-slate-400"><i class="fa-regular fa-envelope"></i></div>
+                                    <span th:text="${user.email}" class="truncate">email@domain.com</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-sm text-slate-600 font-medium">
+                                    <div class="w-6 text-center text-slate-400"><i class="fa-solid fa-phone"></i></div>
+                                    <span th:text="${user.phoneNumber ?: 'Chưa cập nhật SĐT'}">Phone</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div th:if="${user.roles == null or !user.roles.contains('ROLE_SELLER')}" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 text-slate-700/50 opacity-20"><i class="fa-solid fa-shop text-9xl"></i></div>
+                    <div class="relative z-10">
+                        <h3 class="text-lg font-extrabold mb-1">Mở Gian Hàng Ngay!</h3>
+                        <p class="text-slate-300 text-sm mb-4 leading-relaxed">Trở thành đối tác bán hàng, tiếp cận hàng triệu khách hàng tiềm năng.</p>
+                        <a href="/seller/become-seller" class="inline-block bg-white text-slate-900 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-slate-100 transition-colors shadow-sm">Trở Thành Seller</a>
+                    </div>
+                </div>
+
+                <div th:if="${user.roles != null and user.roles.contains('ROLE_SELLER')}" class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-white/20"><i class="fa-solid fa-store text-8xl"></i></div>
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
+                            <i class="fa-solid fa-circle-check text-emerald-300"></i> ĐỐI TÁC BÁN HÀNG
+                        </div>
+                        <h3 class="text-lg font-extrabold mb-4">Bạn đang là Seller</h3>
+                        <a href="/seller/shop" class="inline-block bg-white text-teal-700 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">Truy cập Quản Lý Shop <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 p-6">
+                    <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-4 text-center">Bảo Mật & Cài Đặt</h3>
+                    <div class="space-y-3">
+                        <a href="/change-password" class="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2.5 rounded-xl transition-colors">
+                            <i class="fa-solid fa-key"></i> Đổi Mật Khẩu
+                        </a>
+
+                        <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" class="m-0">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="w-full flex items-center justify-center gap-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 rounded-xl transition-colors" onclick="return confirm('Cảnh báo: Bạn có chắc muốn vô hiệu hóa tài khoản của mình không?')">
+                                <i class="fa-solid fa-user-lock"></i> Vô Hiệu Hóa Tài Khoản
+                            </button>
+                        </form>
+
+                        <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" class="m-0">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl transition-colors">
+                                <i class="fa-solid fa-user-check"></i> Kích Hoạt Lại Tài Khoản
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="card bg-base-100 shadow-card border border-base-200">
-                <div class="card-body">
-                    <h3 class="card-title text-lg">Cập Nhật Thông Tin</h3>
-                    <form id="updateProfileForm" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data" class="space-y-4">
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 p-8 md:p-10">
+                    <div class="mb-8 border-b border-slate-100 pb-4">
+                        <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-pen text-blue-500"></i> Cập Nhật Thông Tin
+                        </h2>
+                    </div>
+
+                    <form id="updateProfileForm" th:action="@{/profile}" method="post" th:object="${updateProfileRequest}" enctype="multipart/form-data" class="space-y-6">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <div class="form-control">
-                            <label for="fullName" class="label"><span class="label-text">Họ và Tên</span></label>
-                            <input type="text" id="fullName" th:field="*{fullName}" class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="label text-error text-sm mt-1"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="phoneNumber" class="label"><span class="label-text">Số Điện Thoại</span></label>
-                            <input type="text" id="phoneNumber" th:field="*{phoneNumber}" class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="label text-error text-sm mt-1"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="avatarFile" class="label"><span class="label-text">Ảnh Đại Diện</span></label>
-                            <input type="file" id="avatarFile" name="avatarFile" accept="image/*" onchange="handleAvatarPreview(event)" class="file-input file-input-bordered w-full max-w-xs">
-                            <label class="label"><span class="label-text-alt text-base-content/60">JPG, PNG, GIF - tối đa 25MB</span></label>
-                            <div id="avatarPreview" class="mt-4 hidden">
-                                <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-[200px] max-h-[200px] rounded-full object-cover">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="fullName" class="block text-sm font-bold text-slate-700 mb-1.5">Họ và Tên</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><i class="fa-regular fa-id-badge"></i></div>
+                                    <input type="text" id="fullName" th:field="*{fullName}" placeholder="Nhập tên hiển thị..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                </div>
+                                <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="block text-rose-500 text-xs font-medium mt-1"></span>
                             </div>
-                            <div th:if="${user != null and user.avatarUrl != null}" class="mt-2">
-                                <span class="label-text-alt text-base-content/60">Ảnh hiện tại:</span>
-                                <img th:src="${user.avatarUrl}" alt="Current Avatar" class="max-w-[100px] max-h-[100px] rounded-full object-cover block mt-1">
+
+                            <div>
+                                <label for="phoneNumber" class="block text-sm font-bold text-slate-700 mb-1.5">Số Điện Thoại</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-phone"></i></div>
+                                    <input type="text" id="phoneNumber" th:field="*{phoneNumber}" placeholder="09xx..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                </div>
+                                <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="block text-rose-500 text-xs font-medium mt-1"></span>
                             </div>
-                            <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="label text-error text-sm mt-1"></span>
                         </div>
-                        <button type="submit" id="updateProfileBtn" class="btn btn-primary">Cập Nhật</button>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Ảnh Đại Diện (Avatar)</label>
+
+                            <label for="avatarFile" class="mt-2 flex justify-center rounded-2xl border-2 border-dashed border-slate-300 px-6 py-8 hover:bg-blue-50 hover:border-blue-400 transition-all relative group cursor-pointer w-full">
+                                <div id="dropZoneContent" class="text-center">
+                                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-300 group-hover:text-blue-500 transition-colors mb-3"></i>
+                                    <div class="mt-2 text-sm leading-6 text-slate-600">
+                                        <span class="font-bold text-blue-600 group-hover:text-blue-700">Tải ảnh lên</span>
+                                        <span>hoặc click vào khu vực này</span>
+                                    </div>
+                                    <p class="text-xs leading-5 text-slate-500 mt-1">PNG, JPG, GIF tối đa 25MB</p>
+                                </div>
+                                <input id="avatarFile" name="avatarFile" type="file" accept="image/*" class="hidden" onchange="handleAvatarPreview(event)">
+                            </label>
+
+                            <span th:if="${#fields.hasErrors('avatarUrl')}" th:errors="*{avatarUrl}" class="block text-rose-500 text-xs font-medium mt-1"></span>
+
+                            <div class="mt-4 flex gap-6 items-end">
+                                <div th:if="${user != null and user.avatarUrl != null}">
+                                    <p class="text-xs font-bold text-slate-500 uppercase mb-2">Ảnh hiện tại</p>
+                                    <img th:src="${user.avatarUrl}" alt="Current" class="w-24 h-24 rounded-2xl object-cover border border-slate-200 shadow-sm">
+                                </div>
+                                <div id="avatarPreview" class="hidden">
+                                    <p class="text-xs font-bold text-blue-500 uppercase mb-2">Ảnh mới sẽ cập nhật</p>
+                                    <img id="avatarPreviewImg" src="" alt="Preview" class="w-24 h-24 rounded-2xl object-cover border-2 border-blue-500 shadow-md">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex justify-end">
+                            <button type="submit" id="updateProfileBtn" class="py-3 px-8 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-[0_4px_12px_rgb(37,99,235,0.2)] hover:shadow-[0_6px_16px_rgb(37,99,235,0.3)] transition-all duration-200 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-floppy-disk mr-1.5"></i> Lưu Thay Đổi
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
 
-            <div th:if="${user}" class="card bg-base-100 shadow-card border border-base-200">
-                <div class="card-body">
-                    <h3 class="card-title text-lg">Trạng Thái Seller</h3>
-                    <div th:if="${user.roles != null and user.roles.contains('ROLE_SELLER')}">
-                        <p class="text-success mb-3">Bạn đã là Seller</p>
-                        <a href="/seller/shop" class="btn btn-success btn-sm">Quản Lý Shop</a>
-                    </div>
-                    <div th:if="${user.roles == null or !user.roles.contains('ROLE_SELLER')}">
-                        <p class="text-base-content/70 mb-3">Bạn chưa là Seller</p>
-                        <a href="/seller/become-seller" class="btn btn-primary btn-sm">Trở Thành Seller</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-card border border-base-200">
-                <div class="card-body">
-                    <h3 class="card-title text-lg">Thao Tác</h3>
-                    <div class="card-actions flex-wrap">
-                        <a href="/change-password" class="btn btn-primary btn-sm">Đổi Mật Khẩu</a>
-                        <form th:if="${user != null and user.isActive}" th:action="@{/deactivate}" method="post" class="inline">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="btn btn-error btn-sm" onclick="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản?')">Vô Hiệu Hóa Tài Khoản</button>
-                        </form>
-                        <form th:if="${user != null and !user.isActive}" th:action="@{/activate}" method="post" class="inline">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="btn btn-success btn-sm">Kích Hoạt Tài Khoản</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
-    </th:block>
-    <th:block th:fragment="additional-js">
-        <script th:src="@{/js/auth.js}"></script>
-    </th:block>
+    </div>
+
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Hàm preview ảnh và thay đổi nội dung khung viền
+        function handleAvatarPreview(event) {
+            const file = event.target.files[0];
+            const previewContainer = document.getElementById('avatarPreview');
+            const previewImage = document.getElementById('avatarPreviewImg');
+            const dropZoneContent = document.getElementById('dropZoneContent');
+
+            if (file) {
+                // Hiển thị ảnh bên dưới
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+
+                // Thay đổi hiệu ứng UI trong khung đứt nét để user biết đã chọn thành công
+                dropZoneContent.innerHTML = `
+                        <i class="fa-solid fa-image text-4xl text-blue-500 mb-3"></i>
+                        <div class="mt-2 text-sm leading-6 text-slate-900 font-bold">
+                            Đã chọn: <span class="text-blue-600">${file.name}</span>
+                        </div>
+                        <p class="text-xs leading-5 text-slate-500 mt-1">Click vào đây nếu muốn chọn lại ảnh khác</p>
+                    `;
+            } else {
+                previewImage.src = '';
+                previewContainer.classList.add('hidden');
+            }
+        }
+    </script>
+</th:block>
 </body>
 </html>

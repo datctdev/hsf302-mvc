@@ -4,64 +4,68 @@
     <title>Chức Năng Đang Phát Triển - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="max-w-2xl mx-auto text-center">
-            <div class="rounded-2xl bg-white border border-slate-200 shadow-sm p-8 sm:p-12">
-                <div class="text-6xl mb-4">🚧</div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-3">Chức Năng Đang Phát Triển</h2>
-                <p class="text-slate-600 mb-2">Chức năng này đang được phát triển và sẽ sớm có mặt trong các phiên bản tiếp theo.</p>
-                <p class="text-slate-500 text-sm mb-6">Chúng tôi đang nỗ lực để mang đến trải nghiệm tốt nhất cho bạn.</p>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <div class="min-h-[60vh] flex items-center justify-center p-4 py-12">
+        <div class="max-w-2xl w-full bg-white rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.08)] border border-slate-100 p-10 sm:p-14 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
 
-                <div class="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3 mb-6">
-                    <strong id="pageName" class="text-slate-700">Chức năng</strong>
-                </div>
-
-                <div id="featuresContainer" class="hidden text-left mb-6">
-                    <h3 class="font-semibold text-slate-900 mb-2">Các tính năng sẽ được thêm vào:</h3>
-                    <ul id="featuresList" class="list-disc list-inside text-slate-600 space-y-1"></ul>
-                </div>
-
-                <a href="#" id="backButton" class="no-underline inline-block px-6 py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Quay Lại</a>
+            <div class="w-28 h-28 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 border-[10px] border-white shadow-sm relative">
+                <div class="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20"></div>
+                <i class="fa-solid fa-person-digging text-5xl"></i>
             </div>
-        </div>
 
-        <script>
-            var pageFeatures = {
-                'admin-users': { name: 'Quản Lý Users', backUrl: '/admin/dashboard', features: ['Xem danh sách tất cả người dùng', 'Tìm kiếm và lọc người dùng', 'Xem chi tiết thông tin người dùng', 'Khóa/Mở khóa tài khoản', 'Phân quyền người dùng', 'Xem lịch sử hoạt động'] },
-                'admin-products': { name: 'Quản Lý Sản Phẩm', backUrl: '/admin/dashboard', features: ['Xem danh sách tất cả sản phẩm', 'Tìm kiếm và lọc sản phẩm', 'Xem chi tiết sản phẩm', 'Duyệt/Xóa sản phẩm', 'Quản lý danh mục sản phẩm', 'Thống kê sản phẩm'] },
-                'admin-orders': { name: 'Quản Lý Đơn Hàng', backUrl: '/admin/dashboard', features: ['Xem danh sách tất cả đơn hàng', 'Tìm kiếm và lọc đơn hàng', 'Xem chi tiết đơn hàng', 'Cập nhật trạng thái đơn hàng', 'Thống kê doanh thu', 'Xuất báo cáo'] },
-                'seller-products': { name: 'Quản Lý Sản Phẩm', backUrl: '/seller/shop', features: ['Thêm sản phẩm mới', 'Chỉnh sửa thông tin sản phẩm', 'Xóa sản phẩm', 'Quản lý kho hàng', 'Xem thống kê sản phẩm', 'Tối ưu hóa SEO'] },
-                'seller-orders': { name: 'Quản Lý Đơn Hàng', backUrl: '/seller/shop', features: ['Xem danh sách đơn hàng', 'Cập nhật trạng thái đơn hàng', 'In hóa đơn', 'Thống kê doanh thu', 'Xuất báo cáo', 'Quản lý vận chuyển'] },
-                'seller-statistics': { name: 'Thống Kê', backUrl: '/seller/shop', features: ['Thống kê doanh thu', 'Thống kê sản phẩm bán chạy', 'Thống kê khách hàng', 'Biểu đồ xu hướng', 'Xuất báo cáo', 'Phân tích hiệu suất'] }
-            };
-            document.addEventListener('DOMContentLoaded', function() {
-                var path = window.location.pathname;
-                var pageKey = '';
-                if (path === '/admin/users') pageKey = 'admin-users';
-                else if (path === '/admin/products') pageKey = 'admin-products';
-                else if (path === '/admin/orders') pageKey = 'admin-orders';
-                else if (path === '/seller/products') pageKey = 'seller-products';
-                else if (path === '/seller/orders') pageKey = 'seller-orders';
-                else if (path === '/seller/statistics') pageKey = 'seller-statistics';
-                if (pageKey && pageFeatures[pageKey]) {
-                    var info = pageFeatures[pageKey];
-                    document.getElementById('pageName').textContent = info.name;
-                    document.getElementById('backButton').href = info.backUrl;
-                    if (info.features && info.features.length > 0) {
-                        var list = document.getElementById('featuresList');
-                        info.features.forEach(function(f) {
-                            var li = document.createElement('li');
-                            li.textContent = f;
-                            list.appendChild(li);
-                        });
-                        document.getElementById('featuresContainer').classList.remove('hidden');
-                    }
-                } else {
-                    document.getElementById('pageName').textContent = 'Chức năng';
-                    document.getElementById('backButton').href = '/';
+            <h2 class="text-3xl font-black text-slate-900 mb-4 tracking-tight">Tính Năng Đang Xây Dựng</h2>
+            <p class="text-slate-500 text-lg mb-8 font-medium max-w-lg mx-auto">Đội ngũ kỹ sư của chúng tôi đang miệt mài gõ code để mang tính năng này đến cho bạn trong thời gian sớm nhất!</p>
+
+            <div class="inline-flex flex-col items-start p-6 bg-slate-50 rounded-2xl border border-slate-200 mb-10 w-full max-w-md mx-auto text-left">
+                <div class="flex items-center gap-3 mb-4 border-b border-slate-200 pb-4 w-full">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+                    <strong id="pageName" class="text-slate-800 font-extrabold text-lg uppercase tracking-wide">Chức năng</strong>
+                </div>
+                <div id="featuresContainer" class="hidden w-full pl-2">
+                    <ul id="featuresList" class="space-y-3 text-[15px] text-slate-600 font-medium"></ul>
+                </div>
+            </div>
+
+            <a href="#" id="backButton" class="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-xl bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition-all shadow-[0_6px_20px_rgba(15,23,42,0.2)] hover:-translate-y-1">
+                <i class="fa-solid fa-arrow-left"></i> Quay Lại Khám Phá
+            </a>
+        </div>
+    </div>
+
+    <script>
+        var pageFeatures = {
+            'admin-users': { name: 'Quản Lý Users', backUrl: '/admin/dashboard', features: ['Xem danh sách người dùng', 'Lọc và phân quyền', 'Khóa/Mở khóa tài khoản'] },
+            'admin-products': { name: 'Quản Lý Sản Phẩm', backUrl: '/admin/dashboard', features: ['Duyệt/Xóa sản phẩm', 'Quản lý danh mục', 'Thống kê tồn kho'] },
+            'admin-orders': { name: 'Quản Lý Đơn Hàng', backUrl: '/admin/dashboard', features: ['Kiểm duyệt đơn hàng', 'Cập nhật trạng thái', 'Xuất báo cáo'] },
+            'seller-products': { name: 'Sản Phẩm Của Shop', backUrl: '/seller/shop', features: ['Thêm sản phẩm mới', 'Chỉnh sửa giá & hình ảnh', 'Quản lý kho hàng'] },
+            'seller-orders': { name: 'Đơn Hàng Của Shop', backUrl: '/seller/shop', features: ['Xác nhận giao hàng', 'In vận đơn', 'Thống kê doanh thu'] },
+            'seller-statistics': { name: 'Phân Tích Bán Hàng', backUrl: '/seller/shop', features: ['Biểu đồ doanh thu', 'Phân tích sản phẩm bán chạy', 'Báo cáo lợi nhuận'] }
+        };
+        document.addEventListener('DOMContentLoaded', function() {
+            var path = window.location.pathname; var pageKey = '';
+            if (path === '/admin/users') pageKey = 'admin-users'; else if (path === '/admin/products') pageKey = 'admin-products'; else if (path === '/admin/orders') pageKey = 'admin-orders'; else if (path === '/seller/products') pageKey = 'seller-products'; else if (path === '/seller/orders') pageKey = 'seller-orders'; else if (path === '/seller/statistics') pageKey = 'seller-statistics';
+
+            if (pageKey && pageFeatures[pageKey]) {
+                var info = pageFeatures[pageKey];
+                document.getElementById('pageName').textContent = info.name;
+                document.getElementById('backButton').href = info.backUrl;
+                if (info.features && info.features.length > 0) {
+                    var list = document.getElementById('featuresList');
+                    info.features.forEach(function(f) {
+                        var li = document.createElement('li');
+                        li.innerHTML = '<i class="fa-solid fa-check text-emerald-500 mr-2 text-sm"></i> ' + f;
+                        list.appendChild(li);
+                    });
+                    document.getElementById('featuresContainer').classList.remove('hidden');
                 }
-            });
-        </script>
-    </th:block>
+            } else {
+                document.getElementById('pageName').textContent = 'Tính năng mới';
+                document.getElementById('backButton').href = '/';
+            }
+        });
+    </script>
+</th:block>
 </body>
 </html>

@@ -4,52 +4,96 @@
     <title>Đăng Ký - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="max-w-md mx-auto">
-            <div class="card bg-base-100 shadow-card border border-base-200">
-                <div class="card-body">
-                    <div class="mb-2">
-                        <h1 class="card-title text-2xl">Đăng Ký Tài Khoản</h1>
-                        <p class="text-base-content/70 mt-1">Tạo tài khoản mới để bắt đầu mua sắm</p>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <div class="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 py-8">
+        <div class="w-full max-w-5xl bg-base-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row border border-base-200">
+
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-extrabold text-base-content tracking-tight">Tạo Tài Khoản</h1>
+                    <p class="text-base-content/60 mt-2 font-medium">Gia nhập nền tảng E-commerce lớn nhất ngay hôm nay.</p>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <div th:if="${success}" class="alert alert-success text-sm shadow-sm" th:text="${success}"></div>
+                    <div th:if="${error}" class="alert alert-error text-sm shadow-sm" th:text="${error}"></div>
+                </div>
+
+                <form id="registerForm" th:action="@{/register}" method="post" th:object="${registerRequest}" class="space-y-4">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label for="fullName" class="label"><span class="label-text font-bold">Họ và Tên <span class="text-error">*</span></span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/40"><i class="fa-regular fa-user"></i></div>
+                                <input type="text" id="fullName" th:field="*{fullName}" required placeholder="Nguyễn Văn A" class="input input-bordered w-full pl-11 focus:border-slate-800 focus:ring-2 focus:ring-slate-200 transition-all">
+                            </div>
+                            <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="text-error text-xs font-medium mt-1"></span>
+                        </div>
+
+                        <div class="form-control">
+                            <label for="phoneNumber" class="label"><span class="label-text font-bold">Số Điện Thoại</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/40"><i class="fa-solid fa-phone"></i></div>
+                                <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" placeholder="09xx..." class="input input-bordered w-full pl-11 focus:border-slate-800 focus:ring-2 focus:ring-slate-200 transition-all">
+                            </div>
+                            <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="text-error text-xs font-medium mt-1"></span>
+                        </div>
                     </div>
 
-                    <div class="space-y-3 mb-4">
-                        <div th:if="${success}" class="alert alert-success text-sm" th:text="${success}"></div>
-                        <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
+                    <div class="form-control">
+                        <label for="email" class="label"><span class="label-text font-bold">Email đăng ký <span class="text-error">*</span></span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/40"><i class="fa-regular fa-envelope"></i></div>
+                            <input type="email" id="email" th:field="*{email}" required placeholder="email@domain.com" class="input input-bordered w-full pl-11 focus:border-slate-800 focus:ring-2 focus:ring-slate-200 transition-all">
+                        </div>
+                        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-error text-xs font-medium mt-1"></span>
                     </div>
 
-                    <form id="registerForm" th:action="@{/register}" method="post" th:object="${registerRequest}" class="space-y-4">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <div class="form-control">
-                            <label for="email" class="label"><span class="label-text">Email *</span></label>
-                            <input type="email" id="email" th:field="*{email}" required class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="label text-error text-sm mt-1"></span>
+                    <div class="form-control">
+                        <label for="password" class="label"><span class="label-text font-bold">Mật Khẩu <span class="text-error">*</span></span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/40"><i class="fa-solid fa-lock"></i></div>
+                            <input type="password" id="password" th:field="*{password}" required placeholder="Ít nhất 8 ký tự..." class="input input-bordered w-full pl-11 pr-12 focus:border-slate-800 focus:ring-2 focus:ring-slate-200 transition-all">
+                            <button type="button" onclick="togglePassword('password', this)" class="absolute inset-y-0 right-0 pr-4 flex items-center text-base-content/40 hover:text-base-content"><i class="fa-regular fa-eye"></i></button>
                         </div>
-                        <div class="form-control">
-                            <label for="fullName" class="label"><span class="label-text">Họ và Tên *</span></label>
-                            <input type="text" id="fullName" th:field="*{fullName}" required class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="label text-error text-sm mt-1"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="phoneNumber" class="label"><span class="label-text">Số Điện Thoại</span></label>
-                            <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="label text-error text-sm mt-1"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="password" class="label"><span class="label-text">Mật Khẩu *</span></label>
-                            <input type="password" id="password" th:field="*{password}" required class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="label text-error text-sm mt-1"></span>
-                            <label class="label"><span class="label-text-alt text-base-content/60">Mật khẩu ít nhất 8 ký tự, có chữ hoa, chữ thường và số</span></label>
-                        </div>
-                        <button type="submit" id="registerBtn" class="btn btn-primary w-full">Đăng Ký</button>
-                    </form>
+                        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-error text-xs font-medium mt-1"></span>
+                    </div>
 
-                    <p class="mt-4 text-center text-sm text-base-content/70">
-                        Đã có tài khoản? <a th:href="@{/login}" class="link link-primary font-medium">Đăng nhập ngay</a>
-                    </p>
+                    <button type="submit" id="registerBtn" class="btn btn-neutral w-full mt-6 h-12 text-base">Đăng Ký Tài Khoản Mới</button>
+                </form>
+
+                <div class="mt-6 text-center border-t border-base-200 pt-6">
+                    <p class="text-sm font-medium text-base-content/60">Đã có tài khoản? <a th:href="@{/login}" class="text-slate-800 font-extrabold hover:underline ml-1">Đăng nhập ngay</a></p>
+                </div>
+            </div>
+
+            <div class="hidden md:flex md:w-1/2 bg-gradient-to-br from-slate-800 to-slate-900 text-white p-12 flex-col justify-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3"></div>
+                <div class="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl -translate-x-1/3 translate-y-1/3"></div>
+
+                <div class="relative z-10 text-center">
+                    <div class="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10">
+                        <i class="fa-solid fa-rocket text-3xl text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold leading-tight mb-4">Bắt Đầu Trải Nghiệm<br/>Mua Sắm Thông Minh</h2>
+                    <p class="text-slate-300 text-base leading-relaxed max-w-sm mx-auto">Tham gia cùng hàng ngàn đối tác bán hàng và người mua trên toàn quốc. Đăng ký hoàn toàn miễn phí!</p>
                 </div>
             </div>
         </div>
-    </th:block>
+    </div>
+
+    <script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+            else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+        }
+    </script>
+</th:block>
 </body>
 </html>

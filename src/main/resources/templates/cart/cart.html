@@ -4,97 +4,181 @@
     <title>Giỏ Hàng - E-commerce</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-slate-900">Giỏ Hàng</h1>
-            <p class="text-slate-600 mt-1">Quản lý sản phẩm trong giỏ của bạn</p>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+                    Giỏ Hàng Của Bạn
+                    <span th:if="${cart != null and cart.items != null and !cart.items.empty}" class="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full align-middle" th:text="${cart.totalItems} + ' sản phẩm'">0</span>
+                </h1>
+                <p class="text-slate-500 mt-2 font-medium">Kiểm tra lại các mặt hàng trước khi tiến hành thanh toán.</p>
+            </div>
         </div>
 
-        <div class="space-y-3 mb-6">
-            <div th:if="${success}" class="rounded-lg p-4 bg-green-50 text-green-800 text-sm" th:text="${success}"></div>
-            <div th:if="${error}" class="rounded-lg p-4 bg-red-50 text-red-800 text-sm" th:text="${error}"></div>
+        <div class="space-y-3 mb-8">
+            <div th:if="${success}" class="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-medium shadow-sm">
+                <i class="fa-solid fa-circle-check text-lg mt-0.5"></i> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 text-sm font-medium shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation text-lg mt-0.5"></i> <span th:text="${error}"></span>
+            </div>
         </div>
 
         <div th:if="${cart != null and cart.items != null and !cart.items.empty}">
-            <form id="formCheckoutSelected" th:action="@{/orders/checkout}" method="get">
-            <p class="text-sm text-slate-600 mb-4">Chọn món bạn muốn thanh toán, sau đó bấm <strong>Thanh toán đã chọn</strong>. Bỏ chọn = có thể bấm <strong>Thanh toán tất cả</strong>.</p>
-            <div class="lg:grid lg:grid-cols-[1fr_320px] gap-8">
-                <!-- Cart items -->
-                <div class="space-y-4">
-                    <div th:each="item : ${cart.items}" class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm items-start">
-                        <label class="flex items-center shrink-0 cursor-pointer pt-1">
-                            <input type="checkbox" name="cartItemIds" th:value="${item.id}" class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cart-item-cb">
+
+            <form id="formCheckoutSelected" th:action="@{/orders/checkout}" method="get" class="hidden"></form>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 text-blue-800 text-sm font-medium mb-6">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <p>Tick chọn các sản phẩm bạn muốn mua và bấm <strong>"Thanh toán đã chọn"</strong>. Nếu muốn mua hết, hãy bấm <strong>"Thanh toán tất cả"</strong> ở cột bên phải.</p>
+                    </div>
+
+                    <div th:each="item : ${cart.items}" class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 flex flex-col sm:flex-row gap-5 items-start sm:items-center transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+
+                        <label class="flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" name="cartItemIds" th:value="${item.id}" form="formCheckoutSelected" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                         </label>
-                        <img th:src="${item.productImageUrl}" th:alt="${item.productName}" class="w-20 h-20 rounded-lg object-cover shrink-0" onerror="this.src='/images/placeholder.png'">
-                        <div class="flex-1 min-w-0">
-                            <a th:href="@{'/products/' + ${item.productId}}" class="no-underline font-medium text-slate-900 hover:text-primary-600 line-clamp-2" th:text="${item.productName}">Product Name</a>
-                            <div th:if="${item.variantName != null and item.variantValue != null}" class="text-sm text-slate-500 mt-0.5" th:text="${item.variantName + ': ' + item.variantValue}">Variant</div>
-                            <div class="text-primary-600 font-medium mt-1" th:text="|${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</div>
-                            <div class="flex flex-wrap items-center gap-3 mt-2">
-                                <form th:action="@{/cart/update}" method="post" class="inline-flex items-center gap-1 border border-slate-300 rounded-lg overflow-hidden">
+
+                        <a th:href="@{'/products/' + ${item.productId}}" class="shrink-0 relative group block">
+                            <img th:src="${item.productImageUrl}" th:alt="${item.productName}" class="w-24 h-24 rounded-2xl object-cover border border-slate-200 shadow-sm transition-transform group-hover:scale-105" onerror="this.src='/images/placeholder.png'">
+                        </a>
+
+                        <div class="flex-1 min-w-0 w-full">
+                            <a th:href="@{'/products/' + ${item.productId}}" class="text-base font-extrabold text-slate-900 hover:text-blue-600 transition-colors line-clamp-2 leading-snug" th:text="${item.productName}">Product Name</a>
+
+                            <div th:if="${item.variantName != null and item.variantValue != null}" class="inline-flex items-center mt-1.5 bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-lg">
+                                <span th:text="${item.variantName + ': ' + item.variantValue}">Variant</span>
+                            </div>
+
+                            <div class="text-slate-500 font-medium text-sm mt-1" th:text="|Đơn giá: ${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'POINT')} đ|">0 đ</div>
+                        </div>
+
+                        <div class="flex flex-row items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto mt-2 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-slate-100 shrink-0">
+
+                            <div class="text-right hidden sm:block min-w-[110px]">
+                                <span class="font-black text-blue-600 text-lg" th:text="|${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} đ|">0 đ</span>
+                            </div>
+
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <form th:action="@{/cart/update}" method="post" class="m-0 flex items-center bg-slate-50 rounded-xl p-1 border border-slate-200">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="cartItemId" th:value="${item.id}"/>
-                                    <button type="button" onclick="decreaseQuantity(this)" class="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700">−</button>
-                                    <input type="number" name="quantity" th:value="${item.quantity}" min="1" onchange="this.form.submit()" required class="w-12 text-center border-0 py-1 text-sm focus:ring-0">
-                                    <button type="button" onclick="increaseQuantity(this)" class="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700">+</button>
+
+                                    <button type="button" onclick="decreaseQuantity(this)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm hover:bg-slate-200 hover:text-blue-600 transition-colors cursor-pointer">
+                                        <i class="fa-solid fa-minus text-[10px]"></i>
+                                    </button>
+
+                                    <input type="number" name="quantity" th:value="${item.quantity}" min="1" onchange="this.form.submit()" required class="w-12 text-center bg-transparent border-0 py-0 text-sm font-bold text-slate-800 focus:ring-0 focus:outline-none hide-arrows">
+
+                                    <button type="button" onclick="increaseQuantity(this)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm hover:bg-slate-200 hover:text-blue-600 transition-colors cursor-pointer">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </button>
                                 </form>
-                                <form th:action="@{'/cart/remove/' + ${item.id}}" method="post" class="inline">
+
+                                <form th:action="@{'/cart/remove/' + ${item.id}}" method="post" class="m-0">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="text-sm text-red-600 hover:underline" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')">Xóa</button>
+                                    <button type="submit" class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer" onclick="return confirm('Xóa sản phẩm này khỏi giỏ hàng?')" title="Xóa khỏi giỏ">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
                                 </form>
                             </div>
                         </div>
-                        <div class="text-right shrink-0">
-                            <span class="font-semibold text-slate-900" th:text="|${#numbers.formatDecimal(item.totalPrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</span>
+
+                    </div>
+                </div>
+
+                <div class="lg:col-span-4 relative">
+                    <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 p-8 sticky top-24">
+                        <h2 class="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-receipt text-blue-500"></i> Tóm Tắt Đơn Hàng
+                        </h2>
+
+                        <div class="space-y-4 text-sm font-medium text-slate-600 border-b border-slate-100 pb-6 mb-6">
+                            <div class="flex justify-between items-center">
+                                <span>Tổng số lượng:</span>
+                                <span class="text-slate-900 font-bold" th:text="${cart.totalItems} + ' sản phẩm'">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Phạm vi giao hàng:</span>
+                                <span class="text-emerald-600 font-bold"><i class="fa-solid fa-truck-fast mr-1"></i> Toàn quốc</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end mb-8">
+                            <span class="text-slate-500 font-bold text-sm uppercase tracking-wider">Tạm tính</span>
+                            <span class="text-2xl font-black text-blue-600" th:text="|${#numbers.formatDecimal(cart.totalPrice, 0, 'POINT', 0, 'POINT')} đ|">0 đ</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <button type="submit" form="formCheckoutSelected" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-[0_4px_12px_rgb(15,23,42,0.2)] hover:shadow-[0_6px_16px_rgb(15,23,42,0.3)] transition-all duration-200 transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-check-to-slot"></i> Thanh Toán Mục Đã Chọn
+                            </button>
+
+                            <a th:href="@{/orders/checkout}" class="w-full py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-all duration-200 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-cart-arrow-down"></i> Thanh Toán Tất Cả
+                            </a>
+                        </div>
+
+                        <div class="mt-6 flex items-center justify-between gap-4">
+                            <a href="/products" class="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"><i class="fa-solid fa-arrow-left mr-1"></i> Mua thêm</a>
+                            <form th:action="@{/cart/clear}" method="post" class="m-0">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="text-sm font-bold text-rose-500 hover:text-rose-700 transition-colors" onclick="return confirm('Cảnh báo: Bạn sẽ xóa sạch toàn bộ giỏ hàng?')"><i class="fa-solid fa-trash-can-arrow-up mr-1"></i> Xóa tất cả</button>
+                            </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Summary -->
-                <div class="lg:sticky lg:top-4 self-start">
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-card p-6">
-                        <h2 class="text-lg font-semibold text-slate-900 mb-4">Tóm Tắt Đơn Hàng</h2>
-                        <div class="flex justify-between py-2 border-b border-slate-200">
-                            <span class="text-slate-600">Tổng sản phẩm:</span>
-                            <span th:text="${cart.totalItems}">0</span>
-                        </div>
-                        <div class="flex justify-between py-3 mt-2 text-xl font-semibold text-primary-600">
-                            <span>Tổng tiền:</span>
-                            <span th:text="|${#numbers.formatDecimal(cart.totalPrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</span>
-                        </div>
-                        <button type="submit" form="formCheckoutSelected" class="w-full mt-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Thanh toán đã chọn</button>
-                        <a th:href="@{/orders/checkout}" class="block mt-2 w-full py-2 rounded-lg border-2 border-primary-500 text-primary-600 font-medium hover:bg-primary-50 transition text-center no-underline">Thanh toán tất cả</a>
-                        <a href="/products" class="block mt-3 text-center no-underline py-2.5 rounded-lg border-2 border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition">Tiếp Tục Mua Sắm</a>
-                        <form th:action="@{/cart/clear}" method="post" class="mt-3">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="w-full py-2 rounded-lg border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 transition" onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm khỏi giỏ hàng?')">Xóa Tất Cả</button>
-                        </form>
-                    </div>
-                </div>
             </div>
-            </form>
         </div>
 
-        <div th:if="${cart == null or cart.items == null or cart.items.empty}" class="text-center py-16 bg-white rounded-xl border border-slate-200">
-            <div class="text-5xl mb-4">🛒</div>
-            <h2 class="text-xl font-semibold text-slate-900 mb-2">Giỏ hàng của bạn đang trống</h2>
-            <p class="text-slate-600 mb-6">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm.</p>
-            <a href="/products" class="inline-block no-underline px-5 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">Xem Sản Phẩm</a>
+        <div th:if="${cart == null or cart.items == null or cart.items.empty}" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-4">
+            <div class="w-40 h-40 bg-blue-50 rounded-full flex items-center justify-center mb-6 border-8 border-white shadow-sm relative">
+                <div class="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-20"></div>
+                <i class="fa-solid fa-cart-shopping text-6xl text-blue-300"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mb-2">Giỏ hàng của bạn đang trống!</h2>
+            <p class="text-slate-500 mb-8 font-medium text-center max-w-md">Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ. Hãy khám phá các ưu đãi hấp dẫn ngay hôm nay.</p>
+            <a href="/products" class="py-3.5 px-8 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-[0_4px_12px_rgb(37,99,235,0.2)] hover:shadow-[0_6px_16px_rgb(37,99,235,0.3)] transition-all duration-200 transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-bag-shopping mr-2"></i> Khám Phá Sản Phẩm
+            </a>
         </div>
 
-        <script>
-            function increaseQuantity(btn) {
-                var form = btn.closest('form');
-                var input = form.querySelector('input[type="number"]');
-                input.value = parseInt(input.value) + 1;
+    </div>
+
+    <style>
+        /* CSS Ẩn mũi tên mặc định của ô nhập số */
+        .hide-arrows::-webkit-outer-spin-button,
+        .hide-arrows::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .hide-arrows {
+            -moz-appearance: textfield;
+        }
+    </style>
+
+    <script>
+        // JS Đã Sửa Lại Logic Lấy DOM Element Chuẩn
+        function increaseQuantity(btn) {
+            var input = btn.previousElementSibling; // Lấy ô input nằm TRƯỚC nút +
+            input.value = parseInt(input.value) + 1;
+            input.dispatchEvent(new Event('change'));
+        }
+        function decreaseQuantity(btn) {
+            var input = btn.nextElementSibling; // Lấy ô input nằm SAU nút -
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
                 input.dispatchEvent(new Event('change'));
             }
-            function decreaseQuantity(btn) {
-                var form = btn.closest('form');
-                var input = form.querySelector('input[type="number"]');
-                if (parseInt(input.value) > 1) { input.value = parseInt(input.value) - 1; input.dispatchEvent(new Event('change')); }
-            }
-        </script>
-    </th:block>
+        }
+    </script>
+</th:block>
 </body>
 </html>
