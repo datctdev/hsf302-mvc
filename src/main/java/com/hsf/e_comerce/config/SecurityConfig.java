@@ -35,7 +35,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/webhooks/**", "/api/chat", "/api/chat/**")) // Webhook GHN, API chat (public)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/webhooks/**", "/chat/**"))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Static resources
@@ -47,7 +47,8 @@ public class SecurityConfig {
                         .requestMatchers("/verify-email", "/resend-verification").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // Public product pages
                         .requestMatchers("/shops", "/shops/**").permitAll() // Public shop view (buyer)
-                        .requestMatchers("/api/chat", "/api/chat/**").permitAll() // AI chatbot (public)
+                        .requestMatchers("/chat/**").permitAll() // Rule-based chatbot (guest + logged-in)
+                        .requestMatchers("/ws-chat", "/ws-chat/**").permitAll() // STOMP live chat (guest can handoff)
                         // File upload/download (require authentication)
                         .requestMatchers("/files/upload").authenticated()
                         .requestMatchers("/files/view/**", "/files/download/**").permitAll() // Public file access

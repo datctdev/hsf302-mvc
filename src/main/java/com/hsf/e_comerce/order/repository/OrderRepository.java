@@ -107,4 +107,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.shop.id = :shopId AND o.createdAt >= :since")
+    long countByShopIdAndCreatedAtAfter(@Param("shopId") UUID shopId, @Param("since") LocalDateTime since);
 }
