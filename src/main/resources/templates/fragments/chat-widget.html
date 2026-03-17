@@ -137,7 +137,7 @@
                         if (data.messageText) appendBubble(data.messageText, false);
                         appendOptions(data.options, data.humanHandoffRequired);
                         if (data.productCards && data.productCards.length > 0) appendProductCards(data.productCards);
-                        if (data.inputExpected) input.placeholder = data.inputHint || 'Nhập mã đơn (VD: ORD-20250101-0001)';
+                        if (data.inputExpected) input.placeholder = data.inputHint || 'Nhập từ khóa hoặc tin nhắn...';
                         if (data.humanHandoffRequired) {
                             document.getElementById('chat-input-area').classList.add('live-chat-mode');
                             if (data.liveChatSessionId) liveChatSessionId = data.liveChatSessionId;
@@ -162,7 +162,7 @@
                         if (data.messageText) appendBubble(data.messageText, false);
                         appendOptions(data.options, data.humanHandoffRequired);
                         if (data.productCards && data.productCards.length > 0) appendProductCards(data.productCards);
-                        if (data.inputExpected) input.placeholder = data.inputHint || 'Nhập mã đơn...';
+                        if (data.inputExpected) input.placeholder = data.inputHint || 'Nhập từ khóa hoặc tin nhắn...';
                         if (data.humanHandoffRequired) {
                             document.getElementById('chat-input-area').classList.add('live-chat-mode');
                             if (data.liveChatSessionId) liveChatSessionId = data.liveChatSessionId;

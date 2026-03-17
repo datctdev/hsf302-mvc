@@ -13,9 +13,7 @@ import com.hsf.e_comerce.chatbot.repository.ChatbotNodeRepository;
 import com.hsf.e_comerce.chatbot.repository.ChatbotOptionRepository;
 import com.hsf.e_comerce.chatbot.service.ChatbotService;
 import com.hsf.e_comerce.chatbot.valueobject.ChatbotNodeType;
-import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
 import com.hsf.e_comerce.order.repository.OrderRepository;
-import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
@@ -38,7 +36,6 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,11 +47,9 @@ public class ChatbotServiceImpl implements ChatbotService {
     private static final String SESSION_ROOT_NODE = "chatbotRootNode";
     private static final String SESSION_LIVE_CHAT = "chatbotLiveChat";
     private static final String SESSION_SEARCH_CATEGORY_ID = "chatbotSearchCategoryId";
-    private static final Pattern ORDER_NUMBER_PATTERN = Pattern.compile("ORD-\\d{8}-\\d{4}", Pattern.CASE_INSENSITIVE);
 
     private final ChatbotNodeRepository nodeRepository;
     private final ChatbotOptionRepository optionRepository;
-    private final OrderService orderService;
     private final ProductService productService;
     private final SellerRequestService sellerRequestService;
     private final ShopRepository shopRepository;
@@ -137,12 +132,6 @@ public class ChatbotServiceImpl implements ChatbotService {
             ChatbotNode nextNode = nodeRepository.findById(nextId).orElse(null);
             if (nextNode != null) return buildResponse(session, nextNode, principal);
             return init(session, principal);
-        }
-
-        if ("TRACK_ORDER".equals(action)) {
-            session.setAttribute(SESSION_CURRENT_NODE, chosen.getNextNodeId());
-            ChatbotNode nextNode = nodeRepository.findById(chosen.getNextNodeId()).orElse(null);
-            return buildResponse(session, nextNode, principal);
         }
 
         if ("POLICY_SHIPPING".equals(action)) {
@@ -301,29 +290,6 @@ public class ChatbotServiceImpl implements ChatbotService {
                     .build();
         }
 
-        if ("NODE_ASK_ORDER_ID".equals(currentNodeId)) {
-            if (!ORDER_NUMBER_PATTERN.matcher(text).matches()) {
-                return ChatbotResponseDto.builder()
-                        .messageText("Mã đơn hàng không đúng định dạng. Ví dụ: ORD-20250101-0001")
-                        .options(Collections.emptyList())
-                        .productCards(Collections.emptyList())
-                        .humanHandoffRequired(false)
-                        .inputExpected(true)
-                        .inputHint("ORD-YYYYMMDD-XXXX")
-                        .build();
-            }
-            OrderTrackingResponse tracking = orderService.getOrderTrackingByOrderNumber(text, principal);
-            session.setAttribute(SESSION_CURRENT_NODE, rootNodeId);
-            List<ChatbotOptionDto> menuOptions = buildOptionsForNode(rootNodeId, rootNodeId);
-            return ChatbotResponseDto.builder()
-                    .messageText(tracking.getMessage())
-                    .options(menuOptions)
-                    .productCards(Collections.emptyList())
-                    .humanHandoffRequired(false)
-                    .inputExpected(false)
-                    .build();
-        }
-
         session.setAttribute(SESSION_CURRENT_NODE, rootNodeId);
         return init(session, principal);
     }
@@ -398,8 +364,8 @@ public class ChatbotServiceImpl implements ChatbotService {
         options = buildOptionsForNode(node.getId(), (String) session.getAttribute(SESSION_ROOT_NODE));
 
         String inputHint = null;
-        if (inputExpected) {
-            inputHint = "NODE_SEARCH_KEYWORD".equals(node.getId()) ? "VD: áo thun, laptop" : "ORD-YYYYMMDD-XXXX";
+        if (inputExpected && "NODE_SEARCH_KEYWORD".equals(node.getId())) {
+            inputHint = "VD: áo thun, laptop";
         }
         return ChatbotResponseDto.builder()
                 .messageText(node.getMessageText())
