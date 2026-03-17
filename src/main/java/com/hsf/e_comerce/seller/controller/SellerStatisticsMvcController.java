@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.common.annotation.CurrentUser;
 import com.hsf.e_comerce.common.exception.CustomException;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
+import com.hsf.e_comerce.order.dto.response.ProductSalesItem;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
 import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
@@ -98,6 +99,10 @@ public class SellerStatisticsMvcController {
         model.addAttribute("totalNetIncome", totalNetIncome);
         model.addAttribute("orderCountByStatus", orderCountByStatusStr);
         model.addAttribute("orderStatusNames", Arrays.stream(OrderStatus.values()).map(Enum::name).toList());
+
+        List<ProductSalesItem> productSales = orderService.getProductSalesByShop(shopId);
+        model.addAttribute("productSales", productSales);
+
         return "seller/statistics";
     }
 }

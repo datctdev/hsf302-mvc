@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/admin-layout}">
+<head>
+    <title>Bảng Xếp Hạng Shop - Admin</title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <style>
+        :root {
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --border-light: #f1f5f9;
+        }
+        .page-wrapper { background-color: #f8fafc; padding: 1.5rem; border-radius: 12px; min-height: calc(100vh - 100px); }
+        .saas-card {
+            background: #ffffff; border-radius: 1.25rem; border: 1px solid var(--border-light);
+            box-shadow: var(--card-shadow); overflow: hidden; margin-bottom: 1.5rem;
+        }
+        .rank-badge { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
+        .rank-1 { background: linear-gradient(135deg, #fcd34d, #f59e0b); color: white; }
+        .rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: white; }
+        .rank-3 { background: linear-gradient(135deg, #ffedd5, #fdba74); color: #9a3412; }
+        .rank-other { background: #f1f5f9; color: #64748b; }
+        .modern-table { width: 100%; border-collapse: collapse; }
+        .modern-table th { background: #f8fafc; color: #64748b; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 1.25rem; text-align: left; border-bottom: 2px solid #f1f5f9; }
+        .modern-table td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.875rem; font-weight: 500; vertical-align: middle; }
+        .modern-table tr:hover td { background: #f8fafc; }
+        .revenue-text { font-weight: 800; color: #059669; font-size: 0.95rem; }
+    </style>
+
+    <div class="page-wrapper">
+        <div class="saas-card">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 3rem; height: 3rem; border-radius: 1rem; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <h1 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: #1e293b;">Bảng xếp hạng Shop</h1>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: #64748b;">Xếp hạng theo doanh thu (đơn đã giao)</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Hạng</th>
+                            <th>Tên Shop</th>
+                            <th style="text-align: right;">Doanh thu (đã giao)</th>
+                            <th style="text-align: center;">Số đơn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${shopRanking == null || shopRanking.isEmpty()}">
+                            <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2rem;">Chưa có dữ liệu xếp hạng.</td>
+                        </tr>
+                        <tr th:each="item : ${shopRanking}" class="border-t border-slate-100">
+                            <td>
+                                <span th:class="${'rank-badge ' + (item.rank == 1 ? 'rank-1' : (item.rank == 2 ? 'rank-2' : (item.rank == 3 ? 'rank-3' : 'rank-other')))}"
+                                      th:text="${item.rank}">1</span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 700; color: #1e293b;" th:text="${item.shopName}">Shop A</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="revenue-text" th:text="${item.totalRevenue != null ? (#numbers.formatDecimal(item.totalRevenue, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span th:text="${item.orderCount}">0</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
