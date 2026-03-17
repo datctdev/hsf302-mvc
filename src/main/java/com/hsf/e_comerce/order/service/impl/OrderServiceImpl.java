@@ -11,7 +11,9 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderItemResponse;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
+import com.hsf.e_comerce.order.dto.response.ProductSalesItem;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
+import com.hsf.e_comerce.order.dto.response.ShopRankingItem;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.repository.OrderItemRepository;
@@ -883,6 +885,46 @@ public class OrderServiceImpl implements OrderService {
         }).toList();
 
         return shippingService.calculateShippingFeeForShop(order.getShop(), simulatedItems, toDistrictId, toWardCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopRankingItem> getShopRanking() {
+        List<Object[]> rows = orderRepository.getShopRankingByRevenue();
+        List<ShopRankingItem> result = new ArrayList<>();
+        int rank = 1;
+        for (Object[] row : rows) {
+            UUID shopId = (UUID) row[0];
+            String shopName = (String) row[1];
+            BigDecimal totalRevenue = row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO;
+            long orderCount = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+            result.add(ShopRankingItem.builder()
+                    .rank(rank++)
+                    .shopId(shopId)
+                    .shopName(shopName)
+                    .totalRevenue(totalRevenue)
+                    .orderCount(orderCount)
+                    .build());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductSalesItem> getProductSalesByShop(UUID shopId) {
+        List<Object[]> rows = orderItemRepository.getProductSalesByShop(shopId);
+        List<ProductSalesItem> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            UUID productId = (UUID) row[0];
+            String productName = (String) row[1];
+            long quantitySold = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+            result.add(ProductSalesItem.builder()
+                    .productId(productId)
+                    .productName(productName)
+                    .quantitySold(quantitySold)
+                    .build());
+        }
+        return result;
     }
 
 }

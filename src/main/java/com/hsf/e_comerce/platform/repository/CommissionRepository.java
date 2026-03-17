@@ -4,9 +4,12 @@ import com.hsf.e_comerce.platform.entity.Commission;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +21,13 @@ public interface CommissionRepository extends
     Optional<Commission> findByOrderId(UUID orderId);
 
     boolean existsByOrderId(UUID orderId);
+
+    /**
+     * Backdate created_at cho commission (phục vụ seed demo để biểu đồ xu hướng đúng theo kỳ).
+     */
+    @Modifying
+    @Query(value = "UPDATE commissions SET created_at = :createdAt WHERE order_id = :orderId", nativeQuery = true)
+    int updateCreatedAtByOrderId(@Param("orderId") UUID orderId, @Param("createdAt") LocalDateTime createdAt);
 
     @Query("""
     SELECT

@@ -4,6 +4,7 @@ import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
@@ -110,4 +111,24 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.shop.id = :shopId AND o.createdAt >= :since")
     long countByShopIdAndCreatedAtAfter(@Param("shopId") UUID shopId, @Param("since") LocalDateTime since);
+
+    /**
+     * Bảng xếp hạng shop theo doanh thu (đơn DELIVERED).
+     * Returns: shopId (UUID), shopName (String), totalRevenue (BigDecimal), orderCount (Long).
+     */
+    @Query("""
+        SELECT o.shop.id, o.shop.name, COALESCE(SUM(o.total), 0), COUNT(o)
+        FROM Order o
+        WHERE o.status = com.hsf.e_comerce.order.valueobject.OrderStatus.DELIVERED
+        GROUP BY o.shop.id, o.shop.name
+        ORDER BY SUM(o.total) DESC
+        """)
+    List<Object[]> getShopRankingByRevenue();
+
+    /**
+     * Cập nhật created_at, delivered_at cho đơn (dùng cho seed demo).
+     */
+    @Modifying
+    @Query(value = "UPDATE orders SET created_at = :createdAt, delivered_at = :deliveredAt, updated_at = :updatedAt WHERE id = :id", nativeQuery = true)
+    int updateOrderDates(@Param("id") UUID id, @Param("createdAt") LocalDateTime createdAt, @Param("deliveredAt") LocalDateTime deliveredAt, @Param("updatedAt") LocalDateTime updatedAt);
 }

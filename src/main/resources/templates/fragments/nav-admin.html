@@ -5,6 +5,10 @@
                th:classappend="${requestURI == '/admin/dashboard' or requestURI == '/admin/dashboard/'} ? 'bg-primary-500 text-white' : 'text-slate-200 hover:bg-slate-600'"
                class="px-4 py-3 text-sm font-medium rounded-t transition whitespace-nowrap"
                data-path="/admin/dashboard">Dashboard</a>
+            <a th:href="@{/admin/shop-ranking}"
+               th:classappend="${requestURI.startsWith('/admin/shop-ranking')} ? 'bg-primary-500 text-white' : 'text-slate-200 hover:bg-slate-600'"
+               class="px-4 py-3 text-sm font-medium rounded-t transition whitespace-nowrap"
+               data-path="/admin/shop-ranking">Xếp hạng Shop</a>
             <a th:href="@{/admin/seller-requests}"
                th:classappend="${requestURI.startsWith('/admin/seller-requests')} ? 'bg-primary-500 text-white' : 'text-slate-200 hover:bg-slate-600'"
                class="px-4 py-3 text-sm font-medium rounded-t transition whitespace-nowrap"
