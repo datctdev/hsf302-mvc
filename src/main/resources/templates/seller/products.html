@@ -1,67 +1,100 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <title>Quản Lý Sản Phẩm - Seller</title>
+    <title>Quản Lý Sản Phẩm - Seller VIP</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <h2 class="text-xl font-bold text-slate-900">Quản Lý Sản Phẩm</h2>
-            <a href="/seller/products/add" class="no-underline px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition">+ Thêm Sản Phẩm</a>
-        </div>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        <div class="flex flex-wrap gap-4 items-center mb-6">
-            <label class="text-sm font-medium text-slate-700">Lọc theo trạng thái:</label>
-            <select id="statusFilter" onchange="filterProducts()" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
-                <option value="">Tất cả</option>
-                <option value="DRAFT" th:selected="${status == 'DRAFT'}">Nháp</option>
-                <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">Đã xuất bản</option>
-                <option value="ARCHIVED" th:selected="${status == 'ARCHIVED'}">Đã lưu trữ</option>
-            </select>
+    <div class="mb-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <i class="fa-solid fa-tags text-blue-600"></i> Kho Sản Phẩm
+            </h1>
+            <p class="text-slate-500 font-medium text-sm mt-1">Quản lý mặt hàng, biến thể và giá bán của shop</p>
         </div>
-
-        <div class="space-y-3 mb-6">
-            <div th:if="${success}" class="rounded-lg p-4 bg-green-50 text-green-800 text-sm" th:text="${success}"></div>
-            <div th:if="${error}" class="rounded-lg p-4 bg-red-50 text-red-800 text-sm" th:text="${error}"></div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <div class="w-10 h-10 flex items-center justify-center text-slate-400"><i class="fa-solid fa-filter"></i></div>
+                <select id="statusFilter" onchange="filterProducts()" class="bg-transparent border-none text-slate-700 font-bold text-sm focus:ring-0 cursor-pointer outline-none pr-8">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="DRAFT" th:selected="${status == 'DRAFT'}">📝 Nháp</option>
+                    <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">✅ Đã xuất bản</option>
+                    <option value="ARCHIVED" th:selected="${status == 'ARCHIVED'}">🗄️ Đã lưu trữ</option>
+                </select>
+            </div>
+            <a href="/seller/products/add" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all transform hover:-translate-y-0.5 no-underline">
+                <i class="fa-solid fa-plus"></i> Thêm Sản Phẩm
+            </a>
         </div>
+    </div>
 
-        <div id="productsContainer" class="space-y-4">
-            <div th:if="${products != null and !products.empty}" th:each="product : ${products}" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col sm:flex-row gap-4 p-4">
-                <div class="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
-                    <img th:if="${displayImage != null}" th:src="${displayImage.imageUrl}" th:alt="${product.name}" class="w-full h-full object-cover" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
-                    <div class="w-full h-full items-center justify-center text-2xl" th:style="${displayImage != null} ? 'display:none;' : 'display:flex;'" style="display:flex;">📦</div>
+    <div class="space-y-4 mb-6">
+        <div th:if="${success}" class="rounded-2xl p-4 bg-emerald-50 border border-emerald-100 flex items-center gap-3 shadow-sm text-emerald-800 font-bold animate-fade-in"><i class="fa-solid fa-circle-check text-xl"></i> <span th:text="${success}"></span></div>
+        <div th:if="${error}" class="rounded-2xl p-4 bg-rose-50 border border-rose-100 flex items-center gap-3 shadow-sm text-rose-800 font-bold animate-fade-in"><i class="fa-solid fa-triangle-exclamation text-xl"></i> <span th:text="${error}"></span></div>
+    </div>
+
+    <div id="productsContainer" class="space-y-5">
+        <div th:if="${products != null and !products.empty}" th:each="product : ${products}" th:with="thumbnailImage=${product.images != null and !product.images.empty ? product.images.?[isThumbnail == true] : null}, firstImage=${product.images != null and !product.images.empty ? product.images[0] : null}, displayImage=${thumbnailImage != null and !thumbnailImage.empty ? thumbnailImage[0] : firstImage}" class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 overflow-hidden flex flex-col md:flex-row group">
+
+            <div class="md:w-56 h-48 md:h-auto shrink-0 relative bg-slate-50 border-r border-slate-100 p-4 flex items-center justify-center">
+                <img th:if="${displayImage != null}" th:src="${displayImage.imageUrl}" th:alt="${product.name}" class="w-full h-full object-cover rounded-2xl shadow-sm group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                <div class="w-full h-full items-center justify-center text-4xl text-slate-300" th:style="${displayImage != null} ? 'display:none;' : 'display:flex;'" style="display:flex;"><i class="fa-solid fa-image"></i></div>
+
+                <div class="absolute top-6 left-6 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase shadow-sm border"
+                     th:classappend="${product.status == 'PUBLISHED'} ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (${product.status == 'DRAFT'} ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200')">
+                    <span th:text="${product.status == 'PUBLISHED' ? 'Đã Xuất Bản' : (product.status == 'DRAFT' ? 'Bản Nháp' : 'Lưu Trữ')}">Status</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-slate-900 truncate" th:text="${product.name}">Product Name</h3>
-                    <p class="text-sm text-slate-500">SKU: <span th:text="${product.sku}">SKU</span></p>
-                    <p class="text-primary-600 font-medium mt-1" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} VNĐ|">0 VNĐ</p>
-                    <p class="text-sm text-slate-600 mt-1 line-clamp-2" th:text="${product.description != null and product.description.length() > 100 ? product.description.substring(0, 100) + '...' : (product.description ?: '')}">Description</p>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700" th:classappend="${product.status == 'PUBLISHED'} ? 'bg-green-100 text-green-800' : (${product.status == 'DRAFT'} ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600')" th:text="${product.status == 'PUBLISHED' ? 'Đã xuất bản' : (product.status == 'DRAFT' ? 'Nháp' : 'Đã lưu trữ')}">Status</span>
-                        <span th:if="${product.variants != null and !product.variants.empty}" class="text-xs text-slate-500" th:text="|${product.variants.size()} biến thể|">Variants</span>
+            </div>
+
+            <div class="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start gap-4 mb-2">
+                        <h3 class="text-lg font-extrabold text-slate-900 line-clamp-2 group-hover:text-blue-600 transition-colors" th:text="${product.name}">Product Name</h3>
+                        <div class="text-xl font-black text-blue-600 shrink-0" th:text="|${#numbers.formatDecimal(product.basePrice, 0, 'POINT', 0, 'POINT')} ₫|">0 ₫</div>
                     </div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-1 rounded-md">SKU: <span class="text-slate-700" th:text="${product.sku}">SKU</span></span>
+                        <span th:if="${product.variants != null and !product.variants.empty}" class="text-xs font-bold text-indigo-500 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-md">
+                                <i class="fa-solid fa-layer-group mr-1"></i> <span th:text="|${product.variants.size()} Phân loại|">Variants</span>
+                            </span>
+                    </div>
+                    <p class="text-sm font-medium text-slate-500 line-clamp-2 leading-relaxed" th:text="${product.description != null and product.description.length() > 120 ? product.description.substring(0, 120) + '...' : (product.description ?: 'Chưa có mô tả')}">Description</p>
                 </div>
-                <div class="flex flex-wrap gap-2 items-center sm:items-start">
-                    <a th:href="@{'/seller/products/edit/' + ${product.id}}" class="no-underline px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">Chỉnh sửa</a>
-                    <form th:action="@{'/seller/products/delete/' + ${product.id}}" method="post" class="inline">
+
+                <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 border-dashed">
+                    <a th:href="@{'/seller/products/edit/' + ${product.id}}" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-blue-600 hover:text-white transition-colors no-underline">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Chỉnh Sửa
+                    </a>
+                    <form th:action="@{'/seller/products/delete/' + ${product.id}}" method="post" class="m-0">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="px-4 py-2 rounded-lg border border-red-500 text-red-600 text-sm font-medium hover:bg-red-50" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này? Hành động này không thể hoàn tác!')">Xóa</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 text-sm font-bold hover:bg-rose-600 hover:text-white transition-colors cursor-pointer" onclick="return confirm('⚠️ Chú ý: Bạn có chắc chắn muốn xóa sản phẩm này không? Hành động này không thể hoàn tác!')">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Xóa
+                        </button>
                     </form>
                 </div>
             </div>
-            <div th:if="${products == null or products.empty}" class="text-center py-12 rounded-xl bg-slate-50 border border-slate-200">
-                <h3 class="font-semibold text-slate-700 mb-1">Chưa có sản phẩm nào</h3>
-                <p class="text-slate-500 text-sm mb-4">Bắt đầu bằng cách thêm sản phẩm đầu tiên của bạn.</p>
-                <a href="/seller/products/add" class="no-underline inline-block px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Thêm Sản Phẩm</a>
-            </div>
         </div>
 
-        <script>
-            function filterProducts() {
-                var status = document.getElementById('statusFilter').value;
-                window.location.href = status ? '/seller/products?status=' + encodeURIComponent(status) : '/seller/products';
-            }
-        </script>
-    </th:block>
+        <div th:if="${products == null or products.empty}" class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-16 text-center">
+            <div class="w-24 h-24 mx-auto bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-boxes-packing text-4xl text-slate-300"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Chưa có sản phẩm nào</h3>
+            <p class="text-slate-500 font-medium mb-6">Hãy bắt đầu kinh doanh bằng cách thêm sản phẩm đầu tiên của bạn lên kệ hàng!</p>
+            <a href="/seller/products/add" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-[0_6px_20px_rgba(37,99,235,0.3)] transition-all transform hover:-translate-y-0.5 no-underline">
+                <i class="fa-solid fa-plus"></i> Đăng Bán Sản Phẩm
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function filterProducts() {
+            var status = document.getElementById('statusFilter').value;
+            window.location.href = status ? '/seller/products?status=' + encodeURIComponent(status) : '/seller/products';
+        }
+    </script>
+</th:block>
 </body>
 </html>
