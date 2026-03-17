@@ -17,6 +17,7 @@ import com.hsf.e_comerce.order.repository.OrderRepository;
 import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
+import com.hsf.e_comerce.recommendation.service.RecommendationService;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
 import com.hsf.e_comerce.shop.entity.Shop;
@@ -51,6 +52,7 @@ public class ChatbotServiceImpl implements ChatbotService {
     private final ChatbotNodeRepository nodeRepository;
     private final ChatbotOptionRepository optionRepository;
     private final ProductService productService;
+    private final RecommendationService recommendationService;
     private final SellerRequestService sellerRequestService;
     private final ShopRepository shopRepository;
     private final OrderRepository orderRepository;
@@ -267,6 +269,7 @@ public class ChatbotServiceImpl implements ChatbotService {
                     intent.getMaxPrice(),
                     null,
                     0, 8);
+            recommendationService.recordSearch(session.getId(), principal != null ? principal.getId() : null, keyword, null, intent.getMinPrice(), intent.getMaxPrice());
             List<ChatbotProductCardDto> cards = page.getContent().stream()
                     .map(this::toProductCard)
                     .collect(Collectors.toList());

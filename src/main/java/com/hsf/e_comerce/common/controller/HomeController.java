@@ -11,8 +11,11 @@ import com.hsf.e_comerce.platform.dto.request.CommissionFilterRequest;
 import com.hsf.e_comerce.platform.dto.response.CommissionResponse;
 import com.hsf.e_comerce.platform.service.CommissionService;
 import com.hsf.e_comerce.platform.service.CommissionStatisticsService;
+import com.hsf.e_comerce.common.annotation.CurrentUser;
+import com.hsf.e_comerce.auth.entity.User;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.service.ProductService;
+import com.hsf.e_comerce.recommendation.service.RecommendationService;
 import com.hsf.e_comerce.review.service.ReviewReportService;
 import com.hsf.e_comerce.seller.dto.response.SellerRequestResponse;
 import com.hsf.e_comerce.seller.service.SellerRequestService;
@@ -27,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,6 +48,7 @@ public class HomeController {
     private final ShopService shopService;
     private final OrderService orderService;
     private final ProductService productService;
+    private final RecommendationService recommendationService;
     private final ReviewReportService reviewReportService;
     private final CommissionService commissionService;
 
@@ -51,9 +56,16 @@ public class HomeController {
     private final CommissionStatisticsService commissionStatisticsService;
 
     @GetMapping("/")
-    public String hello(Model model) {
+    public String hello(HttpSession session, @CurrentUser User currentUser, Model model) {
         model.addAttribute("slogan", "Mua sắm thông minh – Giá tốt mỗi ngày");
         model.addAttribute("sloganSubtext", "Khám phá hàng ngàn sản phẩm điện tử, công nghệ từ các shop uy tín. Giao hàng nhanh, bảo hành chính hãng.");
+        try {
+            List<ProductResponse> recommended = recommendationService.getRecommendationsForUser(
+                    session != null ? session.getId() : null, currentUser != null ? currentUser.getId() : null, 8);
+            model.addAttribute("recommendedProducts", recommended);
+        } catch (Exception e) {
+            model.addAttribute("recommendedProducts", List.<ProductResponse>of());
+        }
         try {
             Page<ProductResponse> featuredPage = productService.getPublishedProducts(
                     0, 8, null, null, null, null, null, "createdAt", "desc");

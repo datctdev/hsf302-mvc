@@ -431,6 +431,16 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ProductResponse> getPublishedProductsByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        List<Product> products = productRepository.findPublishedByIdIn(ids);
+        return products.stream()
+                .map(p -> ProductResponse.convertToResponse(p, variantRepository, imageRepository))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, int page, int size) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getPublishedProducts(page, size, null, null, null, null, null, null, null);
