@@ -128,4 +128,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "AND (:status IS NULL OR p.status = :status)")
     @EntityGraph(attributePaths = {"shop"})
     Page<Product> findAllForAdmin(@Param("shopId") UUID shopId, @Param("status") ProductStatus status, Pageable pageable);
+
+    /** Published products by ids (for recommendation). */
+    @Query("SELECT p FROM Product p WHERE p.id IN :ids AND p.status = 'PUBLISHED' " +
+           "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true AND p.deleted = false")
+    List<Product> findPublishedByIdIn(@Param("ids") List<UUID> ids);
+
+    /** Published products in same category, excluding one product id (for similar products). */
+    @Query("SELECT p FROM Product p WHERE p.status = 'PUBLISHED' " +
+           "AND p.shop.status = 'ACTIVE' AND p.shop.user.isActive = true AND p.deleted = false " +
+           "AND p.id <> :excludeId AND (p.category.id = :categoryId OR (:categoryId IS NULL AND p.category.id IS NULL))")
+    List<Product> findPublishedByCategoryExcludingId(@Param("excludeId") UUID excludeId, @Param("categoryId") UUID categoryId, Pageable pageable);
 }

@@ -19,6 +19,7 @@ import com.hsf.e_comerce.shop.entity.Shop;
 import com.hsf.e_comerce.shop.service.ShopService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -286,5 +287,23 @@ public class OrderMvcController {
         return "redirect:/payments/" + orderId;
     }
 
+    @PostMapping("/{id}/calculate-fee")
+    @ResponseBody
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> calculateOrderFee(
+            @PathVariable("id") UUID id,
+            @RequestBody Map<String, Object> payload,
+            @CurrentUser User user) {
+        try {
+            Integer toDistrictId = Integer.parseInt(payload.get("toDistrictId").toString());
+            String toWardCode = payload.get("toWardCode").toString();
+
+            BigDecimal fee = orderService.calculateFeeForExistingOrder(id, toDistrictId, toWardCode, user);
+            return ResponseEntity.ok(Map.of("success", true, "shippingFee", fee));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 
 }

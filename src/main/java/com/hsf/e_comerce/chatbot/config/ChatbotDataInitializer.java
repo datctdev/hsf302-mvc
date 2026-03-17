@@ -37,7 +37,7 @@ public class ChatbotDataInitializer implements CommandLineRunner {
         // ---- GUEST / BUYER root ----
         ChatbotNode greetingGuest = new ChatbotNode();
         greetingGuest.setId("NODE_GREETING_GUEST");
-        greetingGuest.setMessageText("Xin chào! Tôi có thể giúp bạn: tra cứu đơn hàng, tìm sản phẩm, xem chính sách. Bạn cần gì?");
+        greetingGuest.setMessageText("Xin chào! Tôi có thể giúp bạn: tìm sản phẩm, xem chính sách. Bạn cần gì?");
         greetingGuest.setNodeType(ChatbotNodeType.MENU);
         greetingGuest.setRoleContext("GUEST");
         greetingGuest.setSortOrder(0);
@@ -45,29 +45,11 @@ public class ChatbotDataInitializer implements CommandLineRunner {
 
         ChatbotNode greetingBuyer = new ChatbotNode();
         greetingBuyer.setId("NODE_GREETING_BUYER");
-        greetingBuyer.setMessageText("Xin chào! Tôi có thể giúp bạn: tra cứu đơn hàng, tìm sản phẩm, xem chính sách. Bạn cần gì?");
+        greetingBuyer.setMessageText("Xin chào! Tôi có thể giúp bạn: tìm sản phẩm, xem chính sách. Bạn cần gì?");
         greetingBuyer.setNodeType(ChatbotNodeType.MENU);
         greetingBuyer.setRoleContext("BUYER");
         greetingBuyer.setSortOrder(0);
         nodeRepository.save(greetingBuyer);
-
-        // Ask order ID (input expected)
-        ChatbotNode askOrderId = new ChatbotNode();
-        askOrderId.setId("NODE_ASK_ORDER_ID");
-        askOrderId.setMessageText("Vui lòng nhập mã đơn hàng (ví dụ: ORD-20250101-0001).");
-        askOrderId.setNodeType(ChatbotNodeType.INPUT_EXPECTED);
-        askOrderId.setRoleContext(null);
-        askOrderId.setSortOrder(0);
-        nodeRepository.save(askOrderId);
-
-        // Order result (text only, used dynamically)
-        ChatbotNode orderResult = new ChatbotNode();
-        orderResult.setId("NODE_ORDER_RESULT");
-        orderResult.setMessageText("");
-        orderResult.setNodeType(ChatbotNodeType.TEXT_ONLY);
-        orderResult.setRoleContext(null);
-        orderResult.setSortOrder(0);
-        nodeRepository.save(orderResult);
 
         // Policy
         ChatbotNode policy = new ChatbotNode();
@@ -142,21 +124,16 @@ public class ChatbotDataInitializer implements CommandLineRunner {
         nodeRepository.save(searchKeyword);
 
         // ---- Options for GUEST/BUYER root ----
-        saveOption(greetingGuest.getId(), "Tra cứu đơn hàng", "NODE_ASK_ORDER_ID", "TRACK_ORDER");
         saveOption(greetingGuest.getId(), "Tìm sản phẩm", "NODE_SEARCH_KEYWORD", "SEARCH_PRODUCTS");
         saveOption(greetingGuest.getId(), "Chính sách & Hỗ trợ", "NODE_POLICY_SHIPPING", "POLICY_SHIPPING");
         saveOption(greetingGuest.getId(), "Gặp nhân viên", null, "HUMAN_HANDOFF");
 
-        saveOption(greetingBuyer.getId(), "Tra cứu đơn hàng", "NODE_ASK_ORDER_ID", "TRACK_ORDER");
         saveOption(greetingBuyer.getId(), "Tìm sản phẩm", "NODE_SEARCH_KEYWORD", "SEARCH_PRODUCTS");
         saveOption(greetingBuyer.getId(), "Chính sách & Hỗ trợ", "NODE_POLICY_SHIPPING", "POLICY_SHIPPING");
         saveOption(greetingBuyer.getId(), "Gặp nhân viên", null, "HUMAN_HANDOFF");
 
         // Option for NODE_SEARCH_KEYWORD (back to menu; nextNodeId null = use session root)
         saveOption(searchKeyword.getId(), "Về menu", null, "BACK_TO_MENU");
-        // Options for NODE_ASK_ORDER_ID (back to menu - handled in service when user sends text)
-        // Options for NODE_ORDER_RESULT
-        saveOption(orderResult.getId(), "Về menu", "NODE_GREETING_GUEST", "BACK_TO_MENU");
 
         // Options for policy (back to guest/buyer menu)
         saveOption(policy.getId(), "Về menu", "NODE_GREETING_GUEST", "BACK_TO_MENU");

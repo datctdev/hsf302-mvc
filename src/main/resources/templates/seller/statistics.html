@@ -60,6 +60,34 @@
             </div>
         </div>
 
+        <div class="rounded-xl border border-slate-200 bg-white overflow-hidden mb-6">
+            <div class="px-4 py-3 border-b border-slate-200">
+                <h2 class="font-semibold text-slate-900">Sản phẩm bán chạy / bán ít</h2>
+                <p class="text-xs text-slate-500 mt-1">Số lượng đã bán theo sản phẩm (chỉ tính đơn đã giao)</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">#</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Tên sản phẩm</th>
+                            <th class="px-4 py-3 text-right text-sm font-semibold text-slate-900">Số lượng đã bán</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${productSales == null || productSales.isEmpty()}">
+                            <td colspan="3" class="px-4 py-6 text-center text-slate-500 text-sm">Chưa có sản phẩm nào đã giao.</td>
+                        </tr>
+                        <tr th:each="item, stat : ${productSales}" class="border-t border-slate-100 hover:bg-slate-50">
+                            <td class="px-4 py-3 text-sm font-medium text-slate-600" th:text="${stat.count}">1</td>
+                            <td class="px-4 py-3 text-sm font-medium text-slate-900" th:text="${item.productName}">Tên SP</td>
+                            <td class="px-4 py-3 text-sm text-right font-semibold text-emerald-600" th:text="${item.quantitySold}">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <a href="/seller/orders" class="no-underline inline-block px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Xem Danh Sách Đơn Hàng</a>
     </th:block>
 </body>

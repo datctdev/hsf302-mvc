@@ -42,6 +42,9 @@ public interface ProductService {
     );
     
     ProductResponse getPublishedProductById(UUID productId);
+
+    /** Lấy danh sách sản phẩm published theo ids (thứ tự không đảm bảo). */
+    List<ProductResponse> getPublishedProductsByIds(List<UUID> ids);
     
     Page<ProductResponse> searchProducts(String keyword, int page, int size);
 

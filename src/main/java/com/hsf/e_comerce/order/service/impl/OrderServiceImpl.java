@@ -11,7 +11,9 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderItemResponse;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
+import com.hsf.e_comerce.order.dto.response.ProductSalesItem;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
+import com.hsf.e_comerce.order.dto.response.ShopRankingItem;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
 import com.hsf.e_comerce.order.repository.OrderItemRepository;
@@ -499,10 +501,10 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new CustomException("Không tìm thấy đơn hàng"));
 
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-            throw new CustomException("Không thể cập nhật đơn hàng");
+            throw new CustomException("Không thể cập nhật đơn hàng ở trạng thái này");
         }
 
-        // ✅ SHIPPING INFO
+        // SHIPPING INFO (Lưu địa chỉ mới)
         order.setShippingName(request.getShippingName());
         order.setShippingPhone(request.getShippingPhone());
         order.setShippingAddress(request.getShippingAddress());
@@ -511,16 +513,40 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingWardCode(request.getShippingWardCode());
         order.setNotes(request.getNotes());
 
-        // 🔥 FIX QUAN TRỌNG
-        order.setShippingFee(request.getShippingFee());
+        // TỰ ĐỘNG TÍNH LẠI PHÍ SHIP TỪ GHN DỰA TRÊN ĐỊA CHỈ MỚI
+        BigDecimal newShippingFee = BigDecimal.ZERO;
+        if (request.getShippingDistrictId() != null && request.getShippingWardCode() != null && !request.getShippingWardCode().isBlank()) {
+            try {
+                // Tạo một List<CartItem> ảo từ OrderItem để sử dụng chung hàm tính phí của ShippingService
+                List<CartItem> simulatedCartItems = order.getItems().stream().map(orderItem -> {
+                    CartItem item = new CartItem();
+                    item.setProduct(orderItem.getProduct());
+                    item.setQuantity(orderItem.getQuantity());
+                    return item;
+                }).toList();
 
-        // 🔥 TÍNH LẠI TOTAL
+                newShippingFee = shippingService.calculateShippingFeeForShop(
+                        order.getShop(),
+                        simulatedCartItems,
+                        request.getShippingDistrictId(),
+                        request.getShippingWardCode()
+                );
+                log.info("Đã tính lại phí ship tự động cho đơn {}: {} VNĐ", order.getOrderNumber(), newShippingFee);
+            } catch (Exception e) {
+                log.error("Không thể tự động tính phí ship qua GHN cho đơn {}: {}", order.getOrderNumber(), e.getMessage());
+                // Nếu GHN lỗi, giữ nguyên phí ship cũ hoặc lấy phí từ request làm fallback
+                newShippingFee = request.getShippingFee() != null ? request.getShippingFee() : order.getShippingFee();
+            }
+        } else {
+            // Nếu không có địa chỉ rõ ràng, dùng phí từ UI đẩy lên
+            newShippingFee = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        }
+
+        order.setShippingFee(newShippingFee);
+
+        // TÍNH LẠI TOTAL (Subtotal + New Shipping Fee)
         BigDecimal subtotal = order.getSubtotal();
-        BigDecimal shippingFee = request.getShippingFee() != null
-                ? request.getShippingFee()
-                : BigDecimal.ZERO;
-
-        order.setTotal(subtotal.add(shippingFee));
+        order.setTotal(subtotal.add(newShippingFee));
 
         orderRepository.save(order);
     }
@@ -842,4 +868,63 @@ public class OrderServiceImpl implements OrderService {
                 .estimatedRevenue(estimatedRevenue)
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal calculateFeeForExistingOrder(UUID orderId, Integer toDistrictId, String toWardCode, User user) {
+        Order order = orderRepository.findByIdAndUserWithItems(orderId, user)
+                .orElseThrow(() -> new CustomException("Không tìm thấy đơn hàng"));
+
+        // Tạo CartItem "ảo" từ OrderItem để dùng lại hàm tính phí ship của GHN
+        List<CartItem> simulatedItems = order.getItems().stream().map(oi -> {
+            CartItem ci = new CartItem();
+            ci.setProduct(oi.getProduct());
+            ci.setQuantity(oi.getQuantity());
+            ci.setVariant(oi.getVariant()); // Bổ sung Variant phòng hờ lỗi
+            return ci;
+        }).toList();
+
+        return shippingService.calculateShippingFeeForShop(order.getShop(), simulatedItems, toDistrictId, toWardCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopRankingItem> getShopRanking() {
+        List<Object[]> rows = orderRepository.getShopRankingByRevenue();
+        List<ShopRankingItem> result = new ArrayList<>();
+        int rank = 1;
+        for (Object[] row : rows) {
+            UUID shopId = (UUID) row[0];
+            String shopName = (String) row[1];
+            BigDecimal totalRevenue = row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO;
+            long orderCount = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+            result.add(ShopRankingItem.builder()
+                    .rank(rank++)
+                    .shopId(shopId)
+                    .shopName(shopName)
+                    .totalRevenue(totalRevenue)
+                    .orderCount(orderCount)
+                    .build());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductSalesItem> getProductSalesByShop(UUID shopId) {
+        List<Object[]> rows = orderItemRepository.getProductSalesByShop(shopId);
+        List<ProductSalesItem> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            UUID productId = (UUID) row[0];
+            String productName = (String) row[1];
+            long quantitySold = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+            result.add(ProductSalesItem.builder()
+                    .productId(productId)
+                    .productName(productName)
+                    .quantitySold(quantitySold)
+                    .build());
+        }
+        return result;
+    }
+
 }

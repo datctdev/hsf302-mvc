@@ -6,6 +6,7 @@ import com.hsf.e_comerce.product.dto.response.CategoryResponse;
 import com.hsf.e_comerce.product.dto.response.ProductResponse;
 import com.hsf.e_comerce.product.dto.response.ProductVariantResponse;
 import com.hsf.e_comerce.product.service.ProductService;
+import com.hsf.e_comerce.recommendation.service.RecommendationService;
 import com.hsf.e_comerce.review.dto.response.ReviewResponse;
 import com.hsf.e_comerce.review.dto.response.ReviewSummaryDTO;
 import com.hsf.e_comerce.review.service.ReviewService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ public class ProductMvcController {
 
     private final ProductService productService;
     private final ReviewService reviewService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public String getProducts(
@@ -47,8 +50,13 @@ public class ProductMvcController {
             @RequestParam(required = false, defaultValue = "desc") String sortDir,
             @RequestParam(required = false) String partial,
             HttpServletRequest request,
+            HttpSession session,
+            @CurrentUser User currentUser,
             Model model) {
 
+        if (search != null && !search.isBlank() || categoryId != null || minPrice != null || maxPrice != null) {
+            recommendationService.recordSearch(session.getId(), currentUser != null ? currentUser.getId() : null, search, categoryId, minPrice, maxPrice);
+        }
         if (sort != null && !sort.isBlank()) {
             String[] parts = sort.split(",", 2);
             sortBy = parts.length > 0 && !parts[0].isBlank() ? parts[0].trim() : sortBy;
@@ -102,11 +110,15 @@ public class ProductMvcController {
             @RequestParam(required = false) Boolean hasComments,
             @RequestParam(defaultValue = "newest") String sortBy,
             @CurrentUser User currentUser,
+            HttpSession session,
             Model model) {
         try {
+            recommendationService.recordProductView(session.getId(), currentUser != null ? currentUser.getId() : null, id);
             // 1. Load Product
             ProductResponse product = productService.getPublishedProductById(id);
             model.addAttribute("product", product);
+            List<ProductResponse> similarProducts = recommendationService.getSimilarProducts(id, 8);
+            model.addAttribute("similarProducts", similarProducts);
 
             // 2. Load Reviews (Danh sách review bên dưới)
             Page<ReviewResponse> reviews = reviewService.getProductReviews(

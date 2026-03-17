@@ -5,11 +5,14 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
 import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
+import com.hsf.e_comerce.order.dto.response.ProductSalesItem;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
+import com.hsf.e_comerce.order.dto.response.ShopRankingItem;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.auth.entity.User;
 import jakarta.validation.Valid;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,4 +77,13 @@ public interface OrderService {
     void markReceivedByBuyer(UUID id, User user);
 
     RevenueSummaryResponse getRevenueSummaryByShop(UUID shopId);
+
+    BigDecimal calculateFeeForExistingOrder(UUID orderId, Integer toDistrictId, String toWardCode, User user);
+
+    // Bảng xếp hạng các shop theo doanh thu (đơn đã giao). Dùng cho admin.
+    List<ShopRankingItem> getShopRanking();
+
+    // Thống kê sản phẩm bán nhiều/ít theo số lượng đã bán (đơn DELIVERED) của shop. Dùng cho seller.
+    List<ProductSalesItem> getProductSalesByShop(UUID shopId);
+
 }
