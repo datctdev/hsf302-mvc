@@ -4,6 +4,7 @@ import com.hsf.e_comerce.order.dto.request.CreateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
+import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.auth.entity.User;
@@ -21,6 +22,13 @@ public interface OrderService {
     List<OrderResponse> createOrdersFromCart(User user, CreateOrderRequest request);
     
     OrderResponse getOrderById(UUID orderId);
+
+    /**
+     * Tra cứu đơn hàng theo mã (chatbot / guest hoặc buyer).
+     * Guest: chỉ trả status, orderNumber, deliveredAt.
+     * Buyer (owner): thêm thông tin nếu là chủ đơn.
+     */
+    OrderTrackingResponse getOrderTrackingByOrderNumber(String orderNumber, User optionalUser);
     
     OrderResponse getOrderByIdAndUser(UUID orderId, User user);
     

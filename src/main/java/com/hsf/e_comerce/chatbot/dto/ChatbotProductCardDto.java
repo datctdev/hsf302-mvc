@@ -1,4 +1,4 @@
-package com.hsf.e_comerce.chat.dto;
+package com.hsf.e_comerce.chatbot.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,12 +12,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductSuggestionDto {
+public class ChatbotProductCardDto {
     private UUID id;
     private String name;
     private BigDecimal basePrice;
     private String productUrl;
-    private String categoryName;
-    /** URL ảnh đại diện (để hiển thị trong gợi ý). */
     private String thumbnailUrl;
 }

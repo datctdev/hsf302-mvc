@@ -10,6 +10,7 @@ import com.hsf.e_comerce.order.dto.request.UpdateOrderRequest;
 import com.hsf.e_comerce.order.dto.request.UpdateOrderStatusRequest;
 import com.hsf.e_comerce.order.dto.response.OrderItemResponse;
 import com.hsf.e_comerce.order.dto.response.OrderResponse;
+import com.hsf.e_comerce.order.dto.response.OrderTrackingResponse;
 import com.hsf.e_comerce.order.dto.response.RevenueSummaryResponse;
 import com.hsf.e_comerce.order.entity.Order;
 import com.hsf.e_comerce.order.entity.OrderItem;
@@ -209,6 +210,49 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException("Đơn hàng không tồn tại."));
         return mapToResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderTrackingResponse getOrderTrackingByOrderNumber(String orderNumber, User optionalUser) {
+        if (orderNumber == null || orderNumber.isBlank()) {
+            return OrderTrackingResponse.builder()
+                    .found(false)
+                    .message("Vui lòng nhập mã đơn hàng (ví dụ: ORD-20250101-0001).")
+                    .build();
+        }
+        Optional<Order> opt = orderRepository.findByOrderNumber(orderNumber.trim());
+        if (opt.isEmpty()) {
+            return OrderTrackingResponse.builder()
+                    .found(false)
+                    .message("Không tìm thấy đơn hàng với mã: " + orderNumber.trim() + ".")
+                    .build();
+        }
+        Order order = opt.get();
+        String statusDisplay = statusToDisplay(order.getStatus());
+        OrderTrackingResponse.OrderTrackingResponseBuilder b = OrderTrackingResponse.builder()
+                .orderNumber(order.getOrderNumber())
+                .status(order.getStatus())
+                .statusDisplay(statusDisplay)
+                .deliveredAt(order.getDeliveredAt())
+                .found(true)
+                .message("Đơn hàng " + order.getOrderNumber() + ": " + statusDisplay + ".");
+        return b.build();
+    }
+
+    private static String statusToDisplay(OrderStatus status) {
+        if (status == null) return "N/A";
+        return switch (status) {
+            case PENDING -> "Chờ xử lý";
+            case PENDING_PAYMENT -> "Chờ thanh toán";
+            case CONFIRMED -> "Đã xác nhận";
+            case PROCESSING -> "Đang xử lý";
+            case SHIPPING -> "Đang giao hàng";
+            case DELIVERED -> "Đã giao hàng";
+            case CANCELLED -> "Đã hủy";
+            case REFUNDED -> "Đã hoàn tiền";
+            default -> status.name();
+        };
     }
 
     @Override
