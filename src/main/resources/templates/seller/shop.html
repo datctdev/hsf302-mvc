@@ -1,134 +1,215 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <title>Quản Lý Shop - Seller</title>
+    <title>Hồ Sơ Cửa Hàng - Seller VIP</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <div class="space-y-3 mb-6">
-            <div th:if="${success}" class="alert alert-success text-sm" th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-error text-sm" th:text="${error}"></div>
-        </div>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        <div th:if="${shop != null}" class="space-y-6">
-            <div class="card bg-base-100 border border-base-200 overflow-hidden">
-                <div th:if="${shop.coverImageUrl != null}" class="h-40 sm:h-52 bg-slate-100">
-                    <img th:src="${shop.coverImageUrl}" class="w-full h-full object-cover" alt="Shop Cover">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <i class="fa-solid fa-store text-blue-600"></i> Hồ Sơ Cửa Hàng
+            </h1>
+            <p class="text-slate-500 font-medium text-sm mt-1">Quản lý thương hiệu và thông tin liên hệ của bạn</p>
+        </div>
+    </div>
+
+    <div class="space-y-4 mb-6">
+        <div th:if="${success}" class="rounded-2xl p-4 bg-emerald-50 border border-emerald-100 flex items-center gap-3 shadow-sm text-emerald-800 font-bold"><i class="fa-solid fa-circle-check text-xl"></i> <span th:text="${success}"></span></div>
+        <div th:if="${error}" class="rounded-2xl p-4 bg-rose-50 border border-rose-100 flex items-center gap-3 shadow-sm text-rose-800 font-bold"><i class="fa-solid fa-triangle-exclamation text-xl"></i> <span th:text="${error}"></span></div>
+    </div>
+
+    <div th:if="${shop != null}" class="space-y-8">
+        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative">
+            <div class="h-48 sm:h-64 bg-slate-100 relative group cursor-pointer" onclick="document.getElementById('coverImageFile').click()" title="Đổi ảnh bìa">
+                <img th:if="${shop.coverImageUrl != null}" th:src="${shop.coverImageUrl}" class="w-full h-full object-cover transition-opacity group-hover:opacity-90" alt="Shop Cover">
+                <div th:unless="${shop.coverImageUrl != null}" class="w-full h-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <i class="fa-solid fa-image text-4xl text-blue-200"></i>
                 </div>
-                <div class="p-6 flex flex-col sm:flex-row gap-6">
-                    <div class="flex-shrink-0">
-                        <img th:if="${shop.logoUrl != null}" th:src="${shop.logoUrl}" class="w-24 h-24 rounded-xl object-cover border border-slate-200" alt="Shop Logo">
-                        <div th:unless="${shop.logoUrl != null}" class="w-24 h-24 rounded-xl bg-slate-200 flex items-center justify-center text-4xl">🏪</div>
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span class="bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-lg"><i class="fa-solid fa-camera mr-2"></i>Đổi ảnh bìa</span>
+                </div>
+            </div>
+
+            <div class="p-6 sm:p-8 relative">
+                <div class="absolute -top-16 left-6 sm:left-8 group cursor-pointer" onclick="document.getElementById('logoFile').click()" title="Đổi Logo">
+                    <div class="w-32 h-32 rounded-2xl bg-white p-1.5 shadow-lg border border-slate-100 relative">
+                        <img th:if="${shop.logoUrl != null}" th:src="${shop.logoUrl}" class="w-full h-full rounded-xl object-cover" alt="Shop Logo">
+                        <div th:unless="${shop.logoUrl != null}" class="w-full h-full rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-4xl text-white font-black">
+                            <span th:text="${#strings.substring(shop.name, 0, 1).toUpperCase()}">S</span>
+                        </div>
+                        <div class="absolute inset-1.5 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-camera text-white text-xl"></i>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="text-xl font-bold text-slate-900" th:text="${shop.name}">Shop Name</h2>
-                        <p class="text-slate-600 text-sm mt-1" th:text="${shop.description ?: 'Chưa có mô tả'}">Description</p>
-                        <p class="text-sm mt-1"><strong>Số điện thoại:</strong> <span th:text="${shop.phoneNumber ?: '-'}">-</span></p>
-                        <p class="text-sm mt-1"><strong>Địa chỉ:</strong> <span th:text="${shop.address ?: '-'}">-</span></p>
-                        <div th:if="${shop.averageRating != null and shop.averageRating > 0}" class="mt-2 text-amber-500"><span th:text="${#numbers.formatDecimal(shop.averageRating, 1, 'POINT', 1, 'POINT')}">0.0</span> ⭐</div>
-                        <span class="badge badge-sm mt-2" th:classappend="${shop.status == 'ACTIVE'} ? 'badge-success' : 'badge-ghost'" th:text="${shop.status == 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}">Status</span>
-                        <p class="text-slate-500 text-xs mt-2">Ngày tạo: <span th:text="${#temporals.format(shop.createdAt, 'dd/MM/yyyy HH:mm')}">-</span></p>
+                </div>
+
+                <div class="flex justify-end mb-2 sm:mb-0">
+                        <span class="px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase shadow-sm border"
+                              th:classappend="${shop.status == 'ACTIVE'} ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'">
+                            <i class="fa-solid fa-circle text-[8px] mr-1" th:classappend="${shop.status == 'ACTIVE'} ? 'text-emerald-500 animate-pulse' : ''"></i>
+                            <span th:text="${shop.status == 'ACTIVE' ? 'Đang Hoạt Động' : 'Tạm Khóa'}">Status</span>
+                        </span>
+                </div>
+
+                <div class="mt-8 sm:mt-4 sm:ml-40 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-1" th:text="${shop.name}">Shop Name</h2>
+                        <p class="text-slate-500 text-sm font-medium mb-3 flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-days"></i> Tham gia: <span th:text="${#temporals.format(shop.createdAt, 'dd/MM/yyyy')}">-</span>
+                        </p>
+                        <div th:if="${shop.averageRating != null and shop.averageRating > 0}" class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1 rounded-lg border border-amber-100 font-bold text-sm">
+                            <span th:text="${#numbers.formatDecimal(shop.averageRating, 1, 'POINT', 1, 'POINT')}">0.0</span> <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 text-sm font-medium text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-3"><div class="w-6 text-center text-blue-500"><i class="fa-solid fa-phone"></i></div> <span th:text="${shop.phoneNumber ?: 'Chưa cập nhật số ĐT'}">-</span></div>
+                        <div class="flex items-start gap-3"><div class="w-6 text-center text-rose-500 mt-0.5"><i class="fa-solid fa-location-dot"></i></div> <span class="flex-1" th:text="${shop.address ?: 'Chưa cập nhật địa chỉ kho'}">-</span></div>
                     </div>
                 </div>
-            </div>
-            <div th:if="${shop.districtId == null or shop.wardCode == null or shop.wardCode.isEmpty()}" class="alert alert-warning text-sm">
-                <span><strong>⚠️ Cảnh báo:</strong> Shop của bạn chưa có địa chỉ đầy đủ (Tỉnh/Thành, Quận/Huyện, Phường/Xã). Vui lòng cập nhật địa chỉ shop để có thể thêm sản phẩm và tính phí vận chuyển GHN.</span>
-            </div>
 
-            <div id="updateShopSection" class="card bg-base-100 border border-base-200">
-                <div class="card-body">
-                    <h3 class="card-title text-lg">Cập Nhật Thông Tin Shop</h3>
-                    <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}" enctype="multipart/form-data" class="space-y-4 max-w-2xl">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <div class="form-control">
-                            <label for="name" class="label"><span class="label-text">Tên Shop *</span></label>
-                            <input type="text" id="name" th:field="*{name}" required class="input input-bordered w-full">
-                            <label class="label"><span class="label-text-alt">Tên shop 3–255 ký tự, không trùng shop khác</span></label>
-                            <span th:if="${#fields.hasErrors('name')}" class="label text-error text-sm" th:errors="*{name}"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="description" class="label"><span class="label-text">Mô Tả Shop</span></label>
-                            <textarea id="description" th:field="*{description}" class="textarea textarea-bordered w-full min-h-[100px]"></textarea>
-                            <label class="label"><span class="label-text-alt">Tối đa 2000 ký tự</span></label>
-                            <span th:if="${#fields.hasErrors('description')}" class="label text-error text-sm" th:errors="*{description}"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="phoneNumber" class="label"><span class="label-text">Số Điện Thoại</span></label>
-                            <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('phoneNumber')}" class="label text-error text-sm" th:errors="*{phoneNumber}"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="address" class="label"><span class="label-text">Địa Chỉ Chi Tiết</span></label>
-                            <input type="text" id="address" th:field="*{address}" placeholder="Số nhà, tên đường..." class="input input-bordered w-full">
-                            <span th:if="${#fields.hasErrors('address')}" class="label text-error text-sm" th:errors="*{address}"></span>
-                        </div>
-                        <div class="form-control">
-                            <label for="shopProvinceSelect" class="label"><span class="label-text">Tỉnh/Thành phố</span></label>
-                            <select id="shopProvinceSelect" class="select select-bordered w-full">
-                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
-                            </select>
-                        </div>
-                        <div class="form-control">
-                            <label for="shopDistrictSelect" class="label"><span class="label-text">Quận/Huyện</span></label>
-                            <select id="shopDistrictSelect" class="select select-bordered w-full" disabled>
-                                <option value="">-- Chọn Quận/Huyện --</option>
-                            </select>
-                        </div>
-                        <div class="form-control">
-                            <label for="shopWardSelect" class="label"><span class="label-text">Phường/Xã</span></label>
-                            <select id="shopWardSelect" class="select select-bordered w-full" disabled>
-                                <option value="">-- Chọn Phường/Xã --</option>
-                            </select>
-                        </div>
-                        <input type="hidden" id="districtId" name="districtId">
-                        <input type="hidden" id="wardCode" name="wardCode">
-                        <div class="form-control">
-                            <label for="logoFile" class="label"><span class="label-text">Logo Shop</span></label>
-                            <input type="file" id="logoFile" name="logoFile" accept="image/*" class="file-input file-input-bordered w-full max-w-xs">
-                            <label class="label"><span class="label-text-alt">Chọn ảnh từ máy (PNG, JPG). Tối đa 25MB. Để trống nếu giữ logo hiện tại.</span></label>
-                            <div id="logoCurrentWrap" th:if="${shop != null and shop.logoUrl != null}" class="mt-2">
-                                <p class="text-sm text-slate-500 mb-1">Logo hiện tại:</p>
-                                <img th:src="${shop.logoUrl}" id="logoCurrentImg" class="w-24 h-24 rounded-xl object-cover border border-slate-200" alt="Logo"/>
-                            </div>
-                            <div id="logoPreviewWrap" class="mt-2 hidden">
-                                <p class="text-sm text-slate-500 mb-1">Xem trước ảnh mới:</p>
-                                <img id="logoPreviewImg" class="w-24 h-24 rounded-xl object-cover border border-slate-200 border-primary" alt="Preview logo"/>
-                                <p id="logoPreviewError" class="text-error text-sm mt-1 hidden"></p>
-                            </div>
-                        </div>
-                        <div class="form-control">
-                            <label for="coverImageFile" class="label"><span class="label-text">Ảnh Bìa Shop</span></label>
-                            <input type="file" id="coverImageFile" name="coverImageFile" accept="image/*" class="file-input file-input-bordered w-full max-w-xs">
-                            <label class="label"><span class="label-text-alt">Chọn ảnh từ máy (PNG, JPG). Tối đa 25MB. Để trống nếu giữ ảnh bìa hiện tại.</span></label>
-                            <div id="coverCurrentWrap" th:if="${shop != null and shop.coverImageUrl != null}" class="mt-2">
-                                <p class="text-sm text-slate-500 mb-1">Ảnh bìa hiện tại:</p>
-                                <img th:src="${shop.coverImageUrl}" id="coverCurrentImg" class="max-w-md max-h-32 rounded-lg object-cover border border-slate-200" alt="Bìa"/>
-                            </div>
-                            <div id="coverPreviewWrap" class="mt-2 hidden">
-                                <p class="text-sm text-slate-500 mb-1">Xem trước ảnh mới:</p>
-                                <img id="coverPreviewImg" class="max-w-md max-h-32 rounded-lg object-cover border border-slate-200 border-primary" alt="Preview bìa"/>
-                                <p id="coverPreviewError" class="text-error text-sm mt-1 hidden"></p>
-                            </div>
-                        </div>
-                        <button type="submit" id="updateShopBtn" class="btn btn-primary">Cập Nhật Shop</button>
-                    </form>
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2">Mô tả cửa hàng</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed" th:text="${shop.description ?: 'Chưa có mô tả về shop. Hãy cập nhật để khách hàng hiểu thêm về bạn!'}">Description</p>
                 </div>
             </div>
         </div>
-        <div th:if="${shop == null}" class="alert alert-warning">
-            Bạn chưa có shop. Vui lòng đăng ký làm seller trước.
+
+        <div th:if="${shop.districtId == null or shop.wardCode == null or shop.wardCode.isEmpty()}" class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-2xl shadow-sm flex gap-4 items-start">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mt-1"></i>
+            <div>
+                <h3 class="font-bold text-amber-900">Thiếu địa chỉ kho hàng!</h3>
+                <p class="text-amber-800 text-sm font-medium mt-1">Hệ thống Giao Hàng Nhanh (GHN) yêu cầu phải có địa chỉ kho lấy hàng. Vui lòng cập nhật đầy đủ Tỉnh/Quận/Phường bên dưới để có thể thêm sản phẩm mới và vận hành shop.</p>
+            </div>
         </div>
 
-        <script>
-        // Address dropdowns for shop
+        <div id="updateShopSection" class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+            <div class="px-6 sm:px-8 py-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-blue-500"></i> Chỉnh Sửa Thông Tin</h3>
+            </div>
+
+            <div class="p-6 sm:p-8">
+                <form id="updateShopForm" th:action="@{/seller/shop}" method="post" th:object="${updateShopRequest}" enctype="multipart/form-data">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-5">
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">1. Thông tin cơ bản</h4>
+
+                            <div>
+                                <label for="name" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Tên Shop *</label>
+                                <input type="text" id="name" th:field="*{name}" required placeholder="Nhập tên shop..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                                <p class="text-xs text-slate-400 mt-1 font-medium">3–255 ký tự, không trùng shop khác</p>
+                                <span th:if="${#fields.hasErrors('name')}" class="text-rose-500 text-xs font-bold mt-1 block" th:errors="*{name}"></span>
+                            </div>
+
+                            <div>
+                                <label for="description" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Mô Tả Shop</label>
+                                <textarea id="description" th:field="*{description}" placeholder="Giới thiệu về shop của bạn..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all min-h-[120px] resize-none"></textarea>
+                                <span th:if="${#fields.hasErrors('description')}" class="text-rose-500 text-xs font-bold mt-1 block" th:errors="*{description}"></span>
+                            </div>
+
+                            <div>
+                                <label for="phoneNumber" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Số Điện Thoại Liên Hệ</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none font-bold text-slate-400 border-r border-slate-200 pr-3"><i class="fa-solid fa-phone"></i></div>
+                                    <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" placeholder="Nhập số điện thoại..." class="w-full pl-14 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                                </div>
+                                <span th:if="${#fields.hasErrors('phoneNumber')}" class="text-rose-500 text-xs font-bold mt-1 block" th:errors="*{phoneNumber}"></span>
+                            </div>
+
+                            <div class="pt-4 space-y-4">
+                                <h4 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Hình ảnh</h4>
+
+                                <div class="relative">
+                                    <input type="file" id="logoFile" name="logoFile" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div class="w-full px-4 py-3 bg-slate-50 border border-slate-200 border-dashed rounded-xl flex items-center justify-between group">
+                                        <span class="text-sm font-medium text-slate-500 group-hover:text-blue-600 transition-colors"><i class="fa-solid fa-upload mr-2"></i> Tải Logo mới lên</span>
+                                        <span class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded bg-white">Max 25MB</span>
+                                    </div>
+                                    <div id="logoPreviewWrap" class="mt-3 hidden p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center gap-3">
+                                        <img id="logoPreviewImg" class="w-12 h-12 rounded-lg object-cover shadow-sm" alt="Preview logo"/>
+                                        <span class="text-xs font-bold text-blue-700">Đã chọn logo mới (Lưu để áp dụng)</span>
+                                        <p id="logoPreviewError" class="text-rose-500 text-xs font-bold hidden"></p>
+                                    </div>
+                                </div>
+
+                                <div class="relative">
+                                    <input type="file" id="coverImageFile" name="coverImageFile" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div class="w-full px-4 py-3 bg-slate-50 border border-slate-200 border-dashed rounded-xl flex items-center justify-between group">
+                                        <span class="text-sm font-medium text-slate-500 group-hover:text-blue-600 transition-colors"><i class="fa-solid fa-upload mr-2"></i> Tải Ảnh bìa mới lên</span>
+                                        <span class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded bg-white">Max 25MB</span>
+                                    </div>
+                                    <div id="coverPreviewWrap" class="mt-3 hidden p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                        <img id="coverPreviewImg" class="w-full h-24 rounded-lg object-cover shadow-sm mb-2" alt="Preview bìa"/>
+                                        <span class="text-xs font-bold text-blue-700"><i class="fa-solid fa-check-circle"></i> Đã chọn ảnh bìa mới</span>
+                                        <p id="coverPreviewError" class="text-rose-500 text-xs font-bold hidden"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-5 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">2. Địa chỉ kho hàng (GHN)</h4>
+
+                            <div>
+                                <label for="shopProvinceSelect" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Tỉnh/Thành phố *</label>
+                                <select id="shopProvinceSelect" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="shopDistrictSelect" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Quận/Huyện *</label>
+                                <select id="shopDistrictSelect" disabled class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                                    <option value="">-- Chọn Quận/Huyện --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="shopWardSelect" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Phường/Xã *</label>
+                                <select id="shopWardSelect" disabled class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                                    <option value="">-- Chọn Phường/Xã --</option>
+                                </select>
+                            </div>
+
+                            <input type="hidden" id="districtId" name="districtId">
+                            <input type="hidden" id="wardCode" name="wardCode">
+
+                            <div>
+                                <label for="address" class="block text-[13px] font-black text-slate-600 uppercase tracking-wide mb-2">Số nhà, Tên đường</label>
+                                <input type="text" id="address" th:field="*{address}" placeholder="VD: 123 Đường ABC..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                                <span th:if="${#fields.hasErrors('address')}" class="text-rose-500 text-xs font-bold mt-1 block" th:errors="*{address}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                        <button type="submit" id="updateShopBtn" class="px-8 py-3.5 rounded-xl bg-blue-600 text-white font-black text-sm tracking-wide hover:bg-blue-700 shadow-[0_6px_20px_rgba(37,99,235,0.3)] transition-all transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-save mr-2"></i> Lưu Cập Nhật Shop
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${shop == null}" class="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"><i class="fa-solid fa-store-slash"></i></div>
+        <h2 class="text-2xl font-black text-slate-900 mb-2">Bạn chưa mở Shop</h2>
+        <p class="text-slate-500 font-medium mb-8">Vui lòng đăng ký hồ sơ nhà bán hàng để bắt đầu kinh doanh trên E-Market VIP.</p>
+        <a href="/seller/become-seller" class="inline-flex px-8 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-md transition transform hover:-translate-y-0.5">Đăng Ký Ngay</a>
+    </div>
+
+    <script th:inline="javascript">
         const shopProvinceSelect = document.getElementById('shopProvinceSelect');
         const shopDistrictSelect = document.getElementById('shopDistrictSelect');
         const shopWardSelect = document.getElementById('shopWardSelect');
 
-        // Load provinces for shop
         function loadShopProvinces() {
             if (!shopProvinceSelect) return;
-            
             fetch('/api/shipping/provinces')
                 .then(response => response.json())
                 .then(provinces => {
@@ -139,23 +220,16 @@
                         option.textContent = province.ProvinceName;
                         shopProvinceSelect.appendChild(option);
                     });
-                })
-                .catch(error => {
-                    console.error('Error loading provinces:', error);
-                });
+                }).catch(error => console.error('Error loading provinces:', error));
         }
 
-        // Load districts when province is selected
         if (shopProvinceSelect) {
             shopProvinceSelect.addEventListener('change', function() {
                 const provinceId = this.value;
                 shopDistrictSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
                 shopWardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-                shopDistrictSelect.disabled = true;
-                shopWardSelect.disabled = true;
-
+                shopDistrictSelect.disabled = true; shopWardSelect.disabled = true;
                 if (!provinceId) return;
-
                 shopDistrictSelect.disabled = false;
                 fetch(`/api/shipping/districts?provinceId=${provinceId}`)
                     .then(response => response.json())
@@ -166,26 +240,18 @@
                             option.textContent = district.DistrictName;
                             shopDistrictSelect.appendChild(option);
                         });
-                    })
-                    .catch(error => {
-                        console.error('Error loading districts:', error);
-                    });
+                    }).catch(error => console.error('Error loading districts:', error));
             });
         }
 
-        // Load wards when district is selected
         if (shopDistrictSelect) {
             shopDistrictSelect.addEventListener('change', function() {
                 const districtId = this.value;
                 shopWardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
                 shopWardSelect.disabled = true;
-
-                // Clear hidden fields
                 document.getElementById('districtId').value = '';
                 document.getElementById('wardCode').value = '';
-
                 if (!districtId) return;
-
                 shopWardSelect.disabled = false;
                 fetch(`/api/shipping/wards?districtId=${districtId}`)
                     .then(response => response.json())
@@ -196,19 +262,14 @@
                             option.textContent = ward.WardName;
                             shopWardSelect.appendChild(option);
                         });
-                    })
-                    .catch(error => {
-                        console.error('Error loading wards:', error);
-                    });
+                    }).catch(error => console.error('Error loading wards:', error));
             });
         }
 
-        // Set hidden fields when ward is selected
         if (shopWardSelect) {
             shopWardSelect.addEventListener('change', function() {
                 const districtId = shopDistrictSelect.value;
                 const wardCode = this.value;
-
                 if (districtId && wardCode) {
                     document.getElementById('districtId').value = districtId;
                     document.getElementById('wardCode').value = wardCode;
@@ -216,293 +277,62 @@
             });
         }
 
-        // Preview ảnh trước khi cập nhật (logo & ảnh bìa)
-        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+        const MAX_FILE_SIZE = 25 * 1024 * 1024;
         const logoFileInput = document.getElementById('logoFile');
         const coverFileInput = document.getElementById('coverImageFile');
+
         if (logoFileInput) {
-        logoFileInput.addEventListener('change', function(e) {
-            const wrap = document.getElementById('logoPreviewWrap');
-            const img = document.getElementById('logoPreviewImg');
-            const err = document.getElementById('logoPreviewError');
-            wrap.classList.add('hidden');
-            err.classList.add('hidden');
-            err.textContent = '';
-            if (!this.files || !this.files[0]) return;
-            const file = this.files[0];
-            if (!file.type.startsWith('image/')) {
-                err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG, ...)';
-                err.classList.remove('hidden');
-                this.value = '';
-                return;
-            }
-            if (file.size > MAX_FILE_SIZE) {
-                err.textContent = 'Kích thước file không được vượt quá 25MB';
-                err.classList.remove('hidden');
-                this.value = '';
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                img.src = ev.target.result;
-                wrap.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
-        }
-        if (coverFileInput) {
-        coverFileInput.addEventListener('change', function(e) {
-            const wrap = document.getElementById('coverPreviewWrap');
-            const img = document.getElementById('coverPreviewImg');
-            const err = document.getElementById('coverPreviewError');
-            wrap.classList.add('hidden');
-            err.classList.add('hidden');
-            err.textContent = '';
-            if (!this.files || !this.files[0]) return;
-            const file = this.files[0];
-            if (!file.type.startsWith('image/')) {
-                err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG, ...)';
-                err.classList.remove('hidden');
-                this.value = '';
-                return;
-            }
-            if (file.size > MAX_FILE_SIZE) {
-                err.textContent = 'Kích thước file không được vượt quá 25MB';
-                err.classList.remove('hidden');
-                this.value = '';
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                img.src = ev.target.result;
-                wrap.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
+            logoFileInput.addEventListener('change', function(e) {
+                const wrap = document.getElementById('logoPreviewWrap');
+                const img = document.getElementById('logoPreviewImg');
+                const err = document.getElementById('logoPreviewError');
+                wrap.classList.add('hidden'); err.classList.add('hidden'); err.textContent = '';
+                if (!this.files || !this.files[0]) return;
+                const file = this.files[0];
+                if (!file.type.startsWith('image/')) {
+                    err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG)'; err.classList.remove('hidden'); this.value = ''; return;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    err.textContent = 'Kích thước file vượt quá 25MB'; err.classList.remove('hidden'); this.value = ''; return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(ev) { img.src = ev.target.result; wrap.classList.remove('hidden'); wrap.classList.add('flex'); };
+                reader.readAsDataURL(file);
+            });
         }
 
-        // Initialize shop address dropdowns
+        if (coverFileInput) {
+            coverFileInput.addEventListener('change', function(e) {
+                const wrap = document.getElementById('coverPreviewWrap');
+                const img = document.getElementById('coverPreviewImg');
+                const err = document.getElementById('coverPreviewError');
+                wrap.classList.add('hidden'); err.classList.add('hidden'); err.textContent = '';
+                if (!this.files || !this.files[0]) return;
+                const file = this.files[0];
+                if (!file.type.startsWith('image/')) {
+                    err.textContent = 'Chỉ chấp nhận file ảnh (PNG, JPG)'; err.classList.remove('hidden'); this.value = ''; return;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    err.textContent = 'Kích thước file vượt quá 25MB'; err.classList.remove('hidden'); this.value = ''; return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(ev) { img.src = ev.target.result; wrap.classList.remove('hidden'); };
+                reader.readAsDataURL(file);
+            });
+        }
+
         if (shopProvinceSelect) {
             window.addEventListener('load', function() {
                 loadShopProvinces();
-                
-                // Set existing values to hidden fields if available
-                const existingDistrictId = /*[[${updateShopRequest.districtId}]]*/ null;
-                const existingWardCode = /*[[${updateShopRequest.wardCode}]]*/ null;
-                
+                const existingDistrictId = /*[[${updateShopRequest?.districtId}]]*/ null;
+                const existingWardCode = /*[[${updateShopRequest?.wardCode}]]*/ null;
                 if (existingDistrictId && existingWardCode) {
                     document.getElementById('districtId').value = existingDistrictId;
                     document.getElementById('wardCode').value = existingWardCode;
                 }
             });
         }
-
-        // File upload helper
-        async function uploadFileAndSetUrl(fileInput, urlInputId, folder) {
-            if (!fileInput.files || fileInput.files.length === 0) return;
-            
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('folder', folder);
-            
-            try {
-                // Get CSRF token
-                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
-                                 document.querySelector('input[name="_csrf"]')?.value;
-                if (csrfToken) {
-                    formData.append('_csrf', csrfToken);
-                }
-                
-                const response = await fetch('/files/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById(urlInputId).value = data.url;
-                    alert('Upload thành công!');
-                } else {
-                    alert('Upload thất bại. Vui lòng thử lại.');
-                }
-            } catch (error) {
-                alert('Lỗi khi upload file.');
-            }
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleString('vi-VN');
-        }
-
-        function handleLogoPreview(event) {
-            const fileInput = event.target;
-            const previewDiv = document.getElementById('logoPreview');
-            const previewImg = document.getElementById('logoPreviewImg');
-            const errorSpan = document.getElementById('logoFileError');
-
-            errorSpan.classList.remove('show');
-            errorSpan.textContent = '';
-
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-
-                if (file.size > 25 * 1024 * 1024) {
-                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
-                    errorSpan.classList.add('show');
-                    fileInput.value = '';
-                    return;
-                }
-
-                if (!file.type.startsWith('image/')) {
-                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
-                    errorSpan.classList.add('show');
-                    fileInput.value = '';
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewDiv.classList.add('show');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewDiv.classList.remove('show');
-            }
-        }
-
-        function handleCoverPreview(event) {
-            const fileInput = event.target;
-            const previewDiv = document.getElementById('coverPreview');
-            const previewImg = document.getElementById('coverPreviewImg');
-            const errorSpan = document.getElementById('coverFileError');
-
-            errorSpan.classList.remove('show');
-            errorSpan.textContent = '';
-
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-
-                if (file.size > 25 * 1024 * 1024) {
-                    errorSpan.textContent = 'Kích thước file không được vượt quá 25MB';
-                    errorSpan.classList.add('show');
-                    fileInput.value = '';
-                    return;
-                }
-
-                if (!file.type.startsWith('image/')) {
-                    errorSpan.textContent = 'Chỉ chấp nhận file ảnh';
-                    errorSpan.classList.add('show');
-                    fileInput.value = '';
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewDiv.classList.add('show');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewDiv.classList.remove('show');
-            }
-        }
-
-        async function handleUpdateShop(event) {
-            event.preventDefault();
-            
-            const updateBtn = document.getElementById('updateShopBtn');
-            updateBtn.disabled = true;
-            updateBtn.textContent = 'Đang cập nhật...';
-
-            try {
-                const name = document.getElementById('name').value.trim();
-                const description = document.getElementById('description').value.trim();
-                const phoneNumber = document.getElementById('phoneNumber').value.trim();
-                const address = document.getElementById('address').value.trim();
-                const logoFile = document.getElementById('logoFile').files[0];
-                const coverFile = document.getElementById('coverFile').files[0];
-
-                let logoUrl = currentShop?.logoUrl || null;
-                let coverImageUrl = currentShop?.coverImageUrl || null;
-
-                // Upload logo if provided
-                if (logoFile) {
-                    const formData = new FormData();
-                    formData.append('file', logoFile);
-                    formData.append('folder', 'shop-logos');
-
-                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (uploadResponse.ok) {
-                        const uploadData = await uploadResponse.json();
-                        logoUrl = uploadData.url;
-                    } else {
-                        const errorData = await uploadResponse.json().catch(() => ({}));
-                        alert(errorData.message || 'Upload logo thất bại');
-                        updateBtn.disabled = false;
-                        updateBtn.textContent = 'Cập Nhật Shop';
-                        return;
-                    }
-                }
-
-                // Upload cover if provided
-                if (coverFile) {
-                    const formData = new FormData();
-                    formData.append('file', coverFile);
-                    formData.append('folder', 'shop-covers');
-
-                    const uploadResponse = await AuthUtils.fetchWithAuth('/api/files/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (uploadResponse.ok) {
-                        const uploadData = await uploadResponse.json();
-                        coverImageUrl = uploadData.url;
-                    }
-                }
-
-                // Update shop
-                const response = await AuthUtils.fetchWithAuth('/api/shop', {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        name: name,
-                        description: description || null,
-                        phoneNumber: phoneNumber || null,
-                        address: address || null,
-                        logoUrl: logoUrl,
-                        coverImageUrl: coverImageUrl
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Cập nhật shop thành công!');
-                    await loadShopInfo();
-                    // Clear file inputs
-                    document.getElementById('logoFile').value = '';
-                    document.getElementById('coverFile').value = '';
-                    document.getElementById('logoPreview').classList.remove('show');
-                    document.getElementById('coverPreview').classList.remove('show');
-                } else {
-                    alert(data.message || 'Cập nhật shop thất bại');
-                }
-            } catch (error) {
-                alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-            } finally {
-                updateBtn.disabled = false;
-                updateBtn.textContent = 'Cập Nhật Shop';
-            }
-        }
     </script>
-    </th:block>
+</th:block>
 </body>
 </html>

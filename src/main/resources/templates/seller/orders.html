@@ -1,50 +1,105 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <title>Quản Lý Đơn Hàng - Seller</title>
+    <title>Quản Lý Đơn Hàng - Seller VIP</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">Quản Lý Đơn Hàng</h1>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        <div class="flex flex-wrap gap-4 items-center mb-6">
-            <label class="text-sm font-medium text-slate-700">Lọc theo trạng thái:</label>
-            <select id="statusFilter" onchange="filterOrders()" class="rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                <option value="">Tất cả</option>
-                <option th:each="status : ${orderStatuses}" th:value="${status}" th:text="${status}" th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
+    <div class="mb-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <i class="fa-solid fa-clipboard-list text-blue-600"></i> Quản Lý Đơn Hàng
+            </h1>
+            <p class="text-slate-500 font-medium text-sm mt-1">Theo dõi và xử lý các đơn hàng của shop</p>
+        </div>
+
+        <div class="flex items-center bg-slate-50 p-2 rounded-2xl border border-slate-100">
+            <div class="w-10 h-10 flex items-center justify-center text-slate-400"><i class="fa-solid fa-filter"></i></div>
+            <select id="statusFilter" onchange="filterOrders()" class="bg-transparent border-none text-slate-700 font-bold text-sm focus:ring-0 cursor-pointer outline-none pr-8">
+                <option value="">📦 Tất cả đơn hàng</option>
+                <option th:each="status : ${orderStatuses}"
+                        th:value="${status}"
+                        th:text="${status}"
+                        th:selected="${currentStatus != null and currentStatus.equals(status.toString())}">Status</option>
             </select>
         </div>
+    </div>
 
-        <div th:if="${orders == null or orders.empty}" class="text-center py-12 rounded-xl bg-slate-50 border border-slate-200">
-            <p class="text-slate-500">Chưa có đơn hàng nào.</p>
+    <div th:if="${orders == null or orders.empty}" class="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-16 text-center">
+        <div class="w-24 h-24 mx-auto bg-slate-50 rounded-full flex items-center justify-center mb-6">
+            <i class="fa-solid fa-box-open text-4xl text-slate-300"></i>
         </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">Chưa có đơn hàng nào</h3>
+        <p class="text-slate-500 font-medium">Bạn chưa có đơn hàng nào khớp với bộ lọc hiện tại.</p>
+        <button onclick="document.getElementById('statusFilter').value=''; filterOrders();" class="mt-6 px-6 py-2.5 rounded-xl bg-blue-50 text-blue-600 font-bold hover:bg-blue-100 transition-colors">Xóa bộ lọc</button>
+    </div>
 
-        <div th:if="${orders != null and !orders.empty}" class="space-y-4">
-            <div th:each="order : ${orders}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-card-hover transition">
-                <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+    <div th:if="${orders != null and !orders.empty}" class="space-y-5">
+        <div th:each="order : ${orders}" class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 overflow-hidden group">
+            <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-box"></i></div>
                     <div>
-                        <h3 class="font-semibold text-slate-900" th:text="'Đơn hàng: ' + ${order.orderNumber}">Order Number</h3>
-                        <p class="text-sm text-slate-500 mt-1" th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Date</p>
+                        <h3 class="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+                            <span th:text="${order.orderNumber}">ORD-123</span>
+                            <span th:if="${order.ghnOrderCode != null and !order.ghnOrderCode.isEmpty()}" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] uppercase tracking-wider font-black" title="Đã có mã vận đơn GHN"><i class="fa-solid fa-truck-fast"></i> GHN</span>
+                        </h3>
+                        <p class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5"><i class="fa-regular fa-clock"></i> <span th:text="${#temporals.format(order.createdAt, 'HH:mm - dd/MM/yyyy')}">Date</span></p>
                     </div>
-                    <span class="px-2.5 py-1 rounded text-sm font-medium bg-slate-100 text-slate-700" th:classappend="${order.status == 'PENDING'} ? 'bg-amber-100 text-amber-800' : (${order.status == 'DELIVERED'} ? 'bg-green-100 text-green-800' : (${order.status == 'CANCELLED'} ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'))" th:text="${order.status}">Status</span>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                    <div><span class="text-slate-500">Khách hàng:</span> <span th:text="${order.userName}">User</span></div>
-                    <div><span class="text-slate-500">Tổng tiền:</span> <span th:text="|${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} VNĐ|">Total</span></div>
-                    <div><span class="text-slate-500">Số SP:</span> <span th:text="${order.items != null ? order.items.size() : 0}">Items</span></div>
+
+                <div class="px-4 py-1.5 rounded-xl font-black text-xs tracking-widest uppercase border"
+                     th:classappend="${order.status.name() == 'PENDING' ? 'bg-slate-50 text-slate-600 border-slate-200' : (order.status.name() == 'PENDING_PAYMENT' ? 'bg-amber-50 text-amber-600 border-amber-200' : (order.status.name() == 'CONFIRMED' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : (order.status.name() == 'PROCESSING' ? 'bg-purple-50 text-purple-600 border-purple-200' : (order.status.name() == 'SHIPPING' ? 'bg-sky-50 text-sky-600 border-sky-200' : (order.status.name() == 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (order.status.name() == 'CANCELLED' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-slate-100 text-slate-700'))))))}">
+                    <i class="fa-solid fa-circle text-[8px] mr-1"></i> <span th:text="${order.status}">Status</span>
                 </div>
-                <div class="mt-4">
-                    <a th:href="@{'/seller/orders/' + ${order.id}}" class="inline-block no-underline px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition">Xem Chi Tiết</a>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+
+                    <div class="md:pr-6">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Người Mua</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
+                                <span th:text="${#strings.substring(order.userName, 0, 1).toUpperCase()}">U</span>
+                            </div>
+                            <div class="truncate">
+                                <p class="font-bold text-slate-800 text-sm truncate" th:text="${order.userName}">User Name</p>
+                                <p class="text-xs font-medium text-slate-500 truncate" th:text="${order.shippingAddress + ', ' + order.shippingWard}">Address</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:px-6 pt-4 md:pt-0">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Thanh Toán</p>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-sm font-medium text-slate-500">Số sản phẩm:</span>
+                            <span class="text-sm font-bold text-slate-800" th:text="${order.items != null ? order.items.size() : 0} + ' món'">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-slate-800">Tổng tiền:</span>
+                            <span class="text-lg font-black text-blue-600" th:text="|${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} ₫|">0 ₫</span>
+                        </div>
+                    </div>
+
+                    <div class="md:pl-6 pt-4 md:pt-0 flex flex-col justify-center items-end">
+                        <a th:href="@{'/seller/orders/' + ${order.id}}" class="w-full sm:w-auto text-center px-6 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 shadow-[0_4px_15px_rgba(15,23,42,0.15)] transition-all transform hover:-translate-y-0.5 no-underline">
+                            Xử Lý Đơn Hàng <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script>
-            function filterOrders() {
-                var status = document.getElementById('statusFilter').value;
-                window.location.href = '/seller/orders' + (status ? '?status=' + encodeURIComponent(status) : '');
-            }
-        </script>
-    </th:block>
+    <script>
+        function filterOrders() {
+            var status = document.getElementById('statusFilter').value;
+            window.location.href = '/seller/orders' + (status ? '?status=' + encodeURIComponent(status) : '');
+        }
+    </script>
+</th:block>
 </body>
 </html>
