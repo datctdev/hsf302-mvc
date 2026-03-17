@@ -132,17 +132,28 @@ public class ChatbotDataInitializer implements CommandLineRunner {
         searchPrice.setSortOrder(0);
         nodeRepository.save(searchPrice);
 
+        // Search by keyword (full-text, chat-like)
+        ChatbotNode searchKeyword = new ChatbotNode();
+        searchKeyword.setId("NODE_SEARCH_KEYWORD");
+        searchKeyword.setMessageText("Nhập từ khóa sản phẩm bạn muốn tìm (ví dụ: áo thun, laptop)...");
+        searchKeyword.setNodeType(ChatbotNodeType.INPUT_EXPECTED);
+        searchKeyword.setRoleContext(null);
+        searchKeyword.setSortOrder(0);
+        nodeRepository.save(searchKeyword);
+
         // ---- Options for GUEST/BUYER root ----
         saveOption(greetingGuest.getId(), "Tra cứu đơn hàng", "NODE_ASK_ORDER_ID", "TRACK_ORDER");
-        saveOption(greetingGuest.getId(), "Tìm sản phẩm", "NODE_SEARCH_CATEGORY", "SEARCH_PRODUCTS");
+        saveOption(greetingGuest.getId(), "Tìm sản phẩm", "NODE_SEARCH_KEYWORD", "SEARCH_PRODUCTS");
         saveOption(greetingGuest.getId(), "Chính sách & Hỗ trợ", "NODE_POLICY_SHIPPING", "POLICY_SHIPPING");
         saveOption(greetingGuest.getId(), "Gặp nhân viên", null, "HUMAN_HANDOFF");
 
         saveOption(greetingBuyer.getId(), "Tra cứu đơn hàng", "NODE_ASK_ORDER_ID", "TRACK_ORDER");
-        saveOption(greetingBuyer.getId(), "Tìm sản phẩm", "NODE_SEARCH_CATEGORY", "SEARCH_PRODUCTS");
+        saveOption(greetingBuyer.getId(), "Tìm sản phẩm", "NODE_SEARCH_KEYWORD", "SEARCH_PRODUCTS");
         saveOption(greetingBuyer.getId(), "Chính sách & Hỗ trợ", "NODE_POLICY_SHIPPING", "POLICY_SHIPPING");
         saveOption(greetingBuyer.getId(), "Gặp nhân viên", null, "HUMAN_HANDOFF");
 
+        // Option for NODE_SEARCH_KEYWORD (back to menu; nextNodeId null = use session root)
+        saveOption(searchKeyword.getId(), "Về menu", null, "BACK_TO_MENU");
         // Options for NODE_ASK_ORDER_ID (back to menu - handled in service when user sends text)
         // Options for NODE_ORDER_RESULT
         saveOption(orderResult.getId(), "Về menu", "NODE_GREETING_GUEST", "BACK_TO_MENU");

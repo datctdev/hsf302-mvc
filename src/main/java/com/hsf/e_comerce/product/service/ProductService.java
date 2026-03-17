@@ -44,6 +44,11 @@ public interface ProductService {
     ProductResponse getPublishedProductById(UUID productId);
     
     Page<ProductResponse> searchProducts(String keyword, int page, int size);
+
+    /**
+     * Tìm kiếm cho chatbot: FTS + filter giá/category. Có keyword thì dùng FTS; không thì chỉ filter.
+     */
+    Page<ProductResponse> searchForChatbot(String keyword, BigDecimal minPrice, BigDecimal maxPrice, UUID categoryId, int page, int size);
     
     Page<ProductResponse> getPublishedProductsByShop(UUID shopId, int page, int size);
 

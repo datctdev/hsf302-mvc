@@ -63,6 +63,36 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "@@ plainto_tsquery('simple', :keyword)",
            nativeQuery = true)
     Page<Product> searchPublishedProducts(@Param("keyword") String keyword, Pageable pageable);
+
+    /**
+     * FTS + filter giá và category (cho chatbot). Keyword không null/empty.
+     */
+    @Query(value = "SELECT p.* FROM products p " +
+           "INNER JOIN shops s ON p.shop_id = s.id " +
+           "INNER JOIN users u ON s.user_id = u.id " +
+           "WHERE p.status = 'PUBLISHED' AND s.status = 'ACTIVE' AND u.is_active = true AND p.deleted = false " +
+           "AND to_tsvector('simple', coalesce(p.name,'') || ' ' || coalesce(p.description,'') || ' ' || coalesce(p.sku,'')) " +
+           "@@ plainto_tsquery('simple', :keyword) " +
+           "AND (:minPrice IS NULL OR p.base_price >= :minPrice) " +
+           "AND (:maxPrice IS NULL OR p.base_price <= :maxPrice) " +
+           "AND (:categoryId IS NULL OR p.category_id = CAST(:categoryId AS uuid)) " +
+           "ORDER BY p.created_at DESC",
+           countQuery = "SELECT COUNT(p.id) FROM products p " +
+           "INNER JOIN shops s ON p.shop_id = s.id " +
+           "INNER JOIN users u ON s.user_id = u.id " +
+           "WHERE p.status = 'PUBLISHED' AND s.status = 'ACTIVE' AND u.is_active = true AND p.deleted = false " +
+           "AND to_tsvector('simple', coalesce(p.name,'') || ' ' || coalesce(p.description,'') || ' ' || coalesce(p.sku,'')) " +
+           "@@ plainto_tsquery('simple', :keyword) " +
+           "AND (:minPrice IS NULL OR p.base_price >= :minPrice) " +
+           "AND (:maxPrice IS NULL OR p.base_price <= :maxPrice) " +
+           "AND (:categoryId IS NULL OR p.category_id = CAST(:categoryId AS uuid))",
+           nativeQuery = true)
+    Page<Product> searchPublishedProductsFtsWithFilters(
+            @Param("keyword") String keyword,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("categoryId") UUID categoryId,
+            Pageable pageable);
     
     /* Thứ tự điều kiện :search: dùng :search trong CONCAT trước để Hibernate suy ra type string (tránh lỗi lower(bytea) trên PostgreSQL). */
     @Query("SELECT DISTINCT p FROM Product p " +

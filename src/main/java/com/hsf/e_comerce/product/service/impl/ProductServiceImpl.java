@@ -453,6 +453,33 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<ProductResponse> searchForChatbot(String keyword, BigDecimal minPrice, BigDecimal maxPrice, UUID categoryId, int page, int size) {
+        if (page < 0) page = 0;
+        if (size < 1) size = 20;
+        if (size > 100) size = 100;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_at"));
+
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        boolean hasFilter = minPrice != null || maxPrice != null || categoryId != null;
+
+        if (hasKeyword) {
+            Page<Product> products = productRepository.searchPublishedProductsFtsWithFilters(
+                    keyword.trim(),
+                    minPrice,
+                    maxPrice,
+                    categoryId,
+                    pageable
+            );
+            return products.map(p -> ProductResponse.convertToResponse(p, variantRepository, imageRepository));
+        }
+        if (hasFilter) {
+            return getPublishedProducts(page, size, null, categoryId, null, minPrice, maxPrice, null, null);
+        }
+        return Page.empty(PageRequest.of(page, size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getPublishedProductsByShop(UUID shopId, int page, int size) {
         if (page < 0) page = 0;
         if (size < 1) size = 20;

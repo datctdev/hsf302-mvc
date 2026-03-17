@@ -6,6 +6,8 @@ import com.hsf.e_comerce.chatbot.dto.ChatbotProductCardDto;
 import com.hsf.e_comerce.chatbot.dto.ChatbotResponseDto;
 import com.hsf.e_comerce.chatbot.dto.ChatbotInteractRequest;
 import com.hsf.e_comerce.chatbot.entity.ChatbotNode;
+import com.hsf.e_comerce.chatbot.parser.SearchIntent;
+import com.hsf.e_comerce.chatbot.parser.SearchQueryParser;
 import com.hsf.e_comerce.chatbot.entity.ChatbotOption;
 import com.hsf.e_comerce.chatbot.repository.ChatbotNodeRepository;
 import com.hsf.e_comerce.chatbot.repository.ChatbotOptionRepository;
@@ -29,7 +31,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.servlet.http.HttpSession;
+
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.*;
@@ -181,7 +186,8 @@ public class ChatbotServiceImpl implements ChatbotService {
         if ("SEARCH_PRODUCTS".equals(action)) {
             session.setAttribute(SESSION_SEARCH_CATEGORY_ID, null);
             session.setAttribute(SESSION_CURRENT_NODE, chosen.getNextNodeId());
-            return buildSearchCategoryResponse(session, principal);
+            ChatbotNode nextNode = nodeRepository.findById(chosen.getNextNodeId()).orElse(null);
+            return buildResponse(session, nextNode, principal);
         }
 
         if ("SEARCH_ALL".equals(action)) {
@@ -242,6 +248,59 @@ public class ChatbotServiceImpl implements ChatbotService {
             return init(session, principal);
         }
 
+        if ("NODE_SEARCH_KEYWORD".equals(currentNodeId)) {
+            if (text.isBlank()) {
+                return ChatbotResponseDto.builder()
+                        .messageText("Vui lòng nhập từ khóa tìm kiếm (có thể kèm giá, VD: laptop dưới 30 triệu).")
+                        .options(buildOptionsForNode(currentNodeId, rootNodeId))
+                        .productCards(Collections.emptyList())
+                        .humanHandoffRequired(false)
+                        .inputExpected(true)
+                        .inputHint("VD: áo thun, laptop dưới 30 triệu, laptop hãng asus")
+                        .build();
+            }
+            SearchIntent intent = SearchQueryParser.parse(text);
+            String keyword = intent.getKeyword() != null && !intent.getKeyword().isBlank()
+                    ? intent.getKeyword().trim() : null;
+            if (keyword == null && intent.getMinPrice() == null && intent.getMaxPrice() == null) {
+                return ChatbotResponseDto.builder()
+                        .messageText("Vui lòng nhập từ khóa sản phẩm (VD: laptop, áo thun) hoặc kèm giá (VD: laptop dưới 30 triệu).")
+                        .options(buildOptionsForNode(currentNodeId, rootNodeId))
+                        .productCards(Collections.emptyList())
+                        .humanHandoffRequired(false)
+                        .inputExpected(true)
+                        .inputHint("VD: laptop dưới 30 triệu, laptop hãng asus")
+                        .build();
+            }
+            Page<ProductResponse> page = productService.searchForChatbot(
+                    keyword,
+                    intent.getMinPrice(),
+                    intent.getMaxPrice(),
+                    null,
+                    0, 8);
+            List<ChatbotProductCardDto> cards = page.getContent().stream()
+                    .map(this::toProductCard)
+                    .collect(Collectors.toList());
+            // Giữ tại NODE_SEARCH_KEYWORD để user có thể tìm tiếp hoặc chủ động bấm "Về menu"
+            List<ChatbotOptionDto> searchOptions = buildOptionsForNode("NODE_SEARCH_KEYWORD", rootNodeId);
+            String confirmation = intent.toConfirmationSummary();
+            String msg;
+            if (cards.isEmpty()) {
+                msg = buildNoResultMessage(intent);
+            } else {
+                msg = (confirmation != null ? "Đang tìm: " + confirmation + ".\n\n" : "")
+                        + "Dưới đây là một số sản phẩm phù hợp:";
+            }
+            return ChatbotResponseDto.builder()
+                    .messageText(msg)
+                    .options(searchOptions)
+                    .productCards(cards)
+                    .humanHandoffRequired(false)
+                    .inputExpected(true)
+                    .inputHint("VD: laptop dưới 30 triệu, laptop hãng asus")
+                    .build();
+        }
+
         if ("NODE_ASK_ORDER_ID".equals(currentNodeId)) {
             if (!ORDER_NUMBER_PATTERN.matcher(text).matches()) {
                 return ChatbotResponseDto.builder()
@@ -267,6 +326,32 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         session.setAttribute(SESSION_CURRENT_NODE, rootNodeId);
         return init(session, principal);
+    }
+
+    private String buildNoResultMessage(SearchIntent intent) {
+        StringBuilder sb = new StringBuilder("Không tìm thấy sản phẩm nào");
+        if (intent.getKeyword() != null && !intent.getKeyword().isBlank()) {
+            sb.append(" cho \"").append(intent.getKeyword()).append("\"");
+        }
+        if (intent.getMinPrice() != null || intent.getMaxPrice() != null) {
+            if (intent.getMinPrice() != null && intent.getMaxPrice() != null) {
+                sb.append(" trong khoảng ").append(formatPrice(intent.getMinPrice()))
+                        .append(" - ").append(formatPrice(intent.getMaxPrice()));
+            } else if (intent.getMaxPrice() != null) {
+                sb.append(" dưới ").append(formatPrice(intent.getMaxPrice()));
+            } else {
+                sb.append(" trên ").append(formatPrice(intent.getMinPrice()));
+            }
+        }
+        sb.append(".");
+        sb.append("\n\nThử bỏ bớt từ khóa hoặc mở rộng khoảng giá.");
+        return sb.toString();
+    }
+
+    private String formatPrice(BigDecimal price) {
+        if (price == null) return "";
+        DecimalFormat df = new DecimalFormat("#,###", DecimalFormatSymbols.getInstance(java.util.Locale.US));
+        return df.format(price) + " đ";
     }
 
     private ChatbotResponseDto buildSearchCategoryResponse(HttpSession session, User principal) {
@@ -312,13 +397,17 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         options = buildOptionsForNode(node.getId(), (String) session.getAttribute(SESSION_ROOT_NODE));
 
+        String inputHint = null;
+        if (inputExpected) {
+            inputHint = "NODE_SEARCH_KEYWORD".equals(node.getId()) ? "VD: áo thun, laptop" : "ORD-YYYYMMDD-XXXX";
+        }
         return ChatbotResponseDto.builder()
                 .messageText(node.getMessageText())
                 .options(options)
                 .productCards(Collections.emptyList())
                 .humanHandoffRequired(false)
                 .inputExpected(inputExpected)
-                .inputHint(inputExpected ? "ORD-YYYYMMDD-XXXX" : null)
+                .inputHint(inputHint)
                 .build();
     }
 
