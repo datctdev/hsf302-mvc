@@ -274,7 +274,8 @@ public class DataInitializer implements CommandLineRunner {
                                             String name3, String desc3, String sku3, String price3,
                                             String name4, String desc4, String sku4, String price4,
                                             String name5, String desc5, String sku5, String price5,
-                                            String name6, String desc6, String sku6, String price6) {
+                                            String name6, String desc6, String sku6, String price6,
+                                            String... imageUrls) {
         ProductCategory[] cats = new ProductCategory[]{cat1, cat2, catDefault};
         String[][] data = {
                 {name1, desc1, sku1, price1}, {name2, desc2, sku2, price2}, {name3, desc3, sku3, price3},
@@ -283,7 +284,11 @@ public class DataInitializer implements CommandLineRunner {
         Product[] out = new Product[6];
         for (int i = 0; i < 6; i++) {
             ProductCategory cat = cats[i % cats.length];
-            out[i] = createProduct(shop, data[i][0], data[i][1], data[i][2], new BigDecimal(data[i][3]), cat, SAMPLE_PRODUCT_IMAGE_URL);
+            String imageUrl = SAMPLE_PRODUCT_IMAGE_URL;
+            if (imageUrls != null && imageUrls.length > i && imageUrls[i] != null) {
+                imageUrl = imageUrls[i];
+            }
+            out[i] = createProduct(shop, data[i][0], data[i][1], data[i][2], new BigDecimal(data[i][3]), cat, imageUrl);
             createVariant(out[i], "Màu", "Đen", data[i][2] + "-V", 20 + i * 5);
         }
         return out;
@@ -450,93 +455,93 @@ public class DataInitializer implements CommandLineRunner {
             ProductVariant[] variants = new ProductVariant[40];
 
             // 1–5: Điện thoại, tablet, laptop
-            products[0] = createProduct(shop, "Điện thoại Samsung Galaxy A54 5G", "Màn hình Super AMOLED 6.4\", chip Exynos 1380, camera 50MP.", "SEED-SKU-001", new BigDecimal("7990000"), catPhone, "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400");
+            products[0] = createProduct(shop, "Điện thoại Samsung Galaxy A54 5G", "Màn hình Super AMOLED 6.4\", chip Exynos 1380, camera 50MP.", "SEED-SKU-001", new BigDecimal("7990000"), catPhone, "https://cdn.viettablet.com/images/companies/1/kinh-nghiem-thu-thuat/man%20hinh%20super%20amoled/man-hinh-super-amoled-la-gi-3.jpg?1720668030331");
             variants[0] = createVariant(products[0], "Màu", "Đen", "SEED-V-001", 50);
-            products[1] = createProduct(shop, "iPhone 15 128GB", "Chip A16 Bionic, camera chính 48MP, Dynamic Island.", "SEED-SKU-002", new BigDecimal("21990000"), catPhone, "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400");
+            products[1] = createProduct(shop, "iPhone 15 128GB", "Chip A16 Bionic, camera chính 48MP, Dynamic Island.", "SEED-SKU-002", new BigDecimal("21990000"), catPhone, "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-plus-256gb-color-pink-image_3_1.png");
             variants[1] = createVariant(products[1], "Màu", "Xanh Midnight", "SEED-V-002", 30);
-            products[2] = createProduct(shop, "Laptop Dell XPS 15", "Intel Core i7, 16GB RAM, SSD 512GB, màn hình 15.6\" Full HD.", "SEED-SKU-003", new BigDecimal("35990000"), catLaptop, "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400");
+            products[2] = createProduct(shop, "Laptop Dell XPS 15", "Intel Core i7, 16GB RAM, SSD 512GB, màn hình 15.6\" Full HD.", "SEED-SKU-003", new BigDecimal("35990000"), catLaptop, "https://www.laptopvip.vn/images/detailed/31/notebook-xps-15-9530-t-black-g--1-~1-pkeb-ii-www.laptopvip.vn-1683083662.png");
             variants[2] = createVariant(products[2], "Màu", "Bạc", "SEED-V-003", 20);
-            products[3] = createProduct(shop, "Máy tính bảng iPad Air M2", "Chip M2, màn hình 10.9\", hỗ trợ Apple Pencil 2.", "SEED-SKU-004", new BigDecimal("14990000"), catTablet != null ? catTablet : catDefault, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400");
+            products[3] = createProduct(shop, "Máy tính bảng iPad Air M2", "Chip M2, màn hình 10.9\", hỗ trợ Apple Pencil 2.", "SEED-SKU-004", new BigDecimal("14990000"), catTablet != null ? catTablet : catDefault, "https://cdn.tgdd.vn/Products/Images/522/325507/ipad-air-13-inch-m2-wifi-kem-1-750x500.jpg");
             variants[3] = createVariant(products[3], "Dung lượng", "64GB", "SEED-V-004", 25);
-            products[4] = createProduct(shop, "Laptop Asus Zenbook 14", "OLED 2.8K, Intel Core i5, 8GB RAM, nhẹ 1.2kg.", "SEED-SKU-005", new BigDecimal("22990000"), catLaptop, "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400");
+            products[4] = createProduct(shop, "Laptop Asus Zenbook 14", "OLED 2.8K, Intel Core i5, 8GB RAM, nhẹ 1.2kg.", "SEED-SKU-005", new BigDecimal("22990000"), catLaptop, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIU7vE29tvmUWU3H8yygf6FOeIB8E9wkCk-Q&s");
             variants[4] = createVariant(products[4], "Màu", "Indie Black", "SEED-V-005", 15);
 
             // 6–10: Tai nghe, loa, sạc, USB
-            products[5] = createProduct(shop, "Tai nghe AirPods Pro 2", "Chống ồn chủ động, chip H2, MagSafe.", "SEED-SKU-006", new BigDecimal("5990000"), catHeadphone != null ? catHeadphone : catDefault, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400");
+            products[5] = createProduct(shop, "Tai nghe AirPods Pro 2", "Chống ồn chủ động, chip H2, MagSafe.", "SEED-SKU-006", new BigDecimal("5990000"), catHeadphone != null ? catHeadphone : catDefault, "https://cdn.tgdd.vn/Products/Images/54/315014/tai-nghe-bluetooth-airpods-pro-2nd-gen-usb-c-charge-apple-1-750x500.jpg");
             variants[5] = createVariant(products[5], "Phiên bản", "USB-C", "SEED-V-006", 40);
-            products[6] = createProduct(shop, "Loa Bluetooth JBL Flip 6", "Công suất 20W, chống nước IP67, pin 12 giờ.", "SEED-SKU-007", new BigDecimal("3290000"), catSpeaker != null ? catSpeaker : catDefault, "https://images.unsplash.com/photo-1545127398-14699f92334b?w=400");
+            products[6] = createProduct(shop, "Loa Bluetooth JBL Flip 6", "Công suất 20W, chống nước IP67, pin 12 giờ.", "SEED-SKU-007", new BigDecimal("3290000"), catSpeaker != null ? catSpeaker : catDefault, "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/g/r/group_211_1__1_3.png");
             variants[6] = createVariant(products[6], "Màu", "Xanh Dương", "SEED-V-007", 35);
-            products[7] = createProduct(shop, "Sạc dự phòng Anker 20000mAh", "Sạc nhanh PD 20W, 2 cổng USB-A, 1 USB-C.", "SEED-SKU-008", new BigDecimal("690000"), catPowerbank != null ? catPowerbank : catDefault, "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400");
+            products[7] = createProduct(shop, "Sạc dự phòng Anker 20000mAh", "Sạc nhanh PD 20W, 2 cổng USB-A, 1 USB-C.", "SEED-SKU-008", new BigDecimal("690000"), catPowerbank != null ? catPowerbank : catDefault, "https://cdn2.cellphones.com.vn/x/media/catalog/product/7/h/7h56.png");
             variants[7] = createVariant(products[7], "Màu", "Đen", "SEED-V-008", 80);
-            products[8] = createProduct(shop, "USB 3.2 SanDisk 64GB", "Tốc độ đọc 150MB/s, gọn nhẹ, bảo hành 5 năm.", "SEED-SKU-009", new BigDecimal("199000"), catUSB != null ? catUSB : catDefault, "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400");
+            products[8] = createProduct(shop, "USB 3.2 SanDisk 64GB", "Tốc độ đọc 150MB/s, gọn nhẹ, bảo hành 5 năm.", "SEED-SKU-009", new BigDecimal("199000"), catUSB != null ? catUSB : catDefault, "https://cdn.tgdd.vn/Products/Images/75/328505/usb-3-2-64gb-sandisk-cz410-thumb-1-600x600.jpg");
             variants[8] = createVariant(products[8], "Dung lượng", "64GB", "SEED-V-009", 100);
-            products[9] = createProduct(shop, "Tai nghe Sony WH-1000XM5", "Chống ồn hàng đầu, pin 30h, đa điểm kết nối.", "SEED-SKU-010", new BigDecimal("8990000"), catHeadphone != null ? catHeadphone : catDefault, "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400");
+            products[9] = createProduct(shop, "Tai nghe Sony WH-1000XM5", "Chống ồn hàng đầu, pin 30h, đa điểm kết nối.", "SEED-SKU-010", new BigDecimal("8990000"), catHeadphone != null ? catHeadphone : catDefault, "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/g/r/group_172_2.png");
             variants[9] = createVariant(products[9], "Màu", "Bạc", "SEED-V-010", 18);
 
             // 11–15: Màn hình, bàn phím, chuột, smartwatch, router
-            products[10] = createProduct(shop, "Màn hình Dell S2721H 27 inch", "Full HD, IPS, 75Hz, viền mỏng.", "SEED-SKU-011", new BigDecimal("3990000"), catScreen != null ? catScreen : catDefault, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400");
+            products[10] = createProduct(shop, "Màn hình Dell S2721H 27 inch", "Full HD, IPS, 75Hz, viền mỏng.", "SEED-SKU-011", new BigDecimal("3990000"), catScreen != null ? catScreen : catDefault, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQi7MGQNQW-iZv6nkFapaEYpSqzY5oEtfzGiw&s");
             variants[10] = createVariant(products[10], "Màu", "Đen", "SEED-V-011", 22);
-            products[11] = createProduct(shop, "Bàn phím cơ Logitech G Pro", "Switch GX Blue, RGB, dây rút gọn.", "SEED-SKU-012", new BigDecimal("2490000"), catKeyboard != null ? catKeyboard : catDefault, "https://images.unsplash.com/photo-1541140530114-3cbebc939541?w=400");
+            products[11] = createProduct(shop, "Bàn phím cơ Logitech G Pro", "Switch GX Blue, RGB, dây rút gọn.", "SEED-SKU-012", new BigDecimal("2490000"), catKeyboard != null ? catKeyboard : catDefault, "https://viettuhaiprinting.vn/Image/Picture/logitech_g_pro_x_mechanical_gaming_keyboard.jpg");
             variants[11] = createVariant(products[11], "Layout", "US", "SEED-V-012", 30);
-            products[12] = createProduct(shop, "Chuột không dây Logitech MX Master 3", "Ergonomic, cuộn siêu mượt, pin 70 ngày.", "SEED-SKU-013", new BigDecimal("2190000"), catMouse != null ? catMouse : catDefault, "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400");
+            products[12] = createProduct(shop, "Chuột không dây Logitech MX Master 3", "Ergonomic, cuộn siêu mượt, pin 70 ngày.", "SEED-SKU-013", new BigDecimal("2190000"), catMouse != null ? catMouse : catDefault, "https://product.hstatic.net/200000722513/product/h_mx_master_3_wireless__graphite_.jpg_1e5491e35f754dcc90b90582a9c3be95_ca0c63ca59de4ed1b4d46fcc5c81c1ed.png");
             variants[12] = createVariant(products[12], "Màu", "Xám Đen", "SEED-V-013", 45);
-            products[13] = createProduct(shop, "Smartwatch Apple Watch Series 9", "GPS 41mm, màn hình Retina, đo SpO2, nhà thông minh.", "SEED-SKU-014", new BigDecimal("9990000"), catWatch != null ? catWatch : catDefault, "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400");
+            products[13] = createProduct(shop, "Smartwatch Apple Watch Series 9", "GPS 41mm, màn hình Retina, đo SpO2, nhà thông minh.", "SEED-SKU-014", new BigDecimal("9990000"), catWatch != null ? catWatch : catDefault, "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple_lte_3__1_1_2_1_1.png");
             variants[13] = createVariant(products[13], "Size", "41mm", "SEED-V-014", 20);
-            products[14] = createProduct(shop, "Router WiFi 6 TP-Link Archer AX73", "Dual-band, băng tần 5GHz, phủ tốt cho căn hộ.", "SEED-SKU-015", new BigDecimal("1690000"), catRouter != null ? catRouter : catDefault, "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=400");
+            products[14] = createProduct(shop, "Router WiFi 6 TP-Link Archer AX73", "Dual-band, băng tần 5GHz, phủ tốt cho căn hộ.", "SEED-SKU-015", new BigDecimal("1690000"), catRouter != null ? catRouter : catDefault, "https://cdn2.cellphones.com.vn/x/media/catalog/product/f/r/frame-router-6.png");
             variants[14] = createVariant(products[14], "Màu", "Đen", "SEED-V-015", 28);
 
             // 16–20: Webcam, ổ cứng, thẻ nhớ, Tivi, máy ảnh
-            products[15] = createProduct(shop, "Webcam Logitech C920 HD Pro", "Full HD 1080p 30fps, mic tích hợp, tương thích Zoom/Teams.", "SEED-SKU-016", new BigDecimal("1490000"), catDefault, "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=400");
+            products[15] = createProduct(shop, "Webcam Logitech C920 HD Pro", "Full HD 1080p 30fps, mic tích hợp, tương thích Zoom/Teams.", "SEED-SKU-016", new BigDecimal("1490000"), catDefault, "https://product.hstatic.net/200000722513/product/c922-pro-stream-webcam-gearvn-01_3f5441863869483e862183d4d6db6e29_master.png");
             variants[15] = createVariant(products[15], "Màu", "Đen", "SEED-V-016", 35);
-            products[16] = createProduct(shop, "Ổ cứng SSD Samsung 980 1TB NVMe", "Tốc độ đọc 3500MB/s, M.2 PCIe 3.0, bảo hành 5 năm.", "SEED-SKU-017", new BigDecimal("1890000"), catDefault, "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400");
+            products[16] = createProduct(shop, "Ổ cứng SSD Samsung 980 1TB NVMe", "Tốc độ đọc 3500MB/s, M.2 PCIe 3.0, bảo hành 5 năm.", "SEED-SKU-017", new BigDecimal("1890000"), catDefault, "https://nguyencongpc.vn/media/product/19223-ssd-samsung-980-1t-2.jpg");
             variants[16] = createVariant(products[16], "Dung lượng", "1TB", "SEED-V-017", 40);
-            products[17] = createProduct(shop, "Thẻ nhớ SanDisk Extreme 128GB", "U3 A2, tốc độ đọc 190MB/s, phù hợp quay 4K.", "SEED-SKU-018", new BigDecimal("449000"), catDefault, "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400");
+            products[17] = createProduct(shop, "Thẻ nhớ SanDisk Extreme 128GB", "U3 A2, tốc độ đọc 190MB/s, phù hợp quay 4K.", "SEED-SKU-018", new BigDecimal("449000"), catDefault, "https://cdn2.cellphones.com.vn/x/media/catalog/product/t/h/the-nho-sdhc-sandisk-extreme-pro-u3-128gb-v30-200mbs_3_.png");
             variants[17] = createVariant(products[17], "Loại", "microSD", "SEED-V-018", 60);
-            products[18] = createProduct(shop, "Tivi Samsung 55 inch Crystal 4K", "Crystal UHD, HDR, Tizen OS, 4K.", "SEED-SKU-019", new BigDecimal("12990000"), catTV != null ? catTV : catDefault, "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400");
+            products[18] = createProduct(shop, "Tivi Samsung 55 inch Crystal 4K", "Crystal UHD, HDR, Tizen OS, 4K.", "SEED-SKU-019", new BigDecimal("12990000"), catTV != null ? catTV : catDefault, "https://cdn.mediamart.vn/images/product/smart-tivi-samsung-4k-55-inch-55du8000-crystal-uhd_024654ee.webp");
             variants[18] = createVariant(products[18], "Kích thước", "55\"", "SEED-V-019", 12);
-            products[19] = createProduct(shop, "Máy ảnh Sony Alpha A7 IV", "Full frame 33MP, 4K 60p, 5-axis IBIS, body.", "SEED-SKU-020", new BigDecimal("54990000"), catCamera != null ? catCamera : catDefault, "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400");
+            products[19] = createProduct(shop, "Máy ảnh Sony Alpha A7 IV", "Full frame 33MP, 4K 60p, 5-axis IBIS, body.", "SEED-SKU-020", new BigDecimal("54990000"), catCamera != null ? catCamera : catDefault, "https://bizweb.dktcdn.net/100/507/659/products/sony-alpha-a7m4-13-500x500-1.jpg?v=1708060110230");
             variants[19] = createVariant(products[19], "Body", "Chỉ body", "SEED-V-020", 8);
 
             // 21–40: Gấp đôi sản phẩm shop 1 (demo phong phú)
-            products[20] = createProduct(shop, "Điện thoại Google Pixel 8", "Tensor G3, camera 50MP, Android 14.", "SEED-SKU-021", new BigDecimal("18990000"), catPhone, "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400");
+            products[20] = createProduct(shop, "Điện thoại Google Pixel 8", "Tensor G3, camera 50MP, Android 14.", "SEED-SKU-021", new BigDecimal("18990000"), catPhone, "https://sonpixel.vn/wp-content/uploads/2023/08/Google-Pixel-8-SonPixel.jpg");
             variants[20] = createVariant(products[20], "Màu", "Obsidian", "SEED-V-021", 25);
-            products[21] = createProduct(shop, "Laptop MacBook Air M3", "Chip M3, 8GB, SSD 256GB, 13.6\" Liquid Retina.", "SEED-SKU-022", new BigDecimal("27990000"), catLaptop, "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400");
+            products[21] = createProduct(shop, "Laptop MacBook Air M3", "Chip M3, 8GB, SSD 256GB, 13.6\" Liquid Retina.", "SEED-SKU-022", new BigDecimal("27990000"), catLaptop, "https://cdn.tgdd.vn/Products/Images/44/322612/macbook-air-13-inch-m3-2024-050324-020626-600x600.jpg");
             variants[21] = createVariant(products[21], "Màu", "Midnight", "SEED-V-022", 12);
-            products[22] = createProduct(shop, "Tai nghe Bose QuietComfort Ultra", "Chống ồn, Immersive Audio, pin 24h.", "SEED-SKU-023", new BigDecimal("8990000"), catHeadphone != null ? catHeadphone : catDefault, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400");
+            products[22] = createProduct(shop, "Tai nghe Bose QuietComfort Ultra", "Chống ồn, Immersive Audio, pin 24h.", "SEED-SKU-023", new BigDecimal("8990000"), catHeadphone != null ? catHeadphone : catDefault, "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/a/tai-nghe-chup-tai-bose-quietcomfort-ultra.png");
             variants[22] = createVariant(products[22], "Màu", "Smoke White", "SEED-V-023", 20);
-            products[23] = createProduct(shop, "Loa Sonos Era 100", "Stereo, WiFi, AirPlay 2, giọng nói.", "SEED-SKU-024", new BigDecimal("5990000"), catSpeaker != null ? catSpeaker : catDefault, "https://images.unsplash.com/photo-1545127398-14699f92334b?w=400");
+            products[23] = createProduct(shop, "Loa Sonos Era 100", "Stereo, WiFi, AirPlay 2, giọng nói.", "SEED-SKU-024", new BigDecimal("5990000"), catSpeaker != null ? catSpeaker : catDefault, "https://cdn8.web4s.vn/media/products/2475/loa-sonos-era-100-black-01.jpg");
             variants[23] = createVariant(products[23], "Màu", "Đen", "SEED-V-024", 18);
-            products[24] = createProduct(shop, "Màn hình LG UltraGear 27GP850", "2K 165Hz Nano IPS, 1ms, G-Sync.", "SEED-SKU-025", new BigDecimal("7490000"), catScreen != null ? catScreen : catDefault, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400");
+            products[24] = createProduct(shop, "Màn hình LG UltraGear 27GP850", "2K 165Hz Nano IPS, 1ms, G-Sync.", "SEED-SKU-025", new BigDecimal("7490000"), catScreen != null ? catScreen : catDefault, "https://nguyencongpc.vn/media/product/19737-lg-27gp850-b-4.jpg");
             variants[24] = createVariant(products[24], "Màu", "Đen", "SEED-V-025", 14);
-            products[25] = createProduct(shop, "Bàn phím Keychron K2", "Wireless, Mac/Win, hot-swap.", "SEED-SKU-026", new BigDecimal("1290000"), catKeyboard != null ? catKeyboard : catDefault, "https://images.unsplash.com/photo-1541140530114-3cbebc939541?w=400");
+            products[25] = createProduct(shop, "Bàn phím Keychron K2", "Wireless, Mac/Win, hot-swap.", "SEED-SKU-026", new BigDecimal("1290000"), catKeyboard != null ? catKeyboard : catDefault, "https://metagear.com.vn/wp-content/uploads/2023/02/Keychron-K2-Pro-1.webp");
             variants[25] = createVariant(products[25], "Switch", "Red", "SEED-V-026", 35);
-            products[26] = createProduct(shop, "Chuột Razer DeathAdder V3", "30K DPI, 90g, 90h pin.", "SEED-SKU-027", new BigDecimal("1990000"), catMouse != null ? catMouse : catDefault, "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400");
+            products[26] = createProduct(shop, "Chuột Razer DeathAdder V3", "30K DPI, 90g, 90h pin.", "SEED-SKU-027", new BigDecimal("1990000"), catMouse != null ? catMouse : catDefault, "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/86/357966/chuot-co-day-gaming-razer-deathadder-v3-thumb-638962333391941771-600x600.jpg");
             variants[26] = createVariant(products[26], "Màu", "Đen", "SEED-V-027", 40);
-            products[27] = createProduct(shop, "Smartwatch Samsung Galaxy Watch 6", "Wear OS, đo nhịp tim, pin 40h.", "SEED-SKU-028", new BigDecimal("6990000"), catWatch != null ? catWatch : catDefault, "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400");
+            products[27] = createProduct(shop, "Smartwatch Samsung Galaxy Watch 6", "Wear OS, đo nhịp tim, pin 40h.", "SEED-SKU-028", new BigDecimal("6990000"), catWatch != null ? catWatch : catDefault, "https://cdn.tgdd.vn/Products/Images/7077/310851/samsung-galaxy-watch6-40mm-lte-den-ksp-600x600.jpg");
             variants[27] = createVariant(products[27], "Size", "44mm", "SEED-V-028", 22);
-            products[28] = createProduct(shop, "Router Asus RT-AX86U", "WiFi 6, gaming, 2.5G port.", "SEED-SKU-029", new BigDecimal("3990000"), catRouter != null ? catRouter : catDefault, "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=400");
+            products[28] = createProduct(shop, "Router Asus RT-AX86U", "WiFi 6, gaming, 2.5G port.", "SEED-SKU-029", new BigDecimal("3990000"), catRouter != null ? catRouter : catDefault, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5SdB1meAHthj8XzBpSY0nZES5-9VSFulPYA&s");
             variants[28] = createVariant(products[28], "Màu", "Đen", "SEED-V-029", 16);
-            products[29] = createProduct(shop, "iPad 10th gen", "A14, 10.9\", USB-C, nhiều màu.", "SEED-SKU-030", new BigDecimal("10990000"), catTablet != null ? catTablet : catDefault, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400");
+            products[29] = createProduct(shop, "iPad 10th gen", "A14, 10.9\", USB-C, nhiều màu.", "SEED-SKU-030", new BigDecimal("10990000"), catTablet != null ? catTablet : catDefault, "https://cdn2.fptshop.com.vn/unsafe/828x0/filters:format(webp):quality(75)/2022_11_29_638053168020402739_Pad%20Gen%2010th%20Wifi%20(2).jpg");
             variants[29] = createVariant(products[29], "Dung lượng", "64GB", "SEED-V-030", 30);
-            products[30] = createProduct(shop, "Cáp USB-C to Lightning 2m", "MFi, sạc nhanh iPhone.", "SEED-SKU-031", new BigDecimal("490000"), catDefault, "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400");
+            products[30] = createProduct(shop, "Cáp USB-C to Lightning 2m", "MFi, sạc nhanh iPhone.", "SEED-SKU-031", new BigDecimal("490000"), catDefault, "https://cdn.tgdd.vn/Products/Images/58/211640/5-cap-type-c-lightning-2m-apple-mkq42-trang-avatar-1-600x600.jpg");
             variants[30] = createVariant(products[30], "Màu", "Trắng", "SEED-V-031", 80);
-            products[31] = createProduct(shop, "Ổ cứng HDD Seagate 2TB", "2.5\" USB 3.0, backup.", "SEED-SKU-032", new BigDecimal("1290000"), catDefault, "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400");
+            products[31] = createProduct(shop, "Ổ cứng HDD Seagate 2TB", "2.5\" USB 3.0, backup.", "SEED-SKU-032", new BigDecimal("1290000"), catDefault, "https://product.hstatic.net/200000722513/product/hdd_seagate_baracuda_2tb_gearvn00_28582504c8d24597908c3a73effefa7a_e147c85ec46148acbdc7c7f8a729b68c_master.jpg");
             variants[31] = createVariant(products[31], "Màu", "Đen", "SEED-V-032", 45);
-            products[32] = createProduct(shop, "Microphone Blue Yeti", "USB condenser, 4 chế độ thu.", "SEED-SKU-033", new BigDecimal("2490000"), catDefault, "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400");
+            products[32] = createProduct(shop, "Microphone Blue Yeti", "USB condenser, 4 chế độ thu.", "SEED-SKU-033", new BigDecimal("2490000"), catDefault, "https://vinasound.vn/wp-content/uploads/2023/04/Micro-Blue-Yeti-USB-Blackout.jpg");
             variants[32] = createVariant(products[32], "Màu", "Đen", "SEED-V-033", 28);
-            products[33] = createProduct(shop, "Đèn bàn LED Baseus", "Điều chỉnh độ sáng, sạc không dây.", "SEED-SKU-034", new BigDecimal("349000"), catDefault, "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400");
+            products[33] = createProduct(shop, "Đèn bàn LED Baseus", "Điều chỉnh độ sáng, sạc không dây.", "SEED-SKU-034", new BigDecimal("349000"), catDefault, "https://baseus-vn.com/wp-content/uploads/2022/10/den-led-baseus-de-ban-thong-minh-thich-ung-do-sang-mat-gap-gon-co-the-sac-lai-1.jpg");
             variants[33] = createVariant(products[33], "Màu", "Trắng", "SEED-V-034", 60);
-            products[34] = createProduct(shop, "Tivi TCL 50 inch 4K", "Android TV, Dolby Vision.", "SEED-SKU-035", new BigDecimal("8990000"), catTV != null ? catTV : catDefault, "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400");
+            products[34] = createProduct(shop, "Tivi TCL 50 inch 4K", "Android TV, Dolby Vision.", "SEED-SKU-035", new BigDecimal("8990000"), catTV != null ? catTV : catDefault, "https://thegioithietbiso.com/data/product/jqn1664251830.jpg");
             variants[34] = createVariant(products[34], "Kích thước", "50\"", "SEED-V-035", 15);
-            products[35] = createProduct(shop, "Máy đọc sách Kindle Paperwhite", "6.8\", chống nước, 10 tuần pin.", "SEED-SKU-036", new BigDecimal("3990000"), catDefault, "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400");
+            products[35] = createProduct(shop, "Máy đọc sách Kindle Paperwhite", "6.8\", chống nước, 10 tuần pin.", "SEED-SKU-036", new BigDecimal("3990000"), catDefault, "https://akishop.com.vn/mediacenter/media/images/1453/products/1453/1443/s800_600/61mdbboselacsx679-1729155297.jpg");
             variants[35] = createVariant(products[35], "Phiên bản", "8GB", "SEED-V-036", 35);
-            products[36] = createProduct(shop, "Ring Light 18 inch", "LED, 3 chế độ ánh sáng, chân đế.", "SEED-SKU-037", new BigDecimal("599000"), catDefault, "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400");
+            products[36] = createProduct(shop, "Ring Light 18 inch", "LED, 3 chế độ ánh sáng, chân đế.", "SEED-SKU-037", new BigDecimal("599000"), catDefault, "https://m.media-amazon.com/images/I/71fhTtkXLNL._AC_UF1000,1000_QL80_.jpg");
             variants[36] = createVariant(products[36], "Màu", "Trắng", "SEED-V-037", 42);
-            products[37] = createProduct(shop, "Hub USB-C 7-in-1", "HDMI 4K, SD, PD 100W.", "SEED-SKU-038", new BigDecimal("890000"), catDefault, "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400");
+            products[37] = createProduct(shop, "Hub USB-C 7-in-1", "HDMI 4K, SD, PD 100W.", "SEED-SKU-038", new BigDecimal("890000"), catDefault, "https://cdn2.fptshop.com.vn/unsafe/564x0/filters:quality(80)/Uploads/images/2015/Tin-Tuc/Dung/0118/acernitro/01-cap-hub-usb-c-7-in-1-hd22h-hyperdrive-01.jpg");
             variants[37] = createVariant(products[37], "Màu", "Bạc", "SEED-V-038", 55);
-            products[38] = createProduct(shop, "Balo laptop 15.6 inch", "Chống nước, nhiều ngăn.", "SEED-SKU-039", new BigDecimal("449000"), catDefault, "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400");
+            products[38] = createProduct(shop, "Balo laptop 15.6 inch", "Chống nước, nhiều ngăn.", "SEED-SKU-039", new BigDecimal("449000"), catDefault, "https://cdn.tgdd.vn/Products/Images/7923/328646/balo-laptop-15-6-inch-togo-tgb05-den-1-750x500.jpg");
             variants[38] = createVariant(products[38], "Màu", "Đen", "SEED-V-039", 70);
-            products[39] = createProduct(shop, "Giá đỡ điện thoại ô tô", "Kẹp điều hòa, xoay 360.", "SEED-SKU-040", new BigDecimal("199000"), catDefault, "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400");
+            products[39] = createProduct(shop, "Giá đỡ điện thoại ô tô", "Kẹp điều hòa, xoay 360.", "SEED-SKU-040", new BigDecimal("199000"), catDefault, "https://dochoioto247.com/wp-content/uploads/2024/05/Gia-Do-Dien-Thoai-Kep-Taplo-Xe-O-To-Cao-Cap-GDDT014-1.jpg");
             variants[39] = createVariant(products[39], "Màu", "Đen", "SEED-V-040", 90);
 
             // --- Demo: thêm buyer và seller/shop để dashboard phong phú ---
@@ -557,14 +562,28 @@ public class DataInitializer implements CommandLineRunner {
                             "Tủ lạnh Samsung 234 lít", "Inverter, tiết kiệm điện.", "SEED-S2-003", "7990000",
                             "Điện thoại Xiaomi Redmi Note 13", "Pin 5000mAh, sạc 33W.", "SEED-S2-004", "4990000",
                             "Loa JBL Charge 5", "Bluetooth, chống nước.", "SEED-S2-005", "3490000",
-                            "Tai nghe JBL Tune 520BT", "Bluetooth 5.3, pin 40h.", "SEED-S2-006", "699000");
+                            "Tai nghe JBL Tune 520BT", "Bluetooth 5.3, pin 40h.", "SEED-S2-006", "699000",
+                            "https://cdn.tgdd.vn/Products/Images/42/314209/oppo-reno-11-xanh-thumb-600x600.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/1942/324901/tivi-led-4k-lg-43-inch-43ut8050psb-thum-550x340.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/1943/62699/tu-lanh-samsung-rt22farbdsa-1-700x467-2.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/42/309831/xiaomi-redmi-note-13-gold-thumb-600x600.jpg",
+                            "https://hdradio.vn/upload/hinhanh/loa-di-dong/jbl/charge-5/loa-jbl-charge-5-mau-xanh-moi-chinh-hang-cc.jpg",
+                            "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/a/tai-nghe-chup-tai-jbl-tune-520bt.png"
+                            );
                     Product[] p2b = createProductsForShop(shop2, catPhone, catTV, catDefault,
                             "Nokia G42 5G", "Pin 5000mAh, màn hình 6.56\".", "SEED-S2-007", "3490000",
                             "Tivi Sony 43 inch Bravia", "4K HDR, Android TV.", "SEED-S2-008", "11990000",
                             "Máy giặt LG 9kg", "Inverter, cửa trước.", "SEED-S2-009", "8990000",
                             "Realme C55", "SuperVOOC 33W, 64MP.", "SEED-S2-010", "3990000",
                             "Loa Marshall Emberton", "Bluetooth, thiết kế iconic.", "SEED-S2-011", "2990000",
-                            "Tai nghe SoundPEATS TrueFree", "Bluetooth 5.2, pin 17h.", "SEED-S2-012", "449000");
+                            "Tai nghe SoundPEATS TrueFree", "Bluetooth 5.2, pin 17h.", "SEED-S2-012", "449000",
+                            "https://cdn.tgdd.vn/Products/Images/42/309833/nokia-g42-5g-600x600.jpg",
+                            "https://cdn.mediamart.vn/images/product/smart-tivi-4k-sony-kd-43x75k-43-inch-google-tv_7f98b645.webp",
+                            "https://bizweb.dktcdn.net/thumb/1024x1024/100/498/701/products/10056102-may-giat-inverter-9kg-fv1409s4m-2.jpg?v=1709541582613",
+                            "https://cdn.tgdd.vn/Products/Images/42/301603/realme-c55-gold-1-750x500.jpg",
+                            "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/o/loa-bluetooth-marshall-emberton-iii-spa.png",
+                            "https://cdni.dienthoaivui.com.vn/x,webp,q100/https://dashboard.dienthoaivui.com.vn/uploads/wp-content/uploads/images/products/54401/tai-nghe-khong-day-earbuds-soundpeats-true-free-plus-17488601012924.png"
+                            );
                     shopProducts.add(mergeProductArrays(p2a, p2b));
                 }
             }
@@ -579,14 +598,28 @@ public class DataInitializer implements CommandLineRunner {
                             "Sạc dự phòng 10000mAh", "Sạc nhanh 18W.", "SEED-S3-003", "349000",
                             "Bao da iPad Air", "Bảo vệ 360 độ.", "SEED-S3-004", "299000",
                             "Giá đỡ laptop nhôm", "Góc nâng thoáng mát.", "SEED-S3-005", "189000",
-                            "Webcam 1080p", "Full HD, mic tích hợp.", "SEED-S3-006", "449000");
+                            "Webcam 1080p", "Full HD, mic tích hợp.", "SEED-S3-006", "449000",
+                            "https://cdn.tgdd.vn/Products/Images/60/315050/op-lung-magsafe-iphone-15-pro-silicone-apple-mt1e3-thumbnew-600x600.jpg",
+                            "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/a/cap-type-c-to-type-c-anker-zolo-a8060-240w-1m.png",
+                            "https://cdn.tgdd.vn/Products/Images/57/320307/pin-sac-du-phong-10000mah-type-c-15w-ava-ds608a-thumb-600x600.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/1662/326790/bao-da-ipad-air-6-13-inch-uniq-camden-click-ivory-1-750x500.jpg",
+                            "https://metagear.com.vn/wp-content/uploads/2022/10/4-50.png",
+                            "https://www.logitech.com/content/dam/logitech/en/products/webcams/c922/gallery/c922-gallery-1.png"
+                            );
                     Product[] p3b = createProductsForShop(shop3, catDefault, catPowerbank, catUSB,
                             "Ốp lưng Samsung Galaxy", "Trong suốt, chống xước.", "SEED-S3-007", "199000",
                             "Cáp Lightning 1m", "MFi, sạc sync.", "SEED-S3-008", "299000",
                             "Sạc dự phòng 20000mAh 2 cổng", "PD 22.5W.", "SEED-S3-009", "549000",
                             "Túi đựng MacBook", "Chống sốc, nhiều ngăn.", "SEED-S3-010", "399000",
                             "Bàn phím Bluetooth số", "Gọn, pin 6 tháng.", "SEED-S3-011", "249000",
-                            "Miếng dán màn hình cường lực", "Full coverage 9H.", "SEED-S3-012", "149000");
+                            "Miếng dán màn hình cường lực", "Full coverage 9H.", "SEED-S3-012", "149000",
+                            "https://cdn.tgdd.vn/Products/Images/60/320389/op-lung-galaxy-a15-nhua-deo-samsung-smapp-trong-thumb-600x600.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/58/320581/cap-lightning-1m-ava-jxl-08-thumb-600x600.jpg",
+                            "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/331193/pin-sac-du-phong-20000mah-type-c-pd-qc-3-0-22-5w-xmobile-ym-672-den-thumb-638649555611574142-600x600.jpg",
+                            "https://lucas.vn/wp-content/uploads/2023/07/Tui-xach-MacBook-Tomtoc-Briefcase-Premium-lucas-3-1.png",
+                            "https://phucanhcdn.com/media/product/45213_tk_028_black_ha1.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/1363/314735/mieng-dan-kinh-cuong-luc-iphone-15-plus-jcpal-thumb-600x600.jpg"
+                            );
                     shopProducts.add(mergeProductArrays(p3a, p3b));
                 }
             }
@@ -601,14 +634,28 @@ public class DataInitializer implements CommandLineRunner {
                             "Laptop Acer Aspire 5", "Ryzen 3, 8GB, 15.6\" FHD.", "SEED-S4-003", "10990000",
                             "Màn hình AOC 24 inch", "IPS, 75Hz, viền mỏng.", "SEED-S4-004", "2990000",
                             "Laptop MSI Gaming GF63", "i5, RTX 3050, 16GB.", "SEED-S4-005", "22990000",
-                            "Bàn phím Dareu EK815", "Cơ RGB, giá rẻ.", "SEED-S4-006", "699000");
+                            "Bàn phím Dareu EK815", "Cơ RGB, giá rẻ.", "SEED-S4-006", "699000",
+                            "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/311177/hp-pavilion-15-eg3091tu-i7-8c5l2pa-170225-103417-620-600x600.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/44/269603/lenovo-ideapad-3-14itl6-i5-82h700wavn-thumb-ko-den-600x600.jpg",
+                            "https://lh3.googleusercontent.com/Bcri13DvDifpaQ7GgWW3v5r-jWppa2FWGFnFD3xq4UvEaX8S5c3pv-mLQPLO0iPxo1t8P0s8WqAgT0ScIuGZWt5TRYep4m_C=rw",
+                            "https://product.hstatic.net/200000722513/product/24g4e_f_5d1925e1985648ed907c70bd33f97d7a_master.png",
+                            "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/316941/msi-gaming-gf63-thin-12uc-i7-887vn-thumb-638754850221823962-600x600.jpg",
+                            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0roRJYJcPvGhNgs_IF0RrCivxypnWW_YriA&s"
+                            );
                     Product[] p4b = createProductsForShop(shop4, catLaptop, catScreen, catDefault,
                             "Laptop Dell Inspiron 15", "Intel i5, 8GB, SSD 512GB.", "SEED-S4-007", "14990000",
                             "Laptop Asus Vivobook 15", "Ryzen 5, 8GB, OLED.", "SEED-S4-008", "13990000",
                             "Laptop Gaming Acer Nitro 5", "i5, RTX 4050, 16GB.", "SEED-S4-009", "25990000",
                             "Màn hình BenQ 27 inch", "2K, 75Hz, Eye-Care.", "SEED-S4-010", "4990000",
                             "Laptop LG Gram 17", "Siêu nhẹ 1.35kg, pin lâu.", "SEED-S4-011", "39990000",
-                            "Chuột gaming Logitech G102", "8000 DPI, RGB.", "SEED-S4-012", "449000");
+                            "Chuột gaming Logitech G102", "8000 DPI, RGB.", "SEED-S4-012", "449000",
+                            "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/330075/dell-inspiron-15-3520-i5-n3520-i5u085w11slu-1-638627942653445825-750x500.jpg",
+                            "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/328950/asus-vivobook-15-oled-a1505va-i9-ma586ws-170225-112950-659-600x600.jpg",
+                            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ827PbhO_OmKEJ8F7gM7E36Q-Y9sBr3SWISw&s",
+                            "https://donghypc.vn/upload/20749_benq_ew2775zh_front_view.jpg",
+                            "https://cdn.tgdd.vn/Products/Images/44/225745/lg-gram-17-i7-17z90n-vah75a5-142120-022156-600x600.jpg",
+                            "https://product.hstatic.net/200000722513/product/logitech-g102-lightsync-rgb-black-1_bf4f5774229c4a0f81b8e8a2feebe4d8_aeb4ae49ee844c3e9d315883d4e482d4_master.jpg"
+                            );
                     shopProducts.add(mergeProductArrays(p4a, p4b));
                 }
             }
