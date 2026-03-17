@@ -22,6 +22,8 @@ import com.hsf.e_comerce.order.service.OrderService;
 import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.order.valueobject.OrderStatusTransition;
 import com.hsf.e_comerce.auth.entity.User;
+import com.hsf.e_comerce.platform.entity.Commission;
+import com.hsf.e_comerce.platform.repository.CommissionRepository;
 import com.hsf.e_comerce.platform.service.CategoryCommissionService;
 import com.hsf.e_comerce.platform.service.CommissionService;
 import com.hsf.e_comerce.product.entity.Product;
@@ -74,6 +76,7 @@ public class OrderServiceImpl implements OrderService {
     private final ReviewReportRepository reviewReportRepository;
     private final CommissionService commissionService;
     private final CategoryCommissionService categoryCommissionService;
+    private final CommissionRepository commissionRepository;
 
     @Override
     @Transactional
@@ -713,6 +716,10 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .collect(Collectors.toList());
 
+        Commission commission = commissionRepository
+                .findByOrderId(order.getId())
+                .orElse(null);
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
@@ -732,7 +739,7 @@ public class OrderServiceImpl implements OrderService {
                 .shippingFee(order.getShippingFee())
                 .total(order.getTotal())
                 .ghnOrderCode(order.getGhnOrderCode())
-                .platformCommission(order.getPlatformCommission() != null ? order.getPlatformCommission() : BigDecimal.ZERO)
+                .platformCommission(commission != null ? commission.getTotalCommission() : BigDecimal.ZERO)
                 .commissionRate(order.getCommissionRate())
                 .items(itemResponses)
                 .receivedByBuyer(order.isReceivedByBuyer())
