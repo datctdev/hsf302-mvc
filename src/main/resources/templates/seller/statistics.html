@@ -1,94 +1,236 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/seller-layout}">
 <head>
-    <title>Thống Kê - Seller</title>
+    <title>Thống Kê Doanh Thu - Seller VIP</title>
 </head>
 <body>
-    <th:block th:fragment="content">
-        <h1 class="text-2xl font-bold text-slate-900 mb-2">Thống Kê Shop</h1>
-        <p th:if="${shopName != null}" class="text-slate-500 text-sm mb-6" th:text="|Shop: ${shopName}|">Shop name</p>
+<th:block th:fragment="content">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-primary-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Tổng Đơn Hàng</h3>
-                <div class="text-2xl font-bold text-slate-900" th:text="${totalOrders ?: 0}">0</div>
-                <div class="text-xs text-slate-500 mt-1">Tất cả đơn (trừ chờ thanh toán)</div>
+    <div class="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <i class="fa-solid fa-chart-line text-blue-600"></i> Báo Cáo Kinh Doanh
+            </h1>
+            <p th:if="${shopName != null}" class="text-slate-500 text-sm mt-2 font-medium">
+                Phân tích hiệu quả hoạt động của shop <span class="font-bold text-slate-700" th:text="${shopName}">Shop name</span>
+            </p>
+        </div>
+
+        <form id="filterForm" method="get" action="/seller/statistics" class="flex flex-wrap items-end gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Từ ngày</label>
+                <input type="date" name="startDate" th:value="${paramStartDate}" class="bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 outline-none transition-colors cursor-pointer">
             </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-green-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Tổng Thanh Toán</h3>
-                <div class="text-2xl font-bold text-slate-900" th:text="${totalRevenue != null ? (#numbers.formatDecimal(totalRevenue, 0, 'POINT', 0, 'POINT') + ' đ') : '0 đ'}">0 đ</div>
-                <div class="text-xs text-slate-500 mt-1">Đơn đã xác nhận → đã giao (bao gồm phí ship)</div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Đến ngày</label>
+                <input type="date" name="endDate" th:value="${paramEndDate}" class="bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 outline-none transition-colors cursor-pointer">
             </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-amber-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Doanh Thu Thực Nhận</h3>
-                <div class="text-2xl font-bold text-slate-900"
-                     th:text="${totalNetIncome != null
-                        ? (#numbers.formatDecimal(totalNetIncome, 0, 'POINT', 0, 'POINT') + ' đ')
-                        : '0 đ'}">
-                    0 đ
+            <button type="submit" class="px-5 py-2 h-[38px] rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-sm transition-all transform hover:-translate-y-0.5">
+                Lọc dữ liệu
+            </button>
+            <a href="/seller/statistics" class="px-3 py-2 h-[38px] rounded-xl bg-white border border-slate-200 text-slate-500 font-bold hover:bg-slate-100 hover:text-slate-700 transition-colors flex items-center justify-center" title="Xóa bộ lọc">
+                <i class="fa-solid fa-rotate-right"></i>
+            </a>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-blue-500/10 text-7xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div class="flex items-center gap-3 mb-3 relative z-10">
+                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm"><i class="fa-solid fa-box"></i></div>
+                <h3 class="text-sm font-bold text-blue-900 uppercase tracking-wider">Tổng Đơn</h3>
+            </div>
+            <div class="text-3xl font-black text-blue-700 relative z-10" th:text="${totalOrders ?: 0}">0</div>
+            <div class="text-[11px] font-bold text-blue-600/70 mt-2 relative z-10 uppercase tracking-wide">Tất cả đơn (trừ chờ thanh toán)</div>
+        </div>
+
+        <div class="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-emerald-500/10 text-7xl"><i class="fa-solid fa-money-bill-wave"></i></div>
+            <div class="flex items-center gap-3 mb-3 relative z-10">
+                <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm"><i class="fa-solid fa-sack-dollar"></i></div>
+                <h3 class="text-sm font-bold text-emerald-900 uppercase tracking-wider">Tổng Thu</h3>
+            </div>
+            <div class="text-2xl xl:text-3xl font-black text-emerald-700 relative z-10 truncate" th:text="${totalRevenue != null ? (#numbers.formatDecimal(totalRevenue, 0, 'POINT', 0, 'POINT') + ' ₫') : '0 ₫'}">0 ₫</div>
+            <div class="text-[11px] font-bold text-emerald-600/70 mt-2 relative z-10 uppercase tracking-wide">Đơn đã xác nhận → đã giao</div>
+        </div>
+
+        <div class="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-amber-500/10 text-7xl"><i class="fa-solid fa-vault"></i></div>
+            <div class="flex items-center gap-3 mb-3 relative z-10">
+                <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-sm"><i class="fa-solid fa-wallet"></i></div>
+                <h3 class="text-sm font-bold text-amber-900 uppercase tracking-wider">Thực Nhận</h3>
+            </div>
+            <div class="text-2xl xl:text-3xl font-black text-amber-700 relative z-10 truncate" th:text="${totalNetIncome != null ? (#numbers.formatDecimal(totalNetIncome, 0, 'POINT', 0, 'POINT') + ' ₫') : '0 ₫'}">0 ₫</div>
+            <div class="text-[11px] font-bold text-amber-600/70 mt-2 relative z-10 uppercase tracking-wide">Sau khi trừ hoa hồng & phí ship</div>
+        </div>
+
+        <div class="rounded-3xl border border-purple-100 bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-purple-500/10 text-7xl"><i class="fa-solid fa-chart-pie"></i></div>
+            <div class="flex items-center gap-3 mb-3 relative z-10">
+                <div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-sm"><i class="fa-solid fa-calculator"></i></div>
+                <h3 class="text-sm font-bold text-purple-900 uppercase tracking-wider">Ước Tính</h3>
+            </div>
+            <div class="text-2xl xl:text-3xl font-black text-purple-700 relative z-10 truncate" th:text="${(estimatedRevenue != null and totalCommission != null) ? (#numbers.formatDecimal(estimatedRevenue.subtract(totalCommission), 0, 'POINT', 0, 'POINT') + ' ₫') : '0 ₫'}">0 ₫</div>
+            <div class="text-[11px] font-bold text-purple-600/70 mt-2 relative z-10 uppercase tracking-wide">Tiền chờ về tài khoản</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+        <div class="xl:col-span-2 rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-area text-indigo-500"></i> Biểu Đồ Doanh Thu Thực Tế</h2>
+                    <p class="text-xs font-bold text-emerald-500 mt-1"><i class="fa-solid fa-circle-check"></i> Đang hiển thị theo bộ lọc</p>
                 </div>
-                <div class="text-xs text-slate-500 mt-1">Doanh thu sản phẩm sau khi trừ hoa hồng và phí ship</div>
             </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-6 border-l-4 border-red-500 shadow-sm">
-                <h3 class="text-sm font-medium text-slate-500 mb-1">Bạn Nhận (ước tính)</h3>
-                <div class="text-2xl font-bold text-slate-900" th:text="${(estimatedRevenue != null and totalCommission != null)
-                        ? (#numbers.formatDecimal(estimatedRevenue.subtract(totalCommission), 0, 'POINT', 0, 'POINT') + ' đ')
-                        : '0 đ'}">0 đ</div>
-                <div class="text-xs text-slate-500 mt-1">Doanh thu trừ trả hàng và hủy bỏ </div>
+            <div class="relative h-72 w-full">
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white overflow-hidden mb-6">
-            <div class="px-4 py-3 border-b border-slate-200">
-                <h2 class="font-semibold text-slate-900">Đơn Theo Trạng Thái</h2>
+        <div class="xl:col-span-1 rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden p-6 flex flex-col">
+            <div class="mb-4">
+                <h2 class="font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-amber-500"></i> Tỷ Lệ Trạng Thái Đơn</h2>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Trạng thái</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Số đơn</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="statusName : ${orderStatusNames}" class="border-t border-slate-100 hover:bg-slate-50">
-                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-sm font-medium bg-slate-100 text-slate-700" th:text="${statusName}">Status</span></td>
-                            <td class="px-4 py-3 text-sm" th:text="${orderCountByStatus.get(statusName) ?: 0}">0</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="relative flex-1 min-h-[250px] w-full flex items-center justify-center">
+                <canvas id="statusChart"></canvas>
             </div>
         </div>
+    </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white overflow-hidden mb-6">
-            <div class="px-4 py-3 border-b border-slate-200">
-                <h2 class="font-semibold text-slate-900">Sản phẩm bán chạy / bán ít</h2>
-                <p class="text-xs text-slate-500 mt-1">Số lượng đã bán theo sản phẩm (chỉ tính đơn đã giao)</p>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">#</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-slate-900">Tên sản phẩm</th>
-                            <th class="px-4 py-3 text-right text-sm font-semibold text-slate-900">Số lượng đã bán</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:if="${productSales == null || productSales.isEmpty()}">
-                            <td colspan="3" class="px-4 py-6 text-center text-slate-500 text-sm">Chưa có sản phẩm nào đã giao.</td>
-                        </tr>
-                        <tr th:each="item, stat : ${productSales}" class="border-t border-slate-100 hover:bg-slate-50">
-                            <td class="px-4 py-3 text-sm font-medium text-slate-600" th:text="${stat.count}">1</td>
-                            <td class="px-4 py-3 text-sm font-medium text-slate-900" th:text="${item.productName}">Tên SP</td>
-                            <td class="px-4 py-3 text-sm text-right font-semibold text-emerald-600" th:text="${item.quantitySold}">0</td>
-                        </tr>
-                    </tbody>
-                </table>
+    <div class="rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <div>
+                <h2 class="font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-fire text-orange-500"></i> Top Sản Phẩm Bán Chạy</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1">Dựa trên đơn đã giao thành công trong kỳ</p>
             </div>
         </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-white border-b-2 border-slate-100">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-wider w-16">#</th>
+                    <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-wider">Tên sản phẩm</th>
+                    <th class="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-wider w-32">Đã bán</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                <tr th:if="${productSales == null || productSales.isEmpty()}">
+                    <td colspan="3" class="px-6 py-12 text-center">
+                        <i class="fa-solid fa-box-open text-4xl text-slate-200 mb-3"></i>
+                        <p class="text-slate-500 font-medium">Chưa có sản phẩm nào được giao thành công trong khoảng thời gian này.</p>
+                    </td>
+                </tr>
+                <tr th:each="item, stat : ${productSales}" class="hover:bg-slate-50/80 transition-colors group">
+                    <td class="px-6 py-4">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm"
+                             th:classappend="${stat.count == 1} ? 'bg-amber-100 text-amber-600' : (${stat.count == 2} ? 'bg-slate-200 text-slate-600' : (${stat.count == 3} ? 'bg-orange-100 text-orange-600' : 'bg-slate-50 text-slate-400'))"
+                             th:text="${stat.count}">1</div>
+                    </td>
+                    <td class="px-6 py-4 font-bold text-slate-700 group-hover:text-blue-600 transition-colors" th:text="${item.productName}">Tên SP</td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-black text-sm border border-emerald-100" th:text="${item.quantitySold}">0</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        <a href="/seller/orders" class="no-underline inline-block px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600">Xem Danh Sách Đơn Hàng</a>
-    </th:block>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // 1. BIỂU ĐỒ TRÒN (STATUS)
+            const rawStatusData = /*[[${orderCountByStatus}]]*/ {};
+            const labelsStatus = [];
+            const dataStatus = [];
+            const backgroundColors = [];
+
+            const colorMap = {
+                'DELIVERED': '#10b981', 'PENDING_PAYMENT': '#f59e0b', 'CANCELLED': '#ef4444',
+                'CONFIRMED': '#3b82f6', 'PROCESSING': '#8b5cf6', 'SHIPPING': '#0ea5e9'
+            };
+
+            for (const [key, value] of Object.entries(rawStatusData)) {
+                labelsStatus.push(key);
+                dataStatus.push(value);
+                backgroundColors.push(colorMap[key] || '#94a3b8');
+            }
+
+            if (labelsStatus.length > 0) {
+                const ctxStatus = document.getElementById('statusChart').getContext('2d');
+                new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labelsStatus,
+                        datasets: [{ data: dataStatus, backgroundColor: backgroundColors, borderWidth: 0, hoverOffset: 4 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '70%',
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true, font: { family: 'Inter', weight: 'bold' } } } }
+                    }
+                });
+            }
+
+            // 2. BIỂU ĐỒ ĐƯỜNG (REVENUE - DỮ LIỆU THỰC TẾ)
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            let gradient = ctxRev.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+            new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: /*[(${chartLabels})]*/ [], // Lấy List Dates từ Java
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: /*[(${chartData})]*/ [],  // Lấy List Value từ Java
+                        borderColor: '#6366f1',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b', padding: 12, displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true, border: { display: false }, grid: { color: '#f1f5f9', drawTicks: false },
+                            ticks: { font: { family: 'Inter', weight: '500' }, color: '#94a3b8',
+                                callback: function(value) {
+                                    if(value >= 1000000) return value / 1000000 + 'M';
+                                    if(value >= 1000) return value / 1000 + 'K';
+                                    return value;
+                                }
+                            }
+                        },
+                        x: { border: { display: false }, grid: { display: false }, ticks: { font: { family: 'Inter', weight: '500' }, color: '#94a3b8' } }
+                    }
+                }
+            });
+        });
+    </script>
+</th:block>
 </body>
 </html>
