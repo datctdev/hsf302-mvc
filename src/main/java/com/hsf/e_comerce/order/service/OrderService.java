@@ -10,6 +10,7 @@ import com.hsf.e_comerce.order.valueobject.OrderStatus;
 import com.hsf.e_comerce.auth.entity.User;
 import jakarta.validation.Valid;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,4 +75,6 @@ public interface OrderService {
     void markReceivedByBuyer(UUID id, User user);
 
     RevenueSummaryResponse getRevenueSummaryByShop(UUID shopId);
+
+    BigDecimal calculateFeeForExistingOrder(UUID orderId, Integer toDistrictId, String toWardCode, User user);
 }
